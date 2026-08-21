@@ -12,9 +12,18 @@
       "gitTag": "invoice-v1",
       "commit": "5a9d902",
       "createdAt": "2026-08-21",
-      "status": "active",
+      "status": "superseded",
       "notes": "Initial field set: InvoiceNumber, dates, Terms, Business/Client contact incl. phone numbers."
+    },
+    {
+      "version": 2.0,
+      "analyzerId": "invoicev2",
+      "gitTag": "invoice-v2",
+      "commit": "42a258f",
+      "createdAt": "2026-08-21",
+      "status": "active",
+      "notes": "Added TotalAmount field extraction."
     }
   ],
-  "current": "invoicev1"
+  "current": "invoicev2"
 }
