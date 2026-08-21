@@ -96,10 +96,10 @@ time with a normal `git log`.
 graph TB
     subgraph AUTHOR["1. Author (local, git-tracked)"]
         EDIT["Edit analyzers/&lt;family&gt;/analyzer.json"]
-        VALA["validate-analyzers.py"]
-        GTSCHEMA["build-ground-truth-schema.py"]
-        GOLDMAN["build-golden-manifest.py"]
-        VALG["validate-golden.py"]
+        VALA["validate-analyzers.ps1"]
+        GTSCHEMA["build-ground-truth-schema.ps1"]
+        GOLDMAN["build-golden-manifest.ps1"]
+        VALG["validate-golden.ps1"]
         CI["ci-check.ps1"]
         COMMIT["git commit"]
 
