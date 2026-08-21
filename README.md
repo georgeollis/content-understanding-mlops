@@ -1,132 +1,133 @@
 # content-understand
 
-A version-controlled, MLOps-oriented workflow for Microsoft Foundry Content Understanding
-analyzers.
+A simple, version-controlled way to manage Microsoft Foundry Content Understanding analyzers.
 
-## The one rule: where do changes come from?
+Think of it like this: **git is where analyzers are designed and tested. Azure is where they run.**
 
-- **Foundry Studio** = for **dev exploration and POCs only**. Use it to try out a new field or
-  prompt idea quickly. Never treat an analyzer edited in Studio as "the real one."
-- **This repo** = the source of truth for anything real. Once a schema idea works in Studio,
-  copy it into `analyzer.json` here, commit it, and use `promote-analyzer.ps1` to deploy it.
-  From that point on, only this pipeline should touch that analyzer — not Studio.
+---
 
-Why this matters: Studio has no version history, no audit trail, and no repeatable tests. If
-someone edits a "live" analyzer directly in Studio, git and Azure quietly go out of sync and
-nobody would know. Keeping Studio to prototyping only avoids that.
+## 🎯 The one rule to remember
 
-## Start here
+| | Use for | Treat as |
+|---|---|---|
+| **Foundry Studio** | Quick dev/POC experiments | Throwaway — never "the real thing" |
+| **This repo** | Anything real | The source of truth |
 
-- **[`docs/mlops-pipeline.md`](docs/mlops-pipeline.md)** — how this repo's author → promote →
-  evaluate → record pipeline works, with a full diagram.
-- **[`docs/azure-foundry-architecture.md`](docs/azure-foundry-architecture.md)** — the Microsoft
-  Foundry infrastructure these analyzers are deployed against, with a full diagram.
-- **[`analyzers/README.md`](analyzers/README.md)** — index of every analyzer family (what it
-  extracts, what's currently deployed, golden test coverage).
-- **[`schemas/README.md`](schemas/README.md)** — how `analyzer.json` files are validated and
-  where the schema comes from.
+Once an idea works in Studio, copy it into `analyzer.json`, commit it, and deploy it with a
+script. After that, **only this repo should touch that analyzer** — not Studio.
 
-## Pipeline: author → promote → evaluate → record
+**Why?** Studio has no version history and no tests. If someone edits a live analyzer in
+Studio, git and Azure quietly go out of sync — and nobody would notice.
 
-Four simple steps:
+---
 
-1. **Author** — edit `analyzer.json` (in git, like normal code) and its golden test data.
-2. **Promote** — `promote-analyzer.ps1` deploys it to Microsoft Foundry as a new, permanent
-   `analyzerId`, tags the git commit, and records it in `manifest.json`.
-3. **Evaluate** — `compare-analyzers.ps1` runs the golden PDFs through one or more live versions
-   and scores them against known-correct answers.
-4. **Record** — every comparison is saved as a JSON file in git, so you can see accuracy change
-   over time just by looking at commit history.
+## 📖 Read next
+
+| Doc | What it covers |
+|---|---|
+| [`docs/mlops-pipeline.md`](docs/mlops-pipeline.md) | How the 4-step pipeline works |
+| [`docs/azure-foundry-architecture.md`](docs/azure-foundry-architecture.md) | The Azure setup analyzers run on |
+| [`analyzers/README.md`](analyzers/README.md) | List of analyzers and their status |
+| [`schemas/README.md`](schemas/README.md) | How `analyzer.json` gets validated |
+
+---
+
+## 🔄 The 4-step pipeline
+
+```mermaid
+graph LR
+    A["1️⃣ Author<br/>edit analyzer.json"] --> B["2️⃣ Promote<br/>deploy to Foundry"]
+    B --> C["3️⃣ Evaluate<br/>score vs. test docs"]
+    C --> D["4️⃣ Record<br/>save results to git"]
+    D -.->|"repeat"| A
+```
+
+| Step | What happens | Command |
+|---|---|---|
+| 1️⃣ **Author** | Edit `analyzer.json` like normal code | *(just edit + commit)* |
+| 2️⃣ **Promote** | Deploy it to Foundry as a new version | `promote-analyzer.ps1` |
+| 3️⃣ **Evaluate** | Test it against known-correct answers | `compare-analyzers.ps1` |
+| 4️⃣ **Record** | Save the score as a file in git | *(done automatically)* |
 
 Full details: [`docs/mlops-pipeline.md`](docs/mlops-pipeline.md).
+
+<details>
+<summary>Show detailed pipeline diagram</summary>
 
 ```mermaid
 graph TB
     subgraph AUTHOR["1. Author"]
-        EDIT["Edit analyzer.json"] --> VALA["validate-analyzers.py<br/>+ validate-golden.py"]
+        EDIT["Edit analyzer.json"] --> VALA["Validate"]
         VALA --> CI["ci-check.ps1"] --> COMMIT["git commit"]
     end
 
     subgraph PROMOTE["2. Promote"]
-        PROMOTESCRIPT["promote-analyzer.ps1"] --> UPLOAD["upload-analyzers.ps1<br/>PUT /analyzers/&lt;family&gt;v&lt;N&gt;"]
-        UPLOAD --> TAG["git tag &lt;family&gt;-v&lt;N&gt;"]
-        TAG --> MANIFEST["update manifest.json<br/>(current = &lt;family&gt;v&lt;N&gt;)"]
+        PROMOTESCRIPT["promote-analyzer.ps1"] --> UPLOAD["Deploy to Foundry"]
+        UPLOAD --> TAG["git tag"]
+        TAG --> MANIFEST["update manifest.json"]
         COMMIT --> PROMOTESCRIPT
     end
 
     subgraph FOUNDRY_G["Microsoft Foundry"]
-        ANALYZERS["analyzerId: &lt;family&gt;v1, v2, ... vN"]
+        ANALYZERS["Live analyzer versions"]
     end
-    UPLOAD ==>|"Entra ID token auth"| ANALYZERS
+    UPLOAD ==> ANALYZERS
 
     subgraph EVALUATE["3. Evaluate"]
-        COMPARESCRIPT["compare-analyzers.ps1<br/>-AnalyzerIds v1,v2,..."] --> SCORE["score vs golden/*.expected.json"]
+        COMPARESCRIPT["compare-analyzers.ps1"] --> SCORE["Score vs. test data"]
         MANIFEST -.-> COMPARESCRIPT
         ANALYZERS --> SCORE
     end
 
     subgraph RECORD["4. Record"]
-        REPORT["results/&lt;timestamp&gt;.json<br/>(accuracy + git commit hash)"]
-        SCORE --> REPORT --> COMMIT2["git commit results/*.json"]
+        REPORT["Save results as JSON"]
+        SCORE --> REPORT --> COMMIT2["git commit"]
     end
 
     COMMIT2 -.->|"informs next"| EDIT
 ```
 
-## Microsoft Foundry infrastructure
+</details>
 
-Analyzers are deployed against a private ("bring your own network") Microsoft Foundry account,
-inside a VNet with private endpoints. Only the Content Understanding API on the Foundry account
-is used by this pipeline — other project-scaffolding resources (AI Search, Cosmos DB, Container
-Registry) exist alongside it but aren't called by these scripts. Full inventory + diagram:
-[`docs/azure-foundry-architecture.md`](docs/azure-foundry-architecture.md).
+---
+
+## ☁️ The Azure setup (short version)
+
+Analyzers run on a private Microsoft Foundry account. Only the Content Understanding API is
+used by this pipeline — nothing else needs to be touched.
 
 ```mermaid
-graph TB
-    DEV["content-understand repo<br/>(Entra ID token auth)"] ==>|"HTTPS<br/>/contentunderstanding/analyzers/*"| FOUNDRY
-
-    subgraph RG["Resource Group (private / BYO-VNet)"]
-        subgraph VNET["Virtual Network"]
-            PESUBNET["Private-endpoint subnet"]
-        end
-
-        FOUNDRY["Foundry account (S0)<br/>disableLocalAuth=true"]
-        PROJECT["Foundry project"]
-
-        subgraph MON["Observability"]
-            LAW["Log Analytics"] --- APPI["App Insights"]
-            AMPLS["Azure Monitor Private Link Scope"]
-        end
-
-        FOUNDRY --> PROJECT
-        FOUNDRY -.->|"diagnostics"| LAW
-        AMPLS -.-> APPI
-        PESUBNET -.-> FOUNDRY
-        PESUBNET -.-> AMPLS
-    end
+graph LR
+    REPO["This repo"] -->|"deploy / test"| FOUNDRY["Microsoft Foundry<br/>(private network)"]
 ```
 
-## Layout
+Full inventory + diagram: [`docs/azure-foundry-architecture.md`](docs/azure-foundry-architecture.md).
 
-```
-analyzers/<family>/   # one folder per analyzer (definition, promotion log, test data, results)
-schemas/              # JSON Schemas + validation/generation tooling
-scripts/              # PowerShell tooling: upload, promote, compare, CI check
-docs/                 # architecture + pipeline documentation
-```
+---
 
-## Common commands
+## 📁 Folder guide
+
+| Folder | Contains |
+|---|---|
+| `analyzers/<family>/` | One analyzer's definition, deployment history, test data, results |
+| `schemas/` | Validation rules + tooling |
+| `scripts/` | The PowerShell tools: upload, promote, compare, CI check |
+| `docs/` | This documentation |
+
+---
+
+## ⚡ Quick commands
 
 ```powershell
-# Validate everything before committing/promoting
+# ✅ Check everything is valid before committing
 pwsh -File .\scripts\ci-check.ps1
 
-# Promote a family's analyzer.json to a new versioned Microsoft Foundry deployment
+# 🚀 Deploy an analyzer.json as a new version
 pwsh -File .\scripts\promote-analyzer.ps1 -Endpoint <endpoint> -Family <family> -Notes "..."
 
-# Compare two live versions against the golden set (saves a git-tracked report)
+# 📊 Compare two versions against test documents
 pwsh -File .\scripts\compare-analyzers.ps1 -Endpoint <endpoint> -Family <family> -AnalyzerIds <idA>, <idB>
 ```
 
-> **Note**: scripts require PowerShell 7+ (`pwsh`). Windows PowerShell 5.1 (`powershell.exe`)
-> throws a null-reference error in `Invoke-WebRequest` with these scripts.
+> ⚠️ **Requires PowerShell 7 (`pwsh`), not Windows PowerShell 5.1** — the older version errors
+> out on these scripts.
