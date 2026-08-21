@@ -4,6 +4,17 @@
 **Target resource**: your Microsoft Foundry account (see [`azure-foundry-architecture.md`](./azure-foundry-architecture.md) for the underlying Azure infrastructure)
 **Generated**: 2026-08-21
 
+## Studio vs. this repo
+
+**Foundry Studio is for dev/POC use only.** It's the fastest way to try out a new field or
+prompt idea, but it has no version history, no audit trail, and no repeatable tests — anything
+built there should be treated as throwaway/experimental.
+
+**This repo is the source of truth for anything real.** Once an idea proven in Studio is ready,
+copy it into `analyzer.json`, commit it, and deploy it with `promote-analyzer.ps1`. From then on,
+only this pipeline should change that analyzer — editing it again in Studio would silently
+desync git and Azure with no way to detect it.
+
 ## Overview
 
 This repo treats each Azure AI Content Understanding **analyzer family** (e.g. `invoice`,

@@ -3,6 +3,18 @@
 A version-controlled, MLOps-oriented workflow for Microsoft Foundry Content Understanding
 analyzers.
 
+## The one rule: where do changes come from?
+
+- **Foundry Studio** = for **dev exploration and POCs only**. Use it to try out a new field or
+  prompt idea quickly. Never treat an analyzer edited in Studio as "the real one."
+- **This repo** = the source of truth for anything real. Once a schema idea works in Studio,
+  copy it into `analyzer.json` here, commit it, and use `promote-analyzer.ps1` to deploy it.
+  From that point on, only this pipeline should touch that analyzer — not Studio.
+
+Why this matters: Studio has no version history, no audit trail, and no repeatable tests. If
+someone edits a "live" analyzer directly in Studio, git and Azure quietly go out of sync and
+nobody would know. Keeping Studio to prototyping only avoids that.
+
 ## Start here
 
 - **[`docs/mlops-pipeline.md`](docs/mlops-pipeline.md)** — how this repo's author → promote →
@@ -16,12 +28,17 @@ analyzers.
 
 ## Pipeline: author → promote → evaluate → record
 
-`analyzer.json` is edited and committed like normal source code (git = version history).
-Promotion deploys its current contents to Microsoft Foundry under a new immutable `analyzerId`,
-tags the commit in git, and updates a per-family `manifest.json` pointing at what's currently
-live. Evaluation runs the golden test set through one or more live versions and diffs the
-results; every comparison is saved as a git-tracked JSON report so accuracy is trackable over
-time. Full details: [`docs/mlops-pipeline.md`](docs/mlops-pipeline.md).
+Four simple steps:
+
+1. **Author** — edit `analyzer.json` (in git, like normal code) and its golden test data.
+2. **Promote** — `promote-analyzer.ps1` deploys it to Microsoft Foundry as a new, permanent
+   `analyzerId`, tags the git commit, and records it in `manifest.json`.
+3. **Evaluate** — `compare-analyzers.ps1` runs the golden PDFs through one or more live versions
+   and scores them against known-correct answers.
+4. **Record** — every comparison is saved as a JSON file in git, so you can see accuracy change
+   over time just by looking at commit history.
+
+Full details: [`docs/mlops-pipeline.md`](docs/mlops-pipeline.md).
 
 ```mermaid
 graph TB

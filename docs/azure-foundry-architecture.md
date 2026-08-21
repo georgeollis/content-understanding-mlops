@@ -4,6 +4,13 @@
 **Resource Group**: *(your resource group)*
 **Generated**: 2026-08-21
 
+## Studio note
+
+Foundry Studio (the web UI for this account) is great for **dev/POC exploration** — quickly
+trying a field or prompt idea. It's not used as part of this repo's deployment pipeline, and
+anything created there should be considered experimental until it's copied into `analyzer.json`
+and promoted through git (see [`mlops-pipeline.md`](./mlops-pipeline.md)).
+
 ## Overview
 
 This describes a private ("bring your own network") Microsoft Foundry deployment that the
