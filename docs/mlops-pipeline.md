@@ -61,8 +61,8 @@ Every comparison is saved as a JSON file and committed to git.
 | `compare-analyzers.ps1` | Scores one or more versions against test documents |
 | `upload-analyzers.ps1` | Low-level deploy step (used internally by promote) |
 | `ci-check.ps1` | Runs all validation checks in one command |
-| `validate-analyzers.py` | Checks `analyzer.json` is valid |
-| `validate-golden.py` | Checks the test data is valid and matches the schema |
+| `validate-analyzers.ps1` | Checks `analyzer.json` is valid |
+| `validate-golden.ps1` | Checks the test data is valid and matches the schema |
 
 | File | What it's for |
 |---|---|

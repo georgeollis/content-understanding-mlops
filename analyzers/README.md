@@ -15,15 +15,15 @@ analyzers/<family>/
   sample-documents/    # broader pool of sample/synthetic documents for this document type
   golden/
     *.pdf + *.expected.json   # curated subset used for accuracy scoring
-    expected.schema.json       # derived from analyzer.json fieldSchema (schemas/build-ground-truth-schema.py)
-    manifest.json               # checksummed index of the golden set (schemas/build-golden-manifest.py)
+    expected.schema.json       # derived from analyzer.json fieldSchema (schemas/build-ground-truth-schema.ps1)
+    manifest.json               # checksummed index of the golden set (schemas/build-golden-manifest.ps1)
   results/
     <timestamp>_<analyzerIds>.json   # git-tracked accuracy reports from compare-analyzers.ps1 runs
 ```
 
 ## Index
 
-<!-- Regenerate this table with: python schemas/list-families.py -->
+<!-- Regenerate this table with: pwsh -File schemas/list-families.ps1 -WriteReadme -->
 
 | Family | Description | Current (live) | Golden docs |
 |---|---|---|---|

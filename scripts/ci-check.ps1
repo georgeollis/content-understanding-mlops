@@ -4,11 +4,11 @@
 
 .DESCRIPTION
   Runs, in order:
-    1. schemas/validate-analyzers.py --all  - every analyzers/<family>/analyzer.json against
+    1. schemas/validate-analyzers.ps1  - every analyzers/<family>/analyzer.json against
        schemas/analyzer.schema.json.
-    2. schemas/validate-golden.py --all      - every family's golden set: checksums match
+    2. schemas/validate-golden.ps1 -All - every family's golden set: checksums match
        manifest.json, and every expected.json conforms to expected.schema.json.
-    3. Regenerates the analyzers/README.md family index (schemas/list-families.py) and fails
+    3. Regenerates the analyzers/README.md family index (schemas/list-families.ps1) and fails
        if it produces a diff that wasn't committed, so the index can't silently go stale.
 
   This does NOT call Azure (no live comparison) - it's meant to be fast and run on every
@@ -22,7 +22,7 @@
   .\ci-check.ps1
 
 .NOTES
-  Requires Python with the 'jsonschema' package installed (pip install jsonschema).
+  Requires PowerShell 7+ (pwsh). No Python or external packages required.
 #>
 param(
   [switch]$SkipIndexCheck
@@ -48,18 +48,18 @@ function Run-Check {
 }
 
 Run-Check "Analyzer schema validation" {
-  python (Join-Path $schemasDir "validate-analyzers.py")
+  & (Join-Path $schemasDir "validate-analyzers.ps1")
 }
 
 Run-Check "Golden dataset validation" {
-  python (Join-Path $schemasDir "validate-golden.py") --all
+  & (Join-Path $schemasDir "validate-golden.ps1") -All
 }
 
 if (-not $SkipIndexCheck) {
   Run-Check "Family index freshness (analyzers/README.md)" {
     Push-Location $repoRoot
     try {
-      python (Join-Path $schemasDir "list-families.py") --write-readme | Out-Null
+      & (Join-Path $schemasDir "list-families.ps1") -WriteReadme | Out-Null
       $diff = git status --porcelain -- "analyzers/README.md" 2>$null
       if ($LASTEXITCODE -ne 0) {
         Write-Host "  (not a git repo or git unavailable - skipping staleness check, index was regenerated)"
