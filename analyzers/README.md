@@ -16,6 +16,8 @@ analyzers/<family>/
     *.pdf + *.expected.json   # curated subset used for accuracy scoring
     expected.schema.json       # derived from analyzer.json fieldSchema (schemas/build-ground-truth-schema.py)
     manifest.json               # checksummed index of the golden set (schemas/build-golden-manifest.py)
+  results/
+    <timestamp>_<analyzerIds>.json   # git-tracked accuracy reports from compare-analyzers.ps1 runs
 ```
 
 ## Index
@@ -37,5 +39,6 @@ analyzers/<family>/
 .\scripts\promote-analyzer.ps1 -Endpoint <endpoint> -Family <family> -Notes "..."
 
 # Compare two live versions (or a candidate vs. current) against the golden set
+# Saves a JSON report to analyzers/<family>/results/ by default (commit it to track accuracy over time)
 .\scripts\compare-analyzers.ps1 -Endpoint <endpoint> -Family <family> -AnalyzerIds <idA>, <idB>
 ```

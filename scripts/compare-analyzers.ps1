@@ -35,6 +35,15 @@
 .PARAMETER ApiVersion
   Content Understanding API version. Defaults to the current GA version.
 
+.PARAMETER SaveResults
+  If set (default), writes a structured JSON report of this comparison run to
+  "analyzers/<Family>/results/<timestamp>_<analyzerIds>.json" so accuracy trends over time
+  can be tracked and diffed in git. Requires -Family (results are stored per-family). Pass
+  -SaveResults:$false to skip.
+
+.PARAMETER ResultsDir
+  Override the folder results are saved to. Defaults to "analyzers/<Family>/results".
+
 .EXAMPLE
   # Compare two versions of the invoice analyzer against the golden invoice set
   .\compare-analyzers.ps1 -Endpoint "https://byofoundrylfgymnr5a.cognitiveservices.azure.com" `
@@ -51,7 +60,11 @@ param(
 
   [string]$GoldenDir,
 
-  [string]$ApiVersion = "2025-11-01"
+  [string]$ApiVersion = "2025-11-01",
+
+  [bool]$SaveResults = $true,
+
+  [string]$ResultsDir
 )
 
 $ErrorActionPreference = "Stop"
@@ -187,6 +200,9 @@ Write-Host ""
 $accuracy = @{}
 foreach ($id in $AnalyzerIds) { $accuracy[$id] = @{ matched = 0; total = 0 } }
 
+# Structured record of every document/field/analyzer comparison, for the saved JSON report.
+$documentReports = [System.Collections.Generic.List[object]]::new()
+
 foreach ($pdf in $goldenPdfs) {
   $baseName = [System.IO.Path]::GetFileNameWithoutExtension($pdf.Name)
   $expectedPath = Join-Path $GoldenDir "$baseName.expected.json"
@@ -208,24 +224,83 @@ foreach ($pdf in $goldenPdfs) {
 
   # Only compare fields present in the expected ground truth (schemas may only cover a subset).
   $fieldNames = $expected.PSObject.Properties.Name
+  $fieldReports = [System.Collections.Generic.List[object]]::new()
   $rows = foreach ($fieldName in $fieldNames) {
     $row = [ordered]@{ Field = $fieldName; Expected = ($expected.$fieldName | ConvertTo-Json -Compress -Depth 5) }
+    $analyzerResults = [ordered]@{}
     foreach ($analyzerId in $AnalyzerIds) {
       $actualValue = $resultsByAnalyzer[$analyzerId][$fieldName]
       $isMatch = Test-ValueMatch $expected.$fieldName $actualValue
       $accuracy[$analyzerId].total++
       if ($isMatch) { $accuracy[$analyzerId].matched++ }
       $row["$analyzerId"] = if ($isMatch) { "OK" } else { "MISMATCH ($([string]($actualValue | ConvertTo-Json -Compress -Depth 5)))" }
+      $analyzerResults[$analyzerId] = [ordered]@{
+        actual  = $actualValue
+        matched = $isMatch
+      }
     }
+    $fieldReports.Add([ordered]@{
+      field    = $fieldName
+      expected = $expected.$fieldName
+      results  = $analyzerResults
+    })
     [pscustomobject]$row
   }
   $rows | Format-Table -AutoSize -Wrap | Out-String -Width 4096 | Write-Host
+
+  $documentReports.Add([ordered]@{
+    document = $baseName
+    fields   = $fieldReports
+  })
 }
 
 Write-Host ""
 Write-Host "=== Accuracy summary ===" -ForegroundColor Cyan
+$analyzerSummaries = [ordered]@{}
 foreach ($analyzerId in $AnalyzerIds) {
   $a = $accuracy[$analyzerId]
   $pct = if ($a.total -gt 0) { [Math]::Round(100 * $a.matched / $a.total, 1) } else { 0 }
   Write-Host ("  {0,-25} {1}/{2} fields matched ({3}%)" -f $analyzerId, $a.matched, $a.total, $pct)
+  $analyzerSummaries[$analyzerId] = [ordered]@{
+    matched      = $a.matched
+    total        = $a.total
+    accuracyPct  = $pct
+  }
+}
+
+# ---------- Save structured results report ----------
+if ($SaveResults) {
+  if (-not $ResultsDir) {
+    if ($Family) {
+      $ResultsDir = Join-Path $PSScriptRoot "..\analyzers\$Family\results"
+    } else {
+      Write-Warning "SaveResults requested but no -Family or -ResultsDir supplied; skipping save."
+    }
+  }
+
+  if ($ResultsDir) {
+    New-Item -ItemType Directory -Force -Path $ResultsDir | Out-Null
+    $timestamp = Get-Date -AsUTC -Format "yyyyMMddTHHmmssZ"
+    $safeIds = ($AnalyzerIds -join "_")
+    $reportPath = Join-Path $ResultsDir "$timestamp`_$safeIds.json"
+
+    $gitCommit = (git -C $PSScriptRoot rev-parse HEAD 2>$null)
+
+    $report = [ordered]@{
+      timestamp    = (Get-Date -AsUTC -Format "o")
+      endpoint     = $Endpoint
+      family       = $Family
+      analyzerIds  = $AnalyzerIds
+      apiVersion   = $ApiVersion
+      goldenDir    = $GoldenDir
+      gitCommit    = $gitCommit
+      summary      = $analyzerSummaries
+      documents    = $documentReports
+    }
+
+    $report | ConvertTo-Json -Depth 10 | Set-Content -Path $reportPath -Encoding utf8
+    Write-Host ""
+    Write-Host "Saved comparison report to $reportPath" -ForegroundColor Green
+    Write-Host "  Commit it with: git add `"$reportPath`" && git commit -m `"${Family}: compare $($AnalyzerIds -join ' vs ')`"" -ForegroundColor Yellow
+  }
 }

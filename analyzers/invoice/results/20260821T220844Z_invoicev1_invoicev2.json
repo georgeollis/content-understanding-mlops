@@ -1,0 +1,961 @@
+{
+  "timestamp": "2026-08-21T22:08:45.0960634Z",
+  "endpoint": "https://byofoundrylfgymnr5a.cognitiveservices.azure.com",
+  "family": "invoice",
+  "analyzerIds": [
+    "invoicev1",
+    "invoicev2"
+  ],
+  "apiVersion": "2025-11-01",
+  "goldenDir": "C:\\GitHub\\content-understand\\scripts\\..\\analyzers\\invoice\\golden",
+  "gitCommit": "e0bf0c8b227185f46c6abef68f6c0a9482886bb5",
+  "summary": {
+    "invoicev1": {
+      "matched": 60,
+      "total": 65,
+      "accuracyPct": 92.3
+    },
+    "invoicev2": {
+      "matched": 63,
+      "total": 65,
+      "accuracyPct": 96.9
+    }
+  },
+  "documents": [
+    {
+      "document": "INV1001",
+      "fields": [
+        {
+          "field": "InvoiceNumber",
+          "expected": "INV1001",
+          "results": {
+            "invoicev1": {
+              "actual": "INV1001",
+              "matched": true
+            },
+            "invoicev2": {
+              "actual": "INV1001",
+              "matched": true
+            }
+          }
+        },
+        {
+          "field": "InvoiceDate",
+          "expected": "2025-04-01",
+          "results": {
+            "invoicev1": {
+              "actual": "2025-04-01",
+              "matched": true
+            },
+            "invoicev2": {
+              "actual": "2025-04-01",
+              "matched": true
+            }
+          }
+        },
+        {
+          "field": "DueDate",
+          "expected": "2025-05-16",
+          "results": {
+            "invoicev1": {
+              "actual": "2025-05-16",
+              "matched": true
+            },
+            "invoicev2": {
+              "actual": "2025-05-16",
+              "matched": true
+            }
+          }
+        },
+        {
+          "field": "Terms",
+          "expected": "Net 45",
+          "results": {
+            "invoicev1": {
+              "actual": "Net 45",
+              "matched": true
+            },
+            "invoicev2": {
+              "actual": "Net 45",
+              "matched": true
+            }
+          }
+        },
+        {
+          "field": "BusinessName",
+          "expected": "Bluepeak Studio",
+          "results": {
+            "invoicev1": {
+              "actual": "Bluepeak Studio",
+              "matched": true
+            },
+            "invoicev2": {
+              "actual": "Bluepeak Studio",
+              "matched": true
+            }
+          }
+        },
+        {
+          "field": "BusinessEmail",
+          "expected": "hello@bluepeakstudio.com",
+          "results": {
+            "invoicev1": {
+              "actual": "hello@bluepeakstudio.com",
+              "matched": true
+            },
+            "invoicev2": {
+              "actual": "hello@bluepeakstudio.com",
+              "matched": true
+            }
+          }
+        },
+        {
+          "field": "BusinessAddress",
+          "expected": "437 Oak Street, Georgetown",
+          "results": {
+            "invoicev1": {
+              "actual": "437 Oak Street, Georgetown",
+              "matched": true
+            },
+            "invoicev2": {
+              "actual": "437 Oak Street, Georgetown",
+              "matched": true
+            }
+          }
+        },
+        {
+          "field": "BusinessPhone",
+          "expected": "(922) 681 6364",
+          "results": {
+            "invoicev1": {
+              "actual": "(922) 681 6364",
+              "matched": true
+            },
+            "invoicev2": {
+              "actual": "(922) 681 6364",
+              "matched": true
+            }
+          }
+        },
+        {
+          "field": "ClientName",
+          "expected": "Avery Miller",
+          "results": {
+            "invoicev1": {
+              "actual": "Avery Miller",
+              "matched": true
+            },
+            "invoicev2": {
+              "actual": "Avery Miller",
+              "matched": true
+            }
+          }
+        },
+        {
+          "field": "ClientEmail",
+          "expected": "avery@johnsonmail.com",
+          "results": {
+            "invoicev1": {
+              "actual": "avery@johnsonmail.com",
+              "matched": true
+            },
+            "invoicev2": {
+              "actual": "avery@johnsonmail.com",
+              "matched": true
+            }
+          }
+        },
+        {
+          "field": "ClientAddress",
+          "expected": "898 Cedar Lane, Springfield",
+          "results": {
+            "invoicev1": {
+              "actual": "898 Cedar Lane, Springfield",
+              "matched": true
+            },
+            "invoicev2": {
+              "actual": "898 Cedar Lane, Springfield",
+              "matched": true
+            }
+          }
+        },
+        {
+          "field": "ClientPhone",
+          "expected": "047 458 13801",
+          "results": {
+            "invoicev1": {
+              "actual": "047 458 13801",
+              "matched": true
+            },
+            "invoicev2": {
+              "actual": "047 458 13801",
+              "matched": true
+            }
+          }
+        },
+        {
+          "field": "TotalAmount",
+          "expected": 2904.24,
+          "results": {
+            "invoicev1": {
+              "actual": null,
+              "matched": false
+            },
+            "invoicev2": {
+              "actual": 2904.24,
+              "matched": true
+            }
+          }
+        }
+      ]
+    },
+    {
+      "document": "INV1002",
+      "fields": [
+        {
+          "field": "InvoiceNumber",
+          "expected": "INV1002",
+          "results": {
+            "invoicev1": {
+              "actual": "INV1002",
+              "matched": true
+            },
+            "invoicev2": {
+              "actual": "INV1002",
+              "matched": true
+            }
+          }
+        },
+        {
+          "field": "InvoiceDate",
+          "expected": "2025-10-19",
+          "results": {
+            "invoicev1": {
+              "actual": "2025-10-19",
+              "matched": true
+            },
+            "invoicev2": {
+              "actual": "2025-10-19",
+              "matched": true
+            }
+          }
+        },
+        {
+          "field": "DueDate",
+          "expected": "2025-11-18",
+          "results": {
+            "invoicev1": {
+              "actual": "2025-11-18",
+              "matched": true
+            },
+            "invoicev2": {
+              "actual": "2025-11-18",
+              "matched": true
+            }
+          }
+        },
+        {
+          "field": "Terms",
+          "expected": "Net 30",
+          "results": {
+            "invoicev1": {
+              "actual": "Net 30",
+              "matched": true
+            },
+            "invoicev2": {
+              "actual": "Net 30",
+              "matched": true
+            }
+          }
+        },
+        {
+          "field": "BusinessName",
+          "expected": "Crimson Forge",
+          "results": {
+            "invoicev1": {
+              "actual": "Crimson Forge",
+              "matched": true
+            },
+            "invoicev2": {
+              "actual": "Crimson Forge",
+              "matched": true
+            }
+          }
+        },
+        {
+          "field": "BusinessEmail",
+          "expected": "hello@crimsonforge.com",
+          "results": {
+            "invoicev1": {
+              "actual": "hello@crimsonforge.com",
+              "matched": true
+            },
+            "invoicev2": {
+              "actual": "hello@crimsonforge.com",
+              "matched": true
+            }
+          }
+        },
+        {
+          "field": "BusinessAddress",
+          "expected": "307 Pine Road, Springfield",
+          "results": {
+            "invoicev1": {
+              "actual": "307 Pine Road, Springfield",
+              "matched": true
+            },
+            "invoicev2": {
+              "actual": "307 Pine Road, Springfield",
+              "matched": true
+            }
+          }
+        },
+        {
+          "field": "BusinessPhone",
+          "expected": "(833) 598 3852",
+          "results": {
+            "invoicev1": {
+              "actual": "(833) 598 3852",
+              "matched": true
+            },
+            "invoicev2": {
+              "actual": "(833) 598 3852",
+              "matched": true
+            }
+          }
+        },
+        {
+          "field": "ClientName",
+          "expected": "Emerson Thompson",
+          "results": {
+            "invoicev1": {
+              "actual": "Emerson Thompson",
+              "matched": true
+            },
+            "invoicev2": {
+              "actual": "Emerson Thompson",
+              "matched": true
+            }
+          }
+        },
+        {
+          "field": "ClientEmail",
+          "expected": "emerson@andersonmail.com",
+          "results": {
+            "invoicev1": {
+              "actual": "emerson@andersonmail.com",
+              "matched": true
+            },
+            "invoicev2": {
+              "actual": "emerson@andersonmail.com",
+              "matched": true
+            }
+          }
+        },
+        {
+          "field": "ClientAddress",
+          "expected": "821 Maple Ave, Riverside",
+          "results": {
+            "invoicev1": {
+              "actual": "821 Maple Ave, Riverside",
+              "matched": true
+            },
+            "invoicev2": {
+              "actual": "821 Maple Ave, Riverside",
+              "matched": true
+            }
+          }
+        },
+        {
+          "field": "ClientPhone",
+          "expected": "022 383 48042",
+          "results": {
+            "invoicev1": {
+              "actual": "022 383 48042",
+              "matched": true
+            },
+            "invoicev2": {
+              "actual": "022 383 48042",
+              "matched": true
+            }
+          }
+        },
+        {
+          "field": "TotalAmount",
+          "expected": 4672.61,
+          "results": {
+            "invoicev1": {
+              "actual": null,
+              "matched": false
+            },
+            "invoicev2": {
+              "actual": 4672.61,
+              "matched": true
+            }
+          }
+        }
+      ]
+    },
+    {
+      "document": "INV1003",
+      "fields": [
+        {
+          "field": "InvoiceNumber",
+          "expected": "INV1003",
+          "results": {
+            "invoicev1": {
+              "actual": "INV1003",
+              "matched": true
+            },
+            "invoicev2": {
+              "actual": "INV1003",
+              "matched": true
+            }
+          }
+        },
+        {
+          "field": "InvoiceDate",
+          "expected": "2024-02-19",
+          "results": {
+            "invoicev1": {
+              "actual": "2024-02-19",
+              "matched": true
+            },
+            "invoicev2": {
+              "actual": "2024-02-19",
+              "matched": true
+            }
+          }
+        },
+        {
+          "field": "DueDate",
+          "expected": "2024-02-20",
+          "results": {
+            "invoicev1": {
+              "actual": "2024-02-20",
+              "matched": true
+            },
+            "invoicev2": {
+              "actual": "2024-02-20",
+              "matched": true
+            }
+          }
+        },
+        {
+          "field": "Terms",
+          "expected": "Next Day",
+          "results": {
+            "invoicev1": {
+              "actual": "Next Day",
+              "matched": true
+            },
+            "invoicev2": {
+              "actual": "Next Day",
+              "matched": true
+            }
+          }
+        },
+        {
+          "field": "BusinessName",
+          "expected": "Bluepeak Studio",
+          "results": {
+            "invoicev1": {
+              "actual": "Bluepeak Studio",
+              "matched": true
+            },
+            "invoicev2": {
+              "actual": "Bluepeak Studio",
+              "matched": true
+            }
+          }
+        },
+        {
+          "field": "BusinessEmail",
+          "expected": "hello@bluepeakstudio.com",
+          "results": {
+            "invoicev1": {
+              "actual": "hello@bluepeakstudio.com",
+              "matched": true
+            },
+            "invoicev2": {
+              "actual": "hello@bluepeakstudio.com",
+              "matched": true
+            }
+          }
+        },
+        {
+          "field": "BusinessAddress",
+          "expected": "846 Birch Court, Springfield",
+          "results": {
+            "invoicev1": {
+              "actual": "846 Birch Court, Springfield",
+              "matched": true
+            },
+            "invoicev2": {
+              "actual": "846 Birch Court, Springfield",
+              "matched": true
+            }
+          }
+        },
+        {
+          "field": "BusinessPhone",
+          "expected": "(781) 550 8267",
+          "results": {
+            "invoicev1": {
+              "actual": "(781) 550 8267",
+              "matched": true
+            },
+            "invoicev2": {
+              "actual": "(781) 550 8267",
+              "matched": true
+            }
+          }
+        },
+        {
+          "field": "ClientName",
+          "expected": "Cameron Davis",
+          "results": {
+            "invoicev1": {
+              "actual": "Cameron Davis",
+              "matched": true
+            },
+            "invoicev2": {
+              "actual": "Cameron Davis",
+              "matched": true
+            }
+          }
+        },
+        {
+          "field": "ClientEmail",
+          "expected": "cameron@robinsonmail.com",
+          "results": {
+            "invoicev1": {
+              "actual": "cameron@robinsonmail.com",
+              "matched": true
+            },
+            "invoicev2": {
+              "actual": "cameron@robinsonmail.com",
+              "matched": true
+            }
+          }
+        },
+        {
+          "field": "ClientAddress",
+          "expected": "327 Chestnut Blvd, Georgetown",
+          "results": {
+            "invoicev1": {
+              "actual": "327 Chestnut Blvd, Georgetown",
+              "matched": true
+            },
+            "invoicev2": {
+              "actual": "327 Chestnut Blvd, Georgetown",
+              "matched": true
+            }
+          }
+        },
+        {
+          "field": "ClientPhone",
+          "expected": "012 358 64865",
+          "results": {
+            "invoicev1": {
+              "actual": "012 358 64865",
+              "matched": true
+            },
+            "invoicev2": {
+              "actual": "012 358 64865",
+              "matched": true
+            }
+          }
+        },
+        {
+          "field": "TotalAmount",
+          "expected": 1420.15,
+          "results": {
+            "invoicev1": {
+              "actual": null,
+              "matched": false
+            },
+            "invoicev2": {
+              "actual": 1420.15,
+              "matched": true
+            }
+          }
+        }
+      ]
+    },
+    {
+      "document": "INV1004",
+      "fields": [
+        {
+          "field": "InvoiceNumber",
+          "expected": "INV1004",
+          "results": {
+            "invoicev1": {
+              "actual": "INV1004",
+              "matched": true
+            },
+            "invoicev2": {
+              "actual": "INV1004",
+              "matched": true
+            }
+          }
+        },
+        {
+          "field": "InvoiceDate",
+          "expected": "2024-05-27",
+          "results": {
+            "invoicev1": {
+              "actual": "2024-05-27",
+              "matched": true
+            },
+            "invoicev2": {
+              "actual": "2024-05-27",
+              "matched": true
+            }
+          }
+        },
+        {
+          "field": "DueDate",
+          "expected": "2024-05-28",
+          "results": {
+            "invoicev1": {
+              "actual": "2024-05-28",
+              "matched": true
+            },
+            "invoicev2": {
+              "actual": "2024-05-28",
+              "matched": true
+            }
+          }
+        },
+        {
+          "field": "Terms",
+          "expected": "Next Day",
+          "results": {
+            "invoicev1": {
+              "actual": "Next Day",
+              "matched": true
+            },
+            "invoicev2": {
+              "actual": "Next Day",
+              "matched": true
+            }
+          }
+        },
+        {
+          "field": "BusinessName",
+          "expected": "Crimson Forge",
+          "results": {
+            "invoicev1": {
+              "actual": "Crimson Forge",
+              "matched": true
+            },
+            "invoicev2": {
+              "actual": "Crimson Forge",
+              "matched": true
+            }
+          }
+        },
+        {
+          "field": "BusinessEmail",
+          "expected": "hello@crimsonforge.com",
+          "results": {
+            "invoicev1": {
+              "actual": "hello@crimsonforge.com",
+              "matched": true
+            },
+            "invoicev2": {
+              "actual": "hello@crimsonforge.com",
+              "matched": true
+            }
+          }
+        },
+        {
+          "field": "BusinessAddress",
+          "expected": "154 Oak Street, Franklin",
+          "results": {
+            "invoicev1": {
+              "actual": "154 Oak Street, Franklin",
+              "matched": true
+            },
+            "invoicev2": {
+              "actual": "154 Oak Street, Franklin",
+              "matched": true
+            }
+          }
+        },
+        {
+          "field": "BusinessPhone",
+          "expected": "(319) 691 8779",
+          "results": {
+            "invoicev1": {
+              "actual": "(319) 691 8779",
+              "matched": true
+            },
+            "invoicev2": {
+              "actual": "(319) 691 8779",
+              "matched": true
+            }
+          }
+        },
+        {
+          "field": "ClientName",
+          "expected": "Reese Thomas",
+          "results": {
+            "invoicev1": {
+              "actual": "Reese Thomas",
+              "matched": true
+            },
+            "invoicev2": {
+              "actual": "Reese Thomas",
+              "matched": true
+            }
+          }
+        },
+        {
+          "field": "ClientEmail",
+          "expected": "reese@harrismail.com",
+          "results": {
+            "invoicev1": {
+              "actual": "reese@harrismail.com",
+              "matched": true
+            },
+            "invoicev2": {
+              "actual": "reese@harrismail.com",
+              "matched": true
+            }
+          }
+        },
+        {
+          "field": "ClientAddress",
+          "expected": "924 Chestnut Blvd, Madison",
+          "results": {
+            "invoicev1": {
+              "actual": "924 Chestnut Blvd, Madison",
+              "matched": true
+            },
+            "invoicev2": {
+              "actual": "924 Chestnut Blvd, Madison",
+              "matched": true
+            }
+          }
+        },
+        {
+          "field": "ClientPhone",
+          "expected": "099 642 69556",
+          "results": {
+            "invoicev1": {
+              "actual": "099 642 69556",
+              "matched": true
+            },
+            "invoicev2": {
+              "actual": "099 642 69556",
+              "matched": true
+            }
+          }
+        },
+        {
+          "field": "TotalAmount",
+          "expected": 774.68,
+          "results": {
+            "invoicev1": {
+              "actual": null,
+              "matched": false
+            },
+            "invoicev2": {
+              "actual": 774.68,
+              "matched": true
+            }
+          }
+        }
+      ]
+    },
+    {
+      "document": "INV1005",
+      "fields": [
+        {
+          "field": "InvoiceNumber",
+          "expected": "INV1005",
+          "results": {
+            "invoicev1": {
+              "actual": "INV1005",
+              "matched": true
+            },
+            "invoicev2": {
+              "actual": "INV1005",
+              "matched": true
+            }
+          }
+        },
+        {
+          "field": "InvoiceDate",
+          "expected": "2025-06-11",
+          "results": {
+            "invoicev1": {
+              "actual": "2025-06-11",
+              "matched": true
+            },
+            "invoicev2": {
+              "actual": "2025-06-11",
+              "matched": true
+            }
+          }
+        },
+        {
+          "field": "DueDate",
+          "expected": "2025-07-11",
+          "results": {
+            "invoicev1": {
+              "actual": "2025-07-11",
+              "matched": true
+            },
+            "invoicev2": {
+              "actual": "2025-07-11",
+              "matched": true
+            }
+          }
+        },
+        {
+          "field": "Terms",
+          "expected": "Net 30",
+          "results": {
+            "invoicev1": {
+              "actual": "Net 30",
+              "matched": true
+            },
+            "invoicev2": {
+              "actual": "Net 30",
+              "matched": true
+            }
+          }
+        },
+        {
+          "field": "BusinessName",
+          "expected": "Crimson Forge",
+          "results": {
+            "invoicev1": {
+              "actual": "Crimson Forge",
+              "matched": true
+            },
+            "invoicev2": {
+              "actual": "Crimson Forge",
+              "matched": true
+            }
+          }
+        },
+        {
+          "field": "BusinessEmail",
+          "expected": "hello@crimsonforge.com",
+          "results": {
+            "invoicev1": {
+              "actual": "hello@crimsonforge.com",
+              "matched": true
+            },
+            "invoicev2": {
+              "actual": "hello@crimsonforge.com",
+              "matched": true
+            }
+          }
+        },
+        {
+          "field": "BusinessAddress",
+          "expected": "626 Chestnut Blvd, Fairview",
+          "results": {
+            "invoicev1": {
+              "actual": "626 Chestnut Blvd, Fairview",
+              "matched": true
+            },
+            "invoicev2": {
+              "actual": "626 Chestnut Blvd, Fairview",
+              "matched": true
+            }
+          }
+        },
+        {
+          "field": "BusinessPhone",
+          "expected": "(548) 519 5261",
+          "results": {
+            "invoicev1": {
+              "actual": "(548) 519 5261",
+              "matched": true
+            },
+            "invoicev2": {
+              "actual": "P: (548) 519 5261",
+              "matched": false
+            }
+          }
+        },
+        {
+          "field": "ClientName",
+          "expected": "Casey Wilson",
+          "results": {
+            "invoicev1": {
+              "actual": "Casey Wilson",
+              "matched": true
+            },
+            "invoicev2": {
+              "actual": "Casey Wilson",
+              "matched": true
+            }
+          }
+        },
+        {
+          "field": "ClientEmail",
+          "expected": "casey@clarkmail.com",
+          "results": {
+            "invoicev1": {
+              "actual": "casey@clarkmail.com",
+              "matched": true
+            },
+            "invoicev2": {
+              "actual": "casey@clarkmail.com",
+              "matched": true
+            }
+          }
+        },
+        {
+          "field": "ClientAddress",
+          "expected": "425 Oak Street, Springfield",
+          "results": {
+            "invoicev1": {
+              "actual": "425 Oak Street, Springfield",
+              "matched": true
+            },
+            "invoicev2": {
+              "actual": "425 Oak Street, Springfield",
+              "matched": true
+            }
+          }
+        },
+        {
+          "field": "ClientPhone",
+          "expected": "076 257 38237",
+          "results": {
+            "invoicev1": {
+              "actual": "076 257 38237",
+              "matched": true
+            },
+            "invoicev2": {
+              "actual": "P: 076 257 38237",
+              "matched": false
+            }
+          }
+        },
+        {
+          "field": "TotalAmount",
+          "expected": 376.95,
+          "results": {
+            "invoicev1": {
+              "actual": null,
+              "matched": false
+            },
+            "invoicev2": {
+              "actual": 376.95,
+              "matched": true
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
