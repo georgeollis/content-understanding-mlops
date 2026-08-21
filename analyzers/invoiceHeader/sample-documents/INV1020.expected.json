@@ -1,0 +1,44 @@
+{
+  "InvoiceNumber": "INV1020",
+  "InvoiceDate": "2024-10-28",
+  "DueDate": "2024-11-11",
+  "Terms": "Net 14",
+  "BusinessName": "Bluepeak Studio",
+  "BusinessEmail": "hello@bluepeakstudio.com",
+  "BusinessAddress": "474 Birch Court, Clinton",
+  "BusinessPhone": "(553) 782 6579",
+  "ClientName": "Reese Thomas",
+  "ClientEmail": "reese@thompsonmail.com",
+  "ClientAddress": "358 Oak Street, Springfield",
+  "ClientPhone": "080 807 67802",
+  "LineItems": [
+    {
+      "Description": "App development",
+      "Quantity": 4,
+      "UnitPrice": 466.99,
+      "Amount": 1867.96
+    },
+    {
+      "Description": "Content writing",
+      "Quantity": 5,
+      "UnitPrice": 71,
+      "Amount": 355
+    },
+    {
+      "Description": "Monthly hosting",
+      "Quantity": 1,
+      "UnitPrice": 245.99,
+      "Amount": 245.99
+    },
+    {
+      "Description": "Brand identity package",
+      "Quantity": 3,
+      "UnitPrice": 212,
+      "Amount": 636
+    }
+  ],
+  "Subtotal": 3104.95,
+  "TaxRate": 8,
+  "TaxAmount": 248.4,
+  "Total": 3353.35
+}

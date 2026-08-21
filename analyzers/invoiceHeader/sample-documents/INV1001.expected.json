@@ -1,0 +1,44 @@
+{
+  "InvoiceNumber": "INV1001",
+  "InvoiceDate": "2025-04-01",
+  "DueDate": "2025-05-16",
+  "Terms": "Net 45",
+  "BusinessName": "Bluepeak Studio",
+  "BusinessEmail": "hello@bluepeakstudio.com",
+  "BusinessAddress": "437 Oak Street, Georgetown",
+  "BusinessPhone": "(922) 681 6364",
+  "ClientName": "Avery Miller",
+  "ClientEmail": "avery@johnsonmail.com",
+  "ClientAddress": "898 Cedar Lane, Springfield",
+  "ClientPhone": "047 458 13801",
+  "LineItems": [
+    {
+      "Description": "Brand identity package",
+      "Quantity": 1,
+      "UnitPrice": 275.99,
+      "Amount": 275.99
+    },
+    {
+      "Description": "Website design",
+      "Quantity": 4,
+      "UnitPrice": 280,
+      "Amount": 1120
+    },
+    {
+      "Description": "SEO consulting",
+      "Quantity": 2,
+      "UnitPrice": 300,
+      "Amount": 600
+    },
+    {
+      "Description": "Consulting hours",
+      "Quantity": 5,
+      "UnitPrice": 153.99,
+      "Amount": 769.95
+    }
+  ],
+  "Subtotal": 2765.94,
+  "TaxRate": 5,
+  "TaxAmount": 138.3,
+  "Total": 2904.24
+}

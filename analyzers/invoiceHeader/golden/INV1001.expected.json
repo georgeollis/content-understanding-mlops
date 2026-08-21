@@ -1,0 +1,14 @@
+{
+  "InvoiceNumber": "INV1001",
+  "InvoiceDate": "2025-04-01",
+  "DueDate": "2025-05-16",
+  "Terms": "Net 45",
+  "BusinessName": "Bluepeak Studio",
+  "BusinessEmail": "hello@bluepeakstudio.com",
+  "BusinessAddress": "437 Oak Street, Georgetown",
+  "BusinessPhone": "(922) 681 6364",
+  "ClientName": "Avery Miller",
+  "ClientEmail": "avery@johnsonmail.com",
+  "ClientAddress": "898 Cedar Lane, Springfield",
+  "ClientPhone": "047 458 13801"
+}

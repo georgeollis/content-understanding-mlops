@@ -1,0 +1,38 @@
+{
+  "InvoiceNumber": "INV1013",
+  "InvoiceDate": "2024-10-12",
+  "DueDate": "2024-11-11",
+  "Terms": "Net 30",
+  "BusinessName": "Silverline Labs",
+  "BusinessEmail": "hello@silverlinelabs.com",
+  "BusinessAddress": "619 Oak Street, Riverside",
+  "BusinessPhone": "(292) 461 9016",
+  "ClientName": "Taylor Johnson",
+  "ClientEmail": "taylor@martinezmail.com",
+  "ClientAddress": "577 Birch Court, Riverside",
+  "ClientPhone": "080 406 16276",
+  "LineItems": [
+    {
+      "Description": "App development",
+      "Quantity": 1,
+      "UnitPrice": 81,
+      "Amount": 81
+    },
+    {
+      "Description": "Content writing",
+      "Quantity": 4,
+      "UnitPrice": 428,
+      "Amount": 1712
+    },
+    {
+      "Description": "Consulting hours",
+      "Quantity": 1,
+      "UnitPrice": 463,
+      "Amount": 463
+    }
+  ],
+  "Subtotal": 2256,
+  "TaxRate": 8,
+  "TaxAmount": 180.48,
+  "Total": 2436.48
+}

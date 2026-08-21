@@ -1,0 +1,44 @@
+{
+  "InvoiceNumber": "INV1015",
+  "InvoiceDate": "2025-11-20",
+  "DueDate": "2025-12-05",
+  "Terms": "Net 15",
+  "BusinessName": "Silverline Labs",
+  "BusinessEmail": "hello@silverlinelabs.com",
+  "BusinessAddress": "769 Pine Road, Madison",
+  "BusinessPhone": "(793) 834 9538",
+  "ClientName": "Peyton Harris",
+  "ClientEmail": "peyton@smithmail.com",
+  "ClientAddress": "833 Maple Ave, Springfield",
+  "ClientPhone": "097 181 22853",
+  "LineItems": [
+    {
+      "Description": "Content writing",
+      "Quantity": 4,
+      "UnitPrice": 21.99,
+      "Amount": 87.96
+    },
+    {
+      "Description": "Social media management",
+      "Quantity": 4,
+      "UnitPrice": 119,
+      "Amount": 476
+    },
+    {
+      "Description": "SEO consulting",
+      "Quantity": 2,
+      "UnitPrice": 286.99,
+      "Amount": 573.98
+    },
+    {
+      "Description": "Brand identity package",
+      "Quantity": 5,
+      "UnitPrice": 249.99,
+      "Amount": 1249.95
+    }
+  ],
+  "Subtotal": 2387.89,
+  "TaxRate": 12,
+  "TaxAmount": 286.55,
+  "Total": 2674.44
+}

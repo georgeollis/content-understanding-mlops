@@ -1,0 +1,44 @@
+{
+  "InvoiceNumber": "INV1002",
+  "InvoiceDate": "2025-10-19",
+  "DueDate": "2025-11-18",
+  "Terms": "Net 30",
+  "BusinessName": "Crimson Forge",
+  "BusinessEmail": "hello@crimsonforge.com",
+  "BusinessAddress": "307 Pine Road, Springfield",
+  "BusinessPhone": "(833) 598 3852",
+  "ClientName": "Emerson Thompson",
+  "ClientEmail": "emerson@andersonmail.com",
+  "ClientAddress": "821 Maple Ave, Riverside",
+  "ClientPhone": "022 383 48042",
+  "LineItems": [
+    {
+      "Description": "Social media management",
+      "Quantity": 1,
+      "UnitPrice": 53,
+      "Amount": 53
+    },
+    {
+      "Description": "Brand identity package",
+      "Quantity": 4,
+      "UnitPrice": 414,
+      "Amount": 1656
+    },
+    {
+      "Description": "Consulting hours",
+      "Quantity": 5,
+      "UnitPrice": 345,
+      "Amount": 1725
+    },
+    {
+      "Description": "Website design",
+      "Quantity": 3,
+      "UnitPrice": 245.99,
+      "Amount": 737.97
+    }
+  ],
+  "Subtotal": 4171.97,
+  "TaxRate": 12,
+  "TaxAmount": 500.64,
+  "Total": 4672.61
+}

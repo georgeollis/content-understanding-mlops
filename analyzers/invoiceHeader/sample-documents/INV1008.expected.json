@@ -1,0 +1,44 @@
+{
+  "InvoiceNumber": "INV1008",
+  "InvoiceDate": "2025-01-30",
+  "DueDate": "2025-02-06",
+  "Terms": "Net 7",
+  "BusinessName": "Silverline Labs",
+  "BusinessEmail": "hello@silverlinelabs.com",
+  "BusinessAddress": "615 Maple Ave, Clinton",
+  "BusinessPhone": "(605) 986 1899",
+  "ClientName": "Finley Williams",
+  "ClientEmail": "finley@andersonmail.com",
+  "ClientAddress": "568 Pine Road, Franklin",
+  "ClientPhone": "080 573 11084",
+  "LineItems": [
+    {
+      "Description": "Video editing",
+      "Quantity": 4,
+      "UnitPrice": 83.99,
+      "Amount": 335.96
+    },
+    {
+      "Description": "App development",
+      "Quantity": 3,
+      "UnitPrice": 257,
+      "Amount": 771
+    },
+    {
+      "Description": "Photography session",
+      "Quantity": 2,
+      "UnitPrice": 363,
+      "Amount": 726
+    },
+    {
+      "Description": "Content writing",
+      "Quantity": 5,
+      "UnitPrice": 214,
+      "Amount": 1070
+    }
+  ],
+  "Subtotal": 2902.96,
+  "TaxRate": 12,
+  "TaxAmount": 348.36,
+  "Total": 3251.32
+}

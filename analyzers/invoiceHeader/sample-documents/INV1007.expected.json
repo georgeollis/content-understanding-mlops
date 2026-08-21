@@ -1,0 +1,26 @@
+{
+  "InvoiceNumber": "INV1007",
+  "InvoiceDate": "2025-05-21",
+  "DueDate": "2025-06-05",
+  "Terms": "Net 15",
+  "BusinessName": "Silverline Labs",
+  "BusinessEmail": "hello@silverlinelabs.com",
+  "BusinessAddress": "311 Pine Road, Madison",
+  "BusinessPhone": "(285) 499 3792",
+  "ClientName": "Emerson Jackson",
+  "ClientEmail": "emerson@mooremail.com",
+  "ClientAddress": "653 Maple Ave, Franklin",
+  "ClientPhone": "071 649 48480",
+  "LineItems": [
+    {
+      "Description": "Consulting hours",
+      "Quantity": 1,
+      "UnitPrice": 485,
+      "Amount": 485
+    }
+  ],
+  "Subtotal": 485,
+  "TaxRate": 8,
+  "TaxAmount": 38.8,
+  "Total": 523.8
+}

@@ -1,0 +1,44 @@
+{
+  "InvoiceNumber": "INV1014",
+  "InvoiceDate": "2024-05-14",
+  "DueDate": "2024-05-28",
+  "Terms": "Net 14",
+  "BusinessName": "Crimson Forge",
+  "BusinessEmail": "hello@crimsonforge.com",
+  "BusinessAddress": "616 Pine Road, Franklin",
+  "BusinessPhone": "(572) 694 3196",
+  "ClientName": "Emerson White",
+  "ClientEmail": "emerson@mooremail.com",
+  "ClientAddress": "728 Cedar Lane, Riverside",
+  "ClientPhone": "092 345 56499",
+  "LineItems": [
+    {
+      "Description": "SEO consulting",
+      "Quantity": 2,
+      "UnitPrice": 359,
+      "Amount": 718
+    },
+    {
+      "Description": "Video editing",
+      "Quantity": 2,
+      "UnitPrice": 474,
+      "Amount": 948
+    },
+    {
+      "Description": "Social media management",
+      "Quantity": 5,
+      "UnitPrice": 298.99,
+      "Amount": 1494.95
+    },
+    {
+      "Description": "Brand identity package",
+      "Quantity": 4,
+      "UnitPrice": 93.99,
+      "Amount": 375.96
+    }
+  ],
+  "Subtotal": 3536.91,
+  "TaxRate": 5,
+  "TaxAmount": 176.85,
+  "Total": 3713.76
+}

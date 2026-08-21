@@ -1,0 +1,32 @@
+{
+  "InvoiceNumber": "INV1010",
+  "InvoiceDate": "2024-04-25",
+  "DueDate": "2024-05-09",
+  "Terms": "Net 14",
+  "BusinessName": "Hexcore Solutions",
+  "BusinessEmail": "hello@hexcoresolutions.com",
+  "BusinessAddress": "219 Maple Ave, Greenville",
+  "BusinessPhone": "(922) 615 8620",
+  "ClientName": "Alex Thompson",
+  "ClientEmail": "alex@martinmail.com",
+  "ClientAddress": "258 Pine Road, Clinton",
+  "ClientPhone": "018 348 76380",
+  "LineItems": [
+    {
+      "Description": "Brand identity package",
+      "Quantity": 1,
+      "UnitPrice": 307,
+      "Amount": 307
+    },
+    {
+      "Description": "SEO consulting",
+      "Quantity": 1,
+      "UnitPrice": 349,
+      "Amount": 349
+    }
+  ],
+  "Subtotal": 656,
+  "TaxRate": 10,
+  "TaxAmount": 65.6,
+  "Total": 721.6
+}

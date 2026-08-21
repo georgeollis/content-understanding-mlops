@@ -1,0 +1,46 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "complaintForm ground-truth (expected.json) schema",
+  "description": "Auto-generated from analyzers/complaintForm/analyzer.json. Do not hand-edit; re-run build-ground-truth-schema.py after changing the analyzer's fieldSchema.",
+  "type": "object",
+  "properties": {
+    "CustomerFirstName": {
+      "type": "string",
+      "description": "Customer's first name."
+    },
+    "CustomerLastName": {
+      "type": "string",
+      "description": "Customer's last name."
+    },
+    "EmailAddress": {
+      "type": "string",
+      "description": "Customer's email address."
+    },
+    "PhoneNumber": {
+      "type": "string",
+      "description": "Customer's phone number."
+    },
+    "NatureOfComplaint": {
+      "type": "string",
+      "description": "Short category/summary of the complaint, e.g. 'Late delivery', 'Product defect'."
+    },
+    "IncidentDetails": {
+      "type": "string",
+      "description": "Free-text description of what happened."
+    },
+    "DesiredResolution": {
+      "type": "string",
+      "description": "What the customer wants done to resolve the complaint."
+    }
+  },
+  "required": [
+    "CustomerFirstName",
+    "CustomerLastName",
+    "EmailAddress",
+    "PhoneNumber",
+    "NatureOfComplaint",
+    "IncidentDetails",
+    "DesiredResolution"
+  ],
+  "additionalProperties": false
+}

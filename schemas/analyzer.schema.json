@@ -1,0 +1,612 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "ContentAnalyzer (local authoring schema)",
+  "description": "Schema for locally-authored Content Understanding analyzer definitions (the PUT /analyzers/{analyzerId} request body). Extracted from the official Azure REST API spec for api-version 2025-11-01 (GA). Source: https://github.com/Azure/azure-rest-api-specs/blob/main/specification/ai/data-plane/ContentUnderstanding/stable/2025-11-01/ContentUnderstanding.json",
+  "$ref": "#/definitions/ContentAnalyzer",
+  "definitions": {
+    "Azure.Core.Foundations.Error": {
+      "type": "object",
+      "description": "The error object.",
+      "properties": {
+        "code": {
+          "type": "string",
+          "description": "One of a server-defined set of error codes."
+        },
+        "message": {
+          "type": "string",
+          "description": "A human-readable representation of the error."
+        },
+        "target": {
+          "type": "string",
+          "description": "The target of the error."
+        },
+        "details": {
+          "type": "array",
+          "description": "An array of details about specific errors that led to this reported error.",
+          "items": {
+            "$ref": "#/definitions/Azure.Core.Foundations.Error"
+          }
+        },
+        "innererror": {
+          "$ref": "#/definitions/Azure.Core.Foundations.InnerError",
+          "description": "An object containing more specific information than the current object about the error."
+        }
+      },
+      "required": [
+        "code",
+        "message"
+      ]
+    },
+    "Azure.Core.Foundations.InnerError": {
+      "type": "object",
+      "description": "An object containing more specific information about the error. As per Azure REST API guidelines - https://aka.ms/AzureRestApiGuidelines#handling-errors.",
+      "properties": {
+        "code": {
+          "type": "string",
+          "description": "One of a server-defined set of error codes."
+        },
+        "innererror": {
+          "$ref": "#/definitions/Azure.Core.Foundations.InnerError",
+          "description": "Inner error."
+        }
+      }
+    },
+    "ContentAnalyzer": {
+      "type": "object",
+      "description": "Analyzer that extracts content and fields from multimodal documents.",
+      "properties": {
+        "description": {
+          "type": "string",
+          "description": "A description of the analyzer."
+        },
+        "tags": {
+          "type": "object",
+          "description": "Tags associated with the analyzer.",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "baseAnalyzerId": {
+          "type": "string",
+          "description": "The analyzer to incrementally train from.",
+          "minLength": 1,
+          "maxLength": 64,
+          "pattern": "^[a-zA-Z0-9._-]{1,64}$",
+          "x-ms-mutability": [
+            "read",
+            "create"
+          ]
+        },
+        "config": {
+          "$ref": "#/definitions/ContentAnalyzerConfig",
+          "description": "Analyzer configuration settings.",
+          "x-ms-mutability": [
+            "read",
+            "create"
+          ]
+        },
+        "fieldSchema": {
+          "$ref": "#/definitions/ContentFieldSchema",
+          "description": "The schema of fields to extracted.",
+          "x-ms-mutability": [
+            "read",
+            "create"
+          ]
+        },
+        "dynamicFieldSchema": {
+          "type": "boolean",
+          "description": "Indicates whether the result may contain additional fields outside of the defined schema.",
+          "default": false,
+          "x-ms-mutability": [
+            "read",
+            "create"
+          ]
+        },
+        "processingLocation": {
+          "type": "string",
+          "description": "The location where the data may be processed.  Defaults to global.",
+          "default": "global",
+          "enum": [
+            "geography",
+            "dataZone",
+            "global"
+          ],
+          "x-ms-enum": {
+            "name": "ProcessingLocation",
+            "modelAsString": true,
+            "values": [
+              {
+                "name": "geography",
+                "value": "geography",
+                "description": "Data may be processed in the same geography as the resource."
+              },
+              {
+                "name": "dataZone",
+                "value": "dataZone",
+                "description": "Data may be processed in the same data zone as the resource."
+              },
+              {
+                "name": "global",
+                "value": "global",
+                "description": "Data may be processed in any Azure data center globally."
+              }
+            ]
+          },
+          "x-ms-mutability": [
+            "read",
+            "create"
+          ]
+        },
+        "knowledgeSources": {
+          "type": "array",
+          "description": "Additional knowledge sources used to enhance the analyzer.",
+          "items": {
+            "$ref": "#/definitions/KnowledgeSource"
+          },
+          "x-ms-mutability": [
+            "read",
+            "create"
+          ]
+        },
+        "models": {
+          "type": "object",
+          "description": "Mapping of model roles to specific model names.\nEx. { \"completion\": \"gpt-4.1\", \"embedding\": \"text-embedding-3-large\" }.",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "x-ms-mutability": [
+            "read",
+            "create"
+          ]
+        }
+      },
+      "required": []
+    },
+    "ContentAnalyzerConfig": {
+      "type": "object",
+      "description": "Configuration settings for an analyzer.",
+      "properties": {
+        "returnDetails": {
+          "type": "boolean",
+          "description": "Return all content details."
+        },
+        "locales": {
+          "type": "array",
+          "description": "List of locale hints for speech transcription.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "enableOcr": {
+          "type": "boolean",
+          "description": "Enable optical character recognition (OCR)."
+        },
+        "enableLayout": {
+          "type": "boolean",
+          "description": "Enable layout analysis."
+        },
+        "enableFigureDescription": {
+          "type": "boolean",
+          "description": "Enable generation of figure description."
+        },
+        "enableFigureAnalysis": {
+          "type": "boolean",
+          "description": "Enable analysis of figures, such as charts and diagrams."
+        },
+        "enableFormula": {
+          "type": "boolean",
+          "description": "Enable mathematical formula detection."
+        },
+        "tableFormat": {
+          "type": "string",
+          "description": "Representation format of tables in analyze result markdown.",
+          "default": "html",
+          "enum": [
+            "html",
+            "markdown"
+          ],
+          "x-ms-enum": {
+            "name": "TableFormat",
+            "modelAsString": true,
+            "values": [
+              {
+                "name": "html",
+                "value": "html",
+                "description": "Represent tables using HTML table elements: \\<table>, \\<th>, \\<tr>, \\<td>."
+              },
+              {
+                "name": "markdown",
+                "value": "markdown",
+                "description": "Represent tables using GitHub Flavored Markdown table syntax, which does not support merged cells or rich headers."
+              }
+            ]
+          }
+        },
+        "chartFormat": {
+          "type": "string",
+          "description": "Representation format of charts in analyze result markdown.",
+          "default": "chartJs",
+          "enum": [
+            "chartJs",
+            "markdown"
+          ],
+          "x-ms-enum": {
+            "name": "ChartFormat",
+            "modelAsString": true,
+            "values": [
+              {
+                "name": "chartJs",
+                "value": "chartJs",
+                "description": "Represent charts as Chart.js code blocks."
+              },
+              {
+                "name": "markdown",
+                "value": "markdown",
+                "description": "Represent charts as markdown tables."
+              }
+            ]
+          }
+        },
+        "annotationFormat": {
+          "type": "string",
+          "description": "Representation format of annotations in analyze result markdown.",
+          "default": "markdown",
+          "enum": [
+            "none",
+            "markdown"
+          ],
+          "x-ms-enum": {
+            "name": "AnnotationFormat",
+            "modelAsString": true,
+            "values": [
+              {
+                "name": "none",
+                "value": "none",
+                "description": "Do not represent annotations."
+              },
+              {
+                "name": "markdown",
+                "value": "markdown",
+                "description": "Represent basic annotation information using markdown formatting."
+              }
+            ]
+          }
+        },
+        "disableFaceBlurring": {
+          "type": "boolean",
+          "description": "Disable the default blurring of faces for privacy while processing the content."
+        },
+        "estimateFieldSourceAndConfidence": {
+          "type": "boolean",
+          "description": "Return field grounding source and confidence."
+        },
+        "contentCategories": {
+          "type": "object",
+          "description": "Map of categories to classify the input content(s) against.",
+          "additionalProperties": {
+            "$ref": "#/definitions/ContentCategoryDefinition"
+          }
+        },
+        "enableSegment": {
+          "type": "boolean",
+          "description": "Enable segmentation of the input by contentCategories."
+        },
+        "segmentPerPage": {
+          "type": "boolean",
+          "description": "Force segmentation of document content by page."
+        },
+        "omitContent": {
+          "type": "boolean",
+          "description": "Omit the content for this analyzer from analyze result.\nOnly return content(s) from additional analyzers specified in contentCategories, if any."
+        }
+      }
+    },
+    "ContentAnalyzerStatus": {
+      "type": "string",
+      "description": "Status of a resource.",
+      "enum": [
+        "creating",
+        "ready",
+        "deleting",
+        "failed"
+      ],
+      "x-ms-enum": {
+        "name": "ContentAnalyzerStatus",
+        "modelAsString": true,
+        "values": [
+          {
+            "name": "creating",
+            "value": "creating",
+            "description": "The resource is being created."
+          },
+          {
+            "name": "ready",
+            "value": "ready",
+            "description": "The resource is ready."
+          },
+          {
+            "name": "deleting",
+            "value": "deleting",
+            "description": "The resource is being deleted."
+          },
+          {
+            "name": "failed",
+            "value": "failed",
+            "description": "The resource failed during creation."
+          }
+        ]
+      }
+    },
+    "ContentCategoryDefinition": {
+      "type": "object",
+      "description": "Content category definition.",
+      "properties": {
+        "description": {
+          "type": "string",
+          "description": "The description of the category."
+        },
+        "analyzerId": {
+          "type": "string",
+          "description": "Optional analyzer used to process the content."
+        },
+        "analyzer": {
+          "$ref": "#/definitions/ContentAnalyzer",
+          "description": "Optional inline definition of analyzer used to process the content."
+        }
+      }
+    },
+    "ContentFieldDefinition": {
+      "type": "object",
+      "description": "Definition of the field using a JSON Schema like syntax.",
+      "properties": {
+        "method": {
+          "$ref": "#/definitions/GenerationMethod",
+          "description": "Generation method."
+        },
+        "type": {
+          "$ref": "#/definitions/ContentFieldType",
+          "description": "Semantic data type of the field value."
+        },
+        "description": {
+          "type": "string",
+          "description": "Field description."
+        },
+        "items": {
+          "$ref": "#/definitions/ContentFieldDefinition",
+          "description": "Field type schema of each array element, if type is array."
+        },
+        "properties": {
+          "type": "object",
+          "description": "Named sub-fields, if type is object.",
+          "additionalProperties": {
+            "$ref": "#/definitions/ContentFieldDefinition"
+          }
+        },
+        "examples": {
+          "type": "array",
+          "description": "Examples of field values.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "enum": {
+          "type": "array",
+          "description": "Enumeration of possible field values.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "enumDescriptions": {
+          "type": "object",
+          "description": "Descriptions for each enumeration value.",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "$ref": {
+          "type": "string",
+          "description": "Reference to another field definition."
+        },
+        "estimateSourceAndConfidence": {
+          "type": "boolean",
+          "description": "Return grounding source and confidence."
+        }
+      }
+    },
+    "ContentFieldSchema": {
+      "type": "object",
+      "description": "Schema of fields to be extracted from documents.",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The name of the field schema.",
+          "x-ms-mutability": [
+            "read",
+            "create"
+          ]
+        },
+        "description": {
+          "type": "string",
+          "description": "A description of the field schema.",
+          "x-ms-mutability": [
+            "read",
+            "create"
+          ]
+        },
+        "fields": {
+          "type": "object",
+          "description": "The fields defined in the schema.",
+          "additionalProperties": {
+            "$ref": "#/definitions/ContentFieldDefinition"
+          },
+          "x-ms-mutability": [
+            "read",
+            "create"
+          ]
+        },
+        "definitions": {
+          "type": "object",
+          "description": "Additional definitions referenced by the fields in the schema.",
+          "additionalProperties": {
+            "$ref": "#/definitions/ContentFieldDefinition"
+          },
+          "x-ms-mutability": [
+            "read",
+            "create"
+          ]
+        }
+      },
+      "required": [
+        "fields"
+      ]
+    },
+    "ContentFieldType": {
+      "type": "string",
+      "description": "Semantic data type of the field value.",
+      "enum": [
+        "string",
+        "date",
+        "time",
+        "number",
+        "integer",
+        "boolean",
+        "array",
+        "object",
+        "json"
+      ],
+      "x-ms-enum": {
+        "name": "ContentFieldType",
+        "modelAsString": true,
+        "values": [
+          {
+            "name": "string",
+            "value": "string",
+            "description": "Plain text."
+          },
+          {
+            "name": "date",
+            "value": "date",
+            "description": "Date, normalized to ISO 8601 (YYYY-MM-DD) format."
+          },
+          {
+            "name": "time",
+            "value": "time",
+            "description": "Time, normalized to ISO 8601 (hh:mm:ss) format."
+          },
+          {
+            "name": "number",
+            "value": "number",
+            "description": "Number as double precision floating point."
+          },
+          {
+            "name": "integer",
+            "value": "integer",
+            "description": "Integer as 64-bit signed integer."
+          },
+          {
+            "name": "boolean",
+            "value": "boolean",
+            "description": "Boolean value."
+          },
+          {
+            "name": "array",
+            "value": "array",
+            "description": "List of subfields of the same type."
+          },
+          {
+            "name": "object",
+            "value": "object",
+            "description": "Named list of subfields."
+          },
+          {
+            "name": "json",
+            "value": "json",
+            "description": "JSON object."
+          }
+        ]
+      }
+    },
+    "GenerationMethod": {
+      "type": "string",
+      "description": "Generation method.",
+      "enum": [
+        "generate",
+        "extract",
+        "classify"
+      ],
+      "x-ms-enum": {
+        "name": "GenerationMethod",
+        "modelAsString": true,
+        "values": [
+          {
+            "name": "generate",
+            "value": "generate",
+            "description": "Values are generated freely based on the content."
+          },
+          {
+            "name": "extract",
+            "value": "extract",
+            "description": "Values are extracted as they appear in the content."
+          },
+          {
+            "name": "classify",
+            "value": "classify",
+            "description": "Values are classified against a predefined set of categories."
+          }
+        ]
+      }
+    },
+    "KnowledgeSource": {
+      "type": "object",
+      "description": "Knowledge source.",
+      "properties": {
+        "kind": {
+          "$ref": "#/definitions/KnowledgeSourceKind",
+          "description": "The kind of knowledge source."
+        }
+      },
+      "discriminator": "kind",
+      "required": [
+        "kind"
+      ]
+    },
+    "KnowledgeSourceKind": {
+      "type": "string",
+      "description": "Knowledge source kind.",
+      "enum": [
+        "labeledData"
+      ],
+      "x-ms-enum": {
+        "name": "KnowledgeSourceKind",
+        "modelAsString": true,
+        "values": [
+          {
+            "name": "labeledData",
+            "value": "labeledData",
+            "description": "A labeled data knowledge source."
+          }
+        ]
+      }
+    },
+    "SupportedModels": {
+      "type": "object",
+      "description": "Chat completion and embedding models supported by the analyzer.",
+      "properties": {
+        "completion": {
+          "type": "array",
+          "description": "Chat completion models supported by the analyzer.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "embedding": {
+          "type": "array",
+          "description": "Embedding models supported by the analyzer.",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "InvoiceNumber": "INV1011",
+  "InvoiceDate": "2024-09-04",
+  "DueDate": "2024-10-04",
+  "Terms": "Net 30",
+  "BusinessName": "Hexcore Solutions",
+  "BusinessEmail": "hello@hexcoresolutions.com",
+  "BusinessAddress": "879 Birch Court, Madison",
+  "BusinessPhone": "(233) 764 7163",
+  "ClientName": "Cameron White",
+  "ClientEmail": "cameron@robinsonmail.com",
+  "ClientAddress": "549 Birch Court, Georgetown",
+  "ClientPhone": "064 862 70967",
+  "LineItems": [
+    {
+      "Description": "Video editing",
+      "Quantity": 4,
+      "UnitPrice": 47.99,
+      "Amount": 191.96
+    },
+    {
+      "Description": "Brand identity package",
+      "Quantity": 1,
+      "UnitPrice": 274.99,
+      "Amount": 274.99
+    },
+    {
+      "Description": "Content writing",
+      "Quantity": 5,
+      "UnitPrice": 247.99,
+      "Amount": 1239.95
+    }
+  ],
+  "Subtotal": 1706.9,
+  "TaxRate": 5,
+  "TaxAmount": 85.35,
+  "Total": 1792.25
+}

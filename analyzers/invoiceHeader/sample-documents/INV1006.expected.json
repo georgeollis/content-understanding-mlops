@@ -1,0 +1,32 @@
+{
+  "InvoiceNumber": "INV1006",
+  "InvoiceDate": "2024-12-23",
+  "DueDate": "2025-01-22",
+  "Terms": "Net 30",
+  "BusinessName": "Nova Vertex",
+  "BusinessEmail": "hello@novavertex.com",
+  "BusinessAddress": "583 Birch Court, Riverside",
+  "BusinessPhone": "(536) 909 3126",
+  "ClientName": "Alex Clark",
+  "ClientEmail": "alex@johnsonmail.com",
+  "ClientAddress": "847 Elm Drive, Franklin",
+  "ClientPhone": "088 639 69371",
+  "LineItems": [
+    {
+      "Description": "App development",
+      "Quantity": 3,
+      "UnitPrice": 277.99,
+      "Amount": 833.97
+    },
+    {
+      "Description": "SEO consulting",
+      "Quantity": 4,
+      "UnitPrice": 330,
+      "Amount": 1320
+    }
+  ],
+  "Subtotal": 2153.97,
+  "TaxRate": 12,
+  "TaxAmount": 258.48,
+  "Total": 2412.45
+}

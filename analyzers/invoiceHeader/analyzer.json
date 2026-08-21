@@ -1,0 +1,31 @@
+{
+  "description": "Extracts invoice header, business (from) and client (for) details from the sample invoice PDFs.",
+  "tags": {
+    "family": "invoiceHeader"
+  },
+  "baseAnalyzerId": "prebuilt-document",
+  "config": {
+    "returnDetails": true
+  },
+  "models": {
+    "completion": "gpt-5"
+  },
+  "fieldSchema": {
+    "name": "InvoiceHeaderSchema",
+    "description": "Header-level fields from a generated invoice.",
+    "fields": {
+      "InvoiceNumber": { "type": "string", "description": "The invoice number, e.g. INV1001." },
+      "InvoiceDate": { "type": "date", "description": "The date the invoice was issued." },
+      "DueDate": { "type": "date", "description": "The date payment is due." },
+      "Terms": { "type": "string", "description": "Payment terms, e.g. Net 30." },
+      "BusinessName": { "type": "string", "description": "Name of the business issuing the invoice (From)." },
+      "BusinessEmail": { "type": "string", "description": "Email address of the issuing business." },
+      "BusinessAddress": { "type": "string", "description": "Postal address of the issuing business." },
+      "BusinessPhone": { "type": "string", "description": "Phone number of the issuing business, labeled 'P:' under the From section." },
+      "ClientName": { "type": "string", "description": "Name of the client being billed (For)." },
+      "ClientEmail": { "type": "string", "description": "Email address of the client." },
+      "ClientAddress": { "type": "string", "description": "Postal address of the client." },
+      "ClientPhone": { "type": "string", "description": "Phone number of the client, labeled 'P:' under the For section." }
+    }
+  }
+}

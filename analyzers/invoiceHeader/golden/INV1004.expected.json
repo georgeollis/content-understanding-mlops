@@ -1,0 +1,14 @@
+{
+  "InvoiceNumber": "INV1004",
+  "InvoiceDate": "2024-05-27",
+  "DueDate": "2024-05-28",
+  "Terms": "Next Day",
+  "BusinessName": "Crimson Forge",
+  "BusinessEmail": "hello@crimsonforge.com",
+  "BusinessAddress": "154 Oak Street, Franklin",
+  "BusinessPhone": "(319) 691 8779",
+  "ClientName": "Reese Thomas",
+  "ClientEmail": "reese@harrismail.com",
+  "ClientAddress": "924 Chestnut Blvd, Madison",
+  "ClientPhone": "099 642 69556"
+}

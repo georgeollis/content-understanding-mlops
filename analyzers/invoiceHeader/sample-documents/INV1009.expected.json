@@ -1,0 +1,38 @@
+{
+  "InvoiceNumber": "INV1009",
+  "InvoiceDate": "2025-12-16",
+  "DueDate": "2025-12-31",
+  "Terms": "Net 15",
+  "BusinessName": "Bluepeak Studio",
+  "BusinessEmail": "hello@bluepeakstudio.com",
+  "BusinessAddress": "378 Chestnut Blvd, Riverside",
+  "BusinessPhone": "(818) 375 2786",
+  "ClientName": "Jamie Clark",
+  "ClientEmail": "jamie@smithmail.com",
+  "ClientAddress": "441 Elm Drive, Greenville",
+  "ClientPhone": "046 302 87241",
+  "LineItems": [
+    {
+      "Description": "Video editing",
+      "Quantity": 1,
+      "UnitPrice": 176.99,
+      "Amount": 176.99
+    },
+    {
+      "Description": "App development",
+      "Quantity": 5,
+      "UnitPrice": 242,
+      "Amount": 1210
+    },
+    {
+      "Description": "Photography session",
+      "Quantity": 1,
+      "UnitPrice": 113.99,
+      "Amount": 113.99
+    }
+  ],
+  "Subtotal": 1500.98,
+  "TaxRate": 8,
+  "TaxAmount": 120.08,
+  "Total": 1621.06
+}

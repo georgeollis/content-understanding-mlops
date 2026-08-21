@@ -1,0 +1,44 @@
+{
+  "InvoiceNumber": "INV1016",
+  "InvoiceDate": "2025-01-26",
+  "DueDate": "2025-01-27",
+  "Terms": "Next Day",
+  "BusinessName": "Silverline Labs",
+  "BusinessEmail": "hello@silverlinelabs.com",
+  "BusinessAddress": "694 Pine Road, Riverside",
+  "BusinessPhone": "(412) 403 3152",
+  "ClientName": "Avery Jackson",
+  "ClientEmail": "avery@wilsonmail.com",
+  "ClientAddress": "517 Cedar Lane, Fairview",
+  "ClientPhone": "076 717 61889",
+  "LineItems": [
+    {
+      "Description": "Consulting hours",
+      "Quantity": 1,
+      "UnitPrice": 83,
+      "Amount": 83
+    },
+    {
+      "Description": "Monthly hosting",
+      "Quantity": 2,
+      "UnitPrice": 131.99,
+      "Amount": 263.98
+    },
+    {
+      "Description": "Website design",
+      "Quantity": 5,
+      "UnitPrice": 350,
+      "Amount": 1750
+    },
+    {
+      "Description": "Brand identity package",
+      "Quantity": 4,
+      "UnitPrice": 94,
+      "Amount": 376
+    }
+  ],
+  "Subtotal": 2472.98,
+  "TaxRate": 8,
+  "TaxAmount": 197.84,
+  "Total": 2670.82
+}

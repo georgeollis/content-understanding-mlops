@@ -1,0 +1,38 @@
+{
+  "InvoiceNumber": "INV1019",
+  "InvoiceDate": "2025-11-29",
+  "DueDate": "2025-12-06",
+  "Terms": "Net 7",
+  "BusinessName": "Hexcore Solutions",
+  "BusinessEmail": "hello@hexcoresolutions.com",
+  "BusinessAddress": "605 Pine Road, Franklin",
+  "BusinessPhone": "(784) 829 2930",
+  "ClientName": "Alex Clark",
+  "ClientEmail": "alex@williamsmail.com",
+  "ClientAddress": "127 Chestnut Blvd, Springfield",
+  "ClientPhone": "085 248 61244",
+  "LineItems": [
+    {
+      "Description": "Social media management",
+      "Quantity": 5,
+      "UnitPrice": 495,
+      "Amount": 2475
+    },
+    {
+      "Description": "Content writing",
+      "Quantity": 4,
+      "UnitPrice": 241,
+      "Amount": 964
+    },
+    {
+      "Description": "Consulting hours",
+      "Quantity": 5,
+      "UnitPrice": 241,
+      "Amount": 1205
+    }
+  ],
+  "Subtotal": 4644,
+  "TaxRate": 8,
+  "TaxAmount": 371.52,
+  "Total": 5015.52
+}

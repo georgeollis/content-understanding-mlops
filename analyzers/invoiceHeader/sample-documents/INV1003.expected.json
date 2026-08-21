@@ -1,0 +1,38 @@
+{
+  "InvoiceNumber": "INV1003",
+  "InvoiceDate": "2024-02-19",
+  "DueDate": "2024-02-20",
+  "Terms": "Next Day",
+  "BusinessName": "Bluepeak Studio",
+  "BusinessEmail": "hello@bluepeakstudio.com",
+  "BusinessAddress": "846 Birch Court, Springfield",
+  "BusinessPhone": "(781) 550 8267",
+  "ClientName": "Cameron Davis",
+  "ClientEmail": "cameron@robinsonmail.com",
+  "ClientAddress": "327 Chestnut Blvd, Georgetown",
+  "ClientPhone": "012 358 64865",
+  "LineItems": [
+    {
+      "Description": "Photography session",
+      "Quantity": 1,
+      "UnitPrice": 342.99,
+      "Amount": 342.99
+    },
+    {
+      "Description": "Website design",
+      "Quantity": 1,
+      "UnitPrice": 493,
+      "Amount": 493
+    },
+    {
+      "Description": "Monthly hosting",
+      "Quantity": 4,
+      "UnitPrice": 108,
+      "Amount": 432
+    }
+  ],
+  "Subtotal": 1267.99,
+  "TaxRate": 12,
+  "TaxAmount": 152.16,
+  "Total": 1420.15
+}

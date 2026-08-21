@@ -1,0 +1,14 @@
+{
+  "InvoiceNumber": "INV1002",
+  "InvoiceDate": "2025-10-19",
+  "DueDate": "2025-11-18",
+  "Terms": "Net 30",
+  "BusinessName": "Crimson Forge",
+  "BusinessEmail": "hello@crimsonforge.com",
+  "BusinessAddress": "307 Pine Road, Springfield",
+  "BusinessPhone": "(833) 598 3852",
+  "ClientName": "Emerson Thompson",
+  "ClientEmail": "emerson@andersonmail.com",
+  "ClientAddress": "821 Maple Ave, Riverside",
+  "ClientPhone": "022 383 48042"
+}

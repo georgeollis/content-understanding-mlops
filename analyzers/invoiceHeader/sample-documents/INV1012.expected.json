@@ -1,0 +1,44 @@
+{
+  "InvoiceNumber": "INV1012",
+  "InvoiceDate": "2024-06-22",
+  "DueDate": "2024-07-22",
+  "Terms": "Net 30",
+  "BusinessName": "Silverline Labs",
+  "BusinessEmail": "hello@silverlinelabs.com",
+  "BusinessAddress": "175 Willow Way, Fairview",
+  "BusinessPhone": "(394) 232 7601",
+  "ClientName": "Jordan Robinson",
+  "ClientEmail": "jordan@martinezmail.com",
+  "ClientAddress": "898 Elm Drive, Greenville",
+  "ClientPhone": "049 902 90486",
+  "LineItems": [
+    {
+      "Description": "SEO consulting",
+      "Quantity": 5,
+      "UnitPrice": 101,
+      "Amount": 505
+    },
+    {
+      "Description": "Brand identity package",
+      "Quantity": 1,
+      "UnitPrice": 299.99,
+      "Amount": 299.99
+    },
+    {
+      "Description": "Video editing",
+      "Quantity": 2,
+      "UnitPrice": 300.99,
+      "Amount": 601.98
+    },
+    {
+      "Description": "Consulting hours",
+      "Quantity": 4,
+      "UnitPrice": 461,
+      "Amount": 1844
+    }
+  ],
+  "Subtotal": 3250.97,
+  "TaxRate": 8,
+  "TaxAmount": 260.08,
+  "Total": 3511.05
+}

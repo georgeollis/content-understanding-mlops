@@ -1,0 +1,71 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "invoiceHeader ground-truth (expected.json) schema",
+  "description": "Auto-generated from analyzers/invoiceHeader/analyzer.json. Do not hand-edit; re-run build-ground-truth-schema.py after changing the analyzer's fieldSchema.",
+  "type": "object",
+  "properties": {
+    "InvoiceNumber": {
+      "type": "string",
+      "description": "The invoice number, e.g. INV1001."
+    },
+    "InvoiceDate": {
+      "type": "string",
+      "description": "The date the invoice was issued."
+    },
+    "DueDate": {
+      "type": "string",
+      "description": "The date payment is due."
+    },
+    "Terms": {
+      "type": "string",
+      "description": "Payment terms, e.g. Net 30."
+    },
+    "BusinessName": {
+      "type": "string",
+      "description": "Name of the business issuing the invoice (From)."
+    },
+    "BusinessEmail": {
+      "type": "string",
+      "description": "Email address of the issuing business."
+    },
+    "BusinessAddress": {
+      "type": "string",
+      "description": "Postal address of the issuing business."
+    },
+    "BusinessPhone": {
+      "type": "string",
+      "description": "Phone number of the issuing business, labeled 'P:' under the From section."
+    },
+    "ClientName": {
+      "type": "string",
+      "description": "Name of the client being billed (For)."
+    },
+    "ClientEmail": {
+      "type": "string",
+      "description": "Email address of the client."
+    },
+    "ClientAddress": {
+      "type": "string",
+      "description": "Postal address of the client."
+    },
+    "ClientPhone": {
+      "type": "string",
+      "description": "Phone number of the client, labeled 'P:' under the For section."
+    }
+  },
+  "required": [
+    "InvoiceNumber",
+    "InvoiceDate",
+    "DueDate",
+    "Terms",
+    "BusinessName",
+    "BusinessEmail",
+    "BusinessAddress",
+    "BusinessPhone",
+    "ClientName",
+    "ClientEmail",
+    "ClientAddress",
+    "ClientPhone"
+  ],
+  "additionalProperties": false
+}

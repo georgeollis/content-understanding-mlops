@@ -1,0 +1,44 @@
+{
+  "InvoiceNumber": "INV1018",
+  "InvoiceDate": "2024-11-03",
+  "DueDate": "2024-12-03",
+  "Terms": "Net 30",
+  "BusinessName": "Hexcore Solutions",
+  "BusinessEmail": "hello@hexcoresolutions.com",
+  "BusinessAddress": "750 Oak Street, Clinton",
+  "BusinessPhone": "(444) 586 9034",
+  "ClientName": "Drew Martinez",
+  "ClientEmail": "drew@davismail.com",
+  "ClientAddress": "122 Cedar Lane, Greenville",
+  "ClientPhone": "032 130 42459",
+  "LineItems": [
+    {
+      "Description": "Content writing",
+      "Quantity": 4,
+      "UnitPrice": 41.99,
+      "Amount": 167.96
+    },
+    {
+      "Description": "Brand identity package",
+      "Quantity": 2,
+      "UnitPrice": 25.99,
+      "Amount": 51.98
+    },
+    {
+      "Description": "Consulting hours",
+      "Quantity": 3,
+      "UnitPrice": 451,
+      "Amount": 1353
+    },
+    {
+      "Description": "Social media management",
+      "Quantity": 4,
+      "UnitPrice": 71.99,
+      "Amount": 287.96
+    }
+  ],
+  "Subtotal": 1860.9,
+  "TaxRate": 12,
+  "TaxAmount": 223.31,
+  "Total": 2084.21
+}

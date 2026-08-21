@@ -1,0 +1,231 @@
+<#
+.SYNOPSIS
+  Runs a golden test-data set of documents through one or more Content Understanding analyzers
+  and compares extracted fields against ground truth (and against each other).
+
+.DESCRIPTION
+  For every "<name>.pdf" + "<name>.expected.json" pair found in -GoldenDir, this script:
+    1. Submits the PDF to each analyzer in -AnalyzerIds via POST .../analyzers/{id}:analyzeBinary
+    2. Polls the operation until the result is ready
+    3. Flattens the extracted ContentField result into plain values
+    4. Compares each field against the expected.json ground truth (numeric tolerance, case/whitespace
+       insensitive string matching, and item-by-item comparison for array fields like LineItems)
+    5. Prints a per-document, per-analyzer match report plus an overall accuracy summary, so you can
+       see regressions/improvements when comparing two versions of the same analyzer (e.g.
+       invoiceHeaderV1 vs invoiceHeaderV2).
+
+  Authentication uses a Microsoft Entra ID access token (az account get-access-token).
+
+.PARAMETER Endpoint
+  The Content Understanding resource endpoint, e.g. https://myresource.cognitiveservices.azure.com
+
+.PARAMETER AnalyzerIds
+  One or more analyzer IDs to run against the golden set (e.g. "invoiceHeaderV1", "invoiceHeaderV2").
+
+.PARAMETER Family
+  Analyzer family folder name under analyzers/, e.g. "invoiceHeader" or "complaintForm".
+  Resolves -GoldenDir to "analyzers/<Family>/golden" automatically. Ignored if -GoldenDir is
+  also supplied explicitly.
+
+.PARAMETER GoldenDir
+  Folder containing "<name>.pdf" + "<name>.expected.json" pairs. If omitted, resolved from
+  -Family (analyzers/<Family>/golden); if neither is supplied, defaults to
+  "..\analyzers\invoiceHeader\golden" relative to this script for backward compatibility.
+
+.PARAMETER ApiVersion
+  Content Understanding API version. Defaults to the current GA version.
+
+.EXAMPLE
+  # Compare two versions of the invoice header analyzer against the golden invoice set
+  .\compare-analyzers.ps1 -Endpoint "https://byofoundrylfgymnr5a.cognitiveservices.azure.com" `
+    -Family invoiceHeader -AnalyzerIds "invoiceHeaderV1", "invoiceHeaderV2"
+#>
+param(
+  [Parameter(Mandatory = $true)]
+  [string]$Endpoint,
+
+  [Parameter(Mandatory = $true)]
+  [string[]]$AnalyzerIds,
+
+  [string]$Family,
+
+  [string]$GoldenDir,
+
+  [string]$ApiVersion = "2025-11-01"
+)
+
+$ErrorActionPreference = "Stop"
+
+# ---------- Resolve golden directory ----------
+if (-not $GoldenDir) {
+  if ($Family) {
+    $GoldenDir = Join-Path $PSScriptRoot "..\analyzers\$Family\golden"
+  } else {
+    $GoldenDir = Join-Path $PSScriptRoot "..\analyzers\invoiceHeader\golden"
+    Write-Warning "No -Family or -GoldenDir supplied; defaulting to '$GoldenDir'. Pass -Family <name> to target a different analyzer family."
+  }
+}
+if (-not (Test-Path $GoldenDir)) { throw "Golden directory not found: $GoldenDir" }
+
+$token = az account get-access-token --resource https://cognitiveservices.azure.com --query accessToken -o tsv
+if (-not $token) { throw "Failed to acquire access token. Run 'az login' first." }
+$endpointTrimmed = $Endpoint.TrimEnd('/')
+
+# ---------- Helpers ----------
+
+# Recursively converts a raw ContentField ({type, valueString|valueNumber|valueArray|...}) into a plain value.
+function ConvertFrom-ContentField {
+  param($field)
+  if ($null -eq $field) { return $null }
+  switch ($field.type) {
+    "string"  { return $field.valueString }
+    "date"    { return $field.valueDate }
+    "time"    { return $field.valueTime }
+    "number"  { return $field.valueNumber }
+    "integer" { return $field.valueInteger }
+    "boolean" { return $field.valueBoolean }
+    "array"   { return @($field.valueArray | ForEach-Object { ConvertFrom-ContentField $_ }) }
+    "object"  {
+      $obj = [ordered]@{}
+      if ($field.valueObject) {
+        foreach ($p in $field.valueObject.PSObject.Properties) {
+          $obj[$p.Name] = ConvertFrom-ContentField $p.Value
+        }
+      }
+      return $obj
+    }
+    "json"    { return $field.valueJson }
+    default   { return $null }
+  }
+}
+
+# Flattens the analyzer's raw "fields" object into a simple name -> plain value map.
+function Get-FlatFields {
+  param($fieldsObject)
+  $flat = [ordered]@{}
+  if ($fieldsObject) {
+    foreach ($p in $fieldsObject.PSObject.Properties) {
+      $flat[$p.Name] = ConvertFrom-ContentField $p.Value
+    }
+  }
+  return $flat
+}
+
+function Normalize-StringValue {
+  param($v)
+  if ($null -eq $v) { return "" }
+  return ([string]$v).Trim().ToLowerInvariant()
+}
+
+# Compares an expected value to an actual value with tolerance for numbers/strings/arrays of objects.
+function Test-ValueMatch {
+  param($expected, $actual)
+
+  if ($null -eq $expected -and $null -eq $actual) { return $true }
+  if ($null -eq $expected -or $null -eq $actual) { return $false }
+
+  if ($expected -is [System.Collections.IEnumerable] -and $expected -isnot [string]) {
+    $expectedArr = @($expected)
+    $actualArr = @($actual)
+    if ($expectedArr.Count -ne $actualArr.Count) { return $false }
+    for ($i = 0; $i -lt $expectedArr.Count; $i++) {
+      $e = $expectedArr[$i]
+      $a = $actualArr[$i]
+      if ($e -is [System.Collections.Specialized.OrderedDictionary] -or $e.PSObject.Properties.Count -gt 0 -and $e -isnot [string]) {
+        foreach ($key in $e.PSObject.Properties.Name) {
+          $av = if ($a -is [System.Collections.Specialized.OrderedDictionary]) { $a[$key] } else { $a.$key }
+          if (-not (Test-ValueMatch $e.$key $av)) { return $false }
+        }
+      } elseif (-not (Test-ValueMatch $e $a)) {
+        return $false
+      }
+    }
+    return $true
+  }
+
+  $isNumeric = { param($v) $v -is [double] -or $v -is [int] -or $v -is [long] -or $v -is [decimal] }
+  if ((& $isNumeric $expected) -and (& $isNumeric $actual)) {
+    return [Math]::Abs([double]$expected - [double]$actual) -lt 0.01
+  }
+
+  return (Normalize-StringValue $expected) -eq (Normalize-StringValue $actual)
+}
+
+function Invoke-AnalyzeBinary {
+  param([string]$AnalyzerId, [string]$FilePath)
+
+  $bytes = [System.IO.File]::ReadAllBytes($FilePath)
+  $headers = @{ Authorization = "Bearer $token"; "Content-Type" = "application/pdf" }
+  $uri = "$endpointTrimmed/contentunderstanding/analyzers/$AnalyzerId`:analyzeBinary?api-version=$ApiVersion"
+
+  $response = Invoke-WebRequest -Uri $uri -Headers $headers -Method POST -Body $bytes
+  $opLocation = $response.Headers['Operation-Location'][0]
+
+  $getHeaders = @{ Authorization = "Bearer $token" }
+  do {
+    Start-Sleep -Seconds 2
+    $op = Invoke-RestMethod -Uri $opLocation -Headers $getHeaders -Method GET
+  } while ($op.status -eq "NotStarted" -or $op.status -eq "Running")
+
+  if ($op.status -ne "Succeeded") {
+    throw "Analyze failed for '$AnalyzerId' on '$FilePath': $($op.error | ConvertTo-Json -Depth 5)"
+  }
+
+  return Get-FlatFields $op.result.contents[0].fields
+}
+
+# ---------- Discover golden set ----------
+if (-not (Test-Path $GoldenDir)) { throw "Golden data folder not found: $GoldenDir" }
+$goldenPdfs = Get-ChildItem $GoldenDir -Filter "*.pdf" | Sort-Object Name
+if ($goldenPdfs.Count -eq 0) { throw "No PDF files found in golden folder: $GoldenDir" }
+
+Write-Host "Golden set: $($goldenPdfs.Count) document(s) in $GoldenDir" -ForegroundColor Cyan
+Write-Host "Analyzers under test: $($AnalyzerIds -join ', ')" -ForegroundColor Cyan
+Write-Host ""
+
+# accuracy[analyzerId] = @{ matched = n; total = n }
+$accuracy = @{}
+foreach ($id in $AnalyzerIds) { $accuracy[$id] = @{ matched = 0; total = 0 } }
+
+foreach ($pdf in $goldenPdfs) {
+  $baseName = [System.IO.Path]::GetFileNameWithoutExtension($pdf.Name)
+  $expectedPath = Join-Path $GoldenDir "$baseName.expected.json"
+  if (-not (Test-Path $expectedPath)) {
+    Write-Host "Skipping $($pdf.Name) - no matching $baseName.expected.json" -ForegroundColor Yellow
+    continue
+  }
+  $expected = Get-Content $expectedPath -Raw | ConvertFrom-Json
+
+  Write-Host "=== $baseName ===" -ForegroundColor White
+
+  $resultsByAnalyzer = @{}
+  foreach ($analyzerId in $AnalyzerIds) {
+    Write-Host "  Analyzing with '$analyzerId'..." -NoNewline
+    $flat = Invoke-AnalyzeBinary -AnalyzerId $analyzerId -FilePath $pdf.FullName
+    $resultsByAnalyzer[$analyzerId] = $flat
+    Write-Host " done"
+  }
+
+  # Only compare fields present in the expected ground truth (schemas may only cover a subset).
+  $fieldNames = $expected.PSObject.Properties.Name
+  $rows = foreach ($fieldName in $fieldNames) {
+    $row = [ordered]@{ Field = $fieldName; Expected = ($expected.$fieldName | ConvertTo-Json -Compress -Depth 5) }
+    foreach ($analyzerId in $AnalyzerIds) {
+      $actualValue = $resultsByAnalyzer[$analyzerId][$fieldName]
+      $isMatch = Test-ValueMatch $expected.$fieldName $actualValue
+      $accuracy[$analyzerId].total++
+      if ($isMatch) { $accuracy[$analyzerId].matched++ }
+      $row["$analyzerId"] = if ($isMatch) { "OK" } else { "MISMATCH ($([string]($actualValue | ConvertTo-Json -Compress -Depth 5)))" }
+    }
+    [pscustomobject]$row
+  }
+  $rows | Format-Table -AutoSize -Wrap | Out-String -Width 4096 | Write-Host
+}
+
+Write-Host ""
+Write-Host "=== Accuracy summary ===" -ForegroundColor Cyan
+foreach ($analyzerId in $AnalyzerIds) {
+  $a = $accuracy[$analyzerId]
+  $pct = if ($a.total -gt 0) { [Math]::Round(100 * $a.matched / $a.total, 1) } else { 0 }
+  Write-Host ("  {0,-25} {1}/{2} fields matched ({3}%)" -f $analyzerId, $a.matched, $a.total, $pct)
+}

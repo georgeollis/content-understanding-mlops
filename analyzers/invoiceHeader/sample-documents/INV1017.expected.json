@@ -1,0 +1,32 @@
+{
+  "InvoiceNumber": "INV1017",
+  "InvoiceDate": "2024-06-17",
+  "DueDate": "2024-07-17",
+  "Terms": "Net 30",
+  "BusinessName": "Silverline Labs",
+  "BusinessEmail": "hello@silverlinelabs.com",
+  "BusinessAddress": "983 Birch Court, Madison",
+  "BusinessPhone": "(661) 259 2912",
+  "ClientName": "Avery Taylor",
+  "ClientEmail": "avery@clarkmail.com",
+  "ClientAddress": "163 Elm Drive, Franklin",
+  "ClientPhone": "020 709 24108",
+  "LineItems": [
+    {
+      "Description": "Content writing",
+      "Quantity": 4,
+      "UnitPrice": 182,
+      "Amount": 728
+    },
+    {
+      "Description": "Website design",
+      "Quantity": 4,
+      "UnitPrice": 138.99,
+      "Amount": 555.96
+    }
+  ],
+  "Subtotal": 1283.96,
+  "TaxRate": 7,
+  "TaxAmount": 89.88,
+  "Total": 1373.84
+}

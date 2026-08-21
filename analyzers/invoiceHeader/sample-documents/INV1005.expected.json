@@ -1,0 +1,26 @@
+{
+  "InvoiceNumber": "INV1005",
+  "InvoiceDate": "2025-06-11",
+  "DueDate": "2025-07-11",
+  "Terms": "Net 30",
+  "BusinessName": "Crimson Forge",
+  "BusinessEmail": "hello@crimsonforge.com",
+  "BusinessAddress": "626 Chestnut Blvd, Fairview",
+  "BusinessPhone": "(548) 519 5261",
+  "ClientName": "Casey Wilson",
+  "ClientEmail": "casey@clarkmail.com",
+  "ClientAddress": "425 Oak Street, Springfield",
+  "ClientPhone": "076 257 38237",
+  "LineItems": [
+    {
+      "Description": "Content writing",
+      "Quantity": 1,
+      "UnitPrice": 359,
+      "Amount": 359
+    }
+  ],
+  "Subtotal": 359,
+  "TaxRate": 5,
+  "TaxAmount": 17.95,
+  "Total": 376.95
+}

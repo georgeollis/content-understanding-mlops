@@ -1,0 +1,9 @@
+{
+  "CustomerFirstName": "Jamie",
+  "CustomerLastName": "Wilson",
+  "EmailAddress": "jamie.wilson@example.com",
+  "PhoneNumber": "(530) 919-6783",
+  "NatureOfComplaint": "Missing items",
+  "IncidentDetails": "Order #ORD10003 arrived on January 6, 2025 but was missing two of the four items listed on the packing slip.",
+  "DesiredResolution": "The missing items shipped immediately, or a refund for the items that were not delivered."
+}

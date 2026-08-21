@@ -1,0 +1,9 @@
+{
+  "CustomerFirstName": "Taylor",
+  "CustomerLastName": "Williams",
+  "EmailAddress": "taylor.williams@example.com",
+  "PhoneNumber": "(742) 204-9231",
+  "NatureOfComplaint": "Product defect",
+  "IncidentDetails": "The item I received (order #ORD10001) arrived with a cracked casing and would not power on when I tested it on April 10, 2025.",
+  "DesiredResolution": "A full replacement unit shipped at no additional cost, or a full refund if a replacement is not available."
+}
