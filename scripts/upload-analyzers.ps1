@@ -12,6 +12,9 @@
   Authentication uses a Microsoft Entra ID access token (az account get-access-token),
   since resources with disableLocalAuth=true cannot use subscription keys.
 
+  NOTE: Requires PowerShell 7+ (pwsh). Under Windows PowerShell 5.1, Invoke-WebRequest
+  throws a NullReferenceException with this script. Run via `pwsh -File .\upload-analyzers.ps1 ...`.
+
 .PARAMETER Endpoint
   The Content Understanding resource endpoint, e.g. https://myresource.cognitiveservices.azure.com
 
