@@ -1,12 +1,13 @@
 # content-understand
 
-A version-controlled, MLOps-oriented workflow for Azure AI Content Understanding analyzers.
+A version-controlled, MLOps-oriented workflow for Microsoft Foundry Content Understanding
+analyzers.
 
 ## Start here
 
 - **[`docs/mlops-pipeline.md`](docs/mlops-pipeline.md)** — how this repo's author → promote →
   evaluate → record pipeline works, with a full diagram.
-- **[`docs/azure-foundry-architecture.md`](docs/azure-foundry-architecture.md)** — the Azure AI
+- **[`docs/azure-foundry-architecture.md`](docs/azure-foundry-architecture.md)** — the Microsoft
   Foundry infrastructure these analyzers are deployed against, with a full diagram.
 - **[`analyzers/README.md`](analyzers/README.md)** — index of every analyzer family (what it
   extracts, what's currently deployed, golden test coverage).
@@ -16,11 +17,11 @@ A version-controlled, MLOps-oriented workflow for Azure AI Content Understanding
 ## Pipeline: author → promote → evaluate → record
 
 `analyzer.json` is edited and committed like normal source code (git = version history).
-Promotion deploys its current contents to Azure under a new immutable `analyzerId`, tags the
-commit in git, and updates a per-family `manifest.json` pointing at what's currently live.
-Evaluation runs the golden test set through one or more live versions and diffs the results;
-every comparison is saved as a git-tracked JSON report so accuracy is trackable over time.
-Full details: [`docs/mlops-pipeline.md`](docs/mlops-pipeline.md).
+Promotion deploys its current contents to Microsoft Foundry under a new immutable `analyzerId`,
+tags the commit in git, and updates a per-family `manifest.json` pointing at what's currently
+live. Evaluation runs the golden test set through one or more live versions and diffs the
+results; every comparison is saved as a git-tracked JSON report so accuracy is trackable over
+time. Full details: [`docs/mlops-pipeline.md`](docs/mlops-pipeline.md).
 
 ```mermaid
 graph TB
@@ -36,7 +37,7 @@ graph TB
         COMMIT --> PROMOTESCRIPT
     end
 
-    subgraph AZURE["Azure AI Foundry"]
+    subgraph FOUNDRY_G["Microsoft Foundry"]
         ANALYZERS["analyzerId: &lt;family&gt;v1, v2, ... vN"]
     end
     UPLOAD ==>|"Entra ID token auth"| ANALYZERS
@@ -55,27 +56,25 @@ graph TB
     COMMIT2 -.->|"informs next"| EDIT
 ```
 
-## Azure infrastructure
+## Microsoft Foundry infrastructure
 
-Analyzers are deployed against a private ("bring your own network") Azure AI Foundry account
-(`byofoundrylfgymnr5a` in `rg-foundry-byo-test`), with AI Search, Cosmos DB, Storage, and ACR all
-behind private endpoints. Full inventory + diagram: [`docs/azure-foundry-architecture.md`](docs/azure-foundry-architecture.md).
+Analyzers are deployed against a private ("bring your own network") Microsoft Foundry account,
+inside a VNet with private endpoints. Only the Content Understanding API on the Foundry account
+is used by this pipeline — other project-scaffolding resources (AI Search, Cosmos DB, Container
+Registry) exist alongside it but aren't called by these scripts. Full inventory + diagram:
+[`docs/azure-foundry-architecture.md`](docs/azure-foundry-architecture.md).
 
 ```mermaid
 graph TB
     DEV["content-understand repo<br/>(Entra ID token auth)"] ==>|"HTTPS<br/>/contentunderstanding/analyzers/*"| FOUNDRY
 
-    subgraph RG["rg-foundry-byo-test (Sweden Central)"]
-        subgraph VNET["agent-vnet-byotest (192.168.0.0/16)"]
-            PESUBNET["pe-subnet: private endpoints for<br/>Foundry account, Search, Cosmos DB, Storage, ACR, AMPLS"]
+    subgraph RG["Resource Group (private / BYO-VNet)"]
+        subgraph VNET["Virtual Network"]
+            PESUBNET["Private-endpoint subnet"]
         end
 
-        FOUNDRY["byofoundrylfgymnr5a<br/>AI Foundry account (S0)<br/>disableLocalAuth=true"]
-        PROJECT["byo-test-projectnr5a<br/>Foundry project"]
-        SEARCH["AI Search (standard)<br/>publicNetworkAccess: Disabled"]
-        COSMOS["Cosmos DB<br/>publicNetworkAccess: Disabled"]
-        STORAGE["Storage (ZRS)<br/>publicNetworkAccess: Disabled"]
-        ACR["Container Registry (Premium)<br/>publicNetworkAccess: Disabled"]
+        FOUNDRY["Foundry account (S0)<br/>disableLocalAuth=true"]
+        PROJECT["Foundry project"]
 
         subgraph MON["Observability"]
             LAW["Log Analytics"] --- APPI["App Insights"]
@@ -83,17 +82,9 @@ graph TB
         end
 
         FOUNDRY --> PROJECT
-        PROJECT -.->|"grounding/vector search"| SEARCH
-        PROJECT -.->|"agent/thread state"| COSMOS
-        PROJECT -.->|"blob storage"| STORAGE
-        PROJECT -.->|"container images"| ACR
         FOUNDRY -.->|"diagnostics"| LAW
         AMPLS -.-> APPI
         PESUBNET -.-> FOUNDRY
-        PESUBNET -.-> SEARCH
-        PESUBNET -.-> COSMOS
-        PESUBNET -.-> STORAGE
-        PESUBNET -.-> ACR
         PESUBNET -.-> AMPLS
     end
 ```
@@ -113,7 +104,7 @@ docs/                 # architecture + pipeline documentation
 # Validate everything before committing/promoting
 pwsh -File .\scripts\ci-check.ps1
 
-# Promote a family's analyzer.json to a new versioned Azure deployment
+# Promote a family's analyzer.json to a new versioned Microsoft Foundry deployment
 pwsh -File .\scripts\promote-analyzer.ps1 -Endpoint <endpoint> -Family <family> -Notes "..."
 
 # Compare two live versions against the golden set (saves a git-tracked report)
@@ -122,4 +113,3 @@ pwsh -File .\scripts\compare-analyzers.ps1 -Endpoint <endpoint> -Family <family>
 
 > **Note**: scripts require PowerShell 7+ (`pwsh`). Windows PowerShell 5.1 (`powershell.exe`)
 > throws a null-reference error in `Invoke-WebRequest` with these scripts.
-

@@ -1,7 +1,7 @@
 # MLOps Pipeline: Content Understanding Analyzers
 
 **Repo**: `content-understand`
-**Target resource**: `byofoundrylfgymnr5a` (see [`azure-foundry-architecture.md`](./azure-foundry-architecture.md) for the underlying Azure infrastructure)
+**Target resource**: your Microsoft Foundry account (see [`azure-foundry-architecture.md`](./azure-foundry-architecture.md) for the underlying Azure infrastructure)
 **Generated**: 2026-08-21
 
 ## Overview
@@ -74,7 +74,7 @@ graph TB
         PROMOTESCRIPT --> NEXTVER --> UPLOAD --> TAG --> MANIFEST
     end
 
-    subgraph AZURE["Azure AI Foundry (byofoundrylfgymnr5a)"]
+    subgraph AZURE["Microsoft Foundry"]
         ANALYZERV1["analyzerId: &lt;family&gt;v1"]
         ANALYZERV2["analyzerId: &lt;family&gt;v2"]
         ANALYZERVN["analyzerId: &lt;family&gt;vN ..."]
@@ -146,7 +146,6 @@ validates every golden set's checksums + ground-truth schema conformance, and co
   current `active` version.
 - **CI automation (not yet implemented)**: `ci-check.ps1` is run manually today; wiring it into
   a GitHub Actions workflow on PRs touching `analyzers/**` would make the checks non-optional.
-- **Single environment today**: all promotions currently target one Azure resource
-  (`byofoundrylfgymnr5a`). If/when dev/test/prod environments are introduced, expect
-  `promote-analyzer.ps1` to take an `-Environment`/`-Endpoint` pair per environment, each
-  resolving to a different Foundry account.
+- **Single environment today**: all promotions currently target one Foundry account/resource.
+  If/when dev/test/prod environments are introduced, expect `promote-analyzer.ps1` to take an
+  `-Environment`/`-Endpoint` pair per environment, each resolving to a different Foundry account.

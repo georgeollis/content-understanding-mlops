@@ -46,7 +46,7 @@
 
 .EXAMPLE
   # Compare two versions of the invoice analyzer against the golden invoice set
-  .\compare-analyzers.ps1 -Endpoint "https://byofoundrylfgymnr5a.cognitiveservices.azure.com" `
+  .\compare-analyzers.ps1 -Endpoint "https://<your-resource>.cognitiveservices.azure.com" `
     -Family invoice -AnalyzerIds "invoicev1", "invoicev2"
 #>
 param(

@@ -37,7 +37,7 @@
 
 .EXAMPLE
   # After editing analyzers/invoice/analyzer.json and committing the change:
-  .\promote-analyzer.ps1 -Endpoint "https://byofoundrylfgymnr5a.cognitiveservices.azure.com" `
+  .\promote-analyzer.ps1 -Endpoint "https://<your-resource>.cognitiveservices.azure.com" `
     -Family invoice -Notes "Adds BusinessPhone and ClientPhone fields."
 
 .NOTES

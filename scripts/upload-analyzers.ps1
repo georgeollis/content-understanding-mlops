@@ -30,7 +30,7 @@
 
 .EXAMPLE
   # Manual one-off upload (prefer scripts\promote-analyzer.ps1 for tracked promotions):
-  .\upload-analyzers.ps1 -Endpoint "https://byofoundrylfgymnr5a.cognitiveservices.azure.com" `
+  .\upload-analyzers.ps1 -Endpoint "https://<your-resource>.cognitiveservices.azure.com" `
     -AnalyzerFiles ".\analyzers\invoice\analyzer.json", ".\analyzers\complaint\analyzer.json" `
     -AnalyzerIds "invoicedev", "complaintdev"
 

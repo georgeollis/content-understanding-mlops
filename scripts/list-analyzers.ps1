@@ -23,10 +23,10 @@
   Print the full JSON for each analyzer (fieldSchema, config, models, etc.) instead of the summary table.
 
 .EXAMPLE
-  .\list-analyzers.ps1 -Endpoint "https://byofoundrylfgymnr5a.cognitiveservices.azure.com"
+  .\list-analyzers.ps1 -Endpoint "https://<your-resource>.cognitiveservices.azure.com"
 
 .EXAMPLE
-  .\list-analyzers.ps1 -Endpoint "https://byofoundrylfgymnr5a.cognitiveservices.azure.com" -Detailed
+  .\list-analyzers.ps1 -Endpoint "https://<your-resource>.cognitiveservices.azure.com" -Detailed
 #>
 param(
   [Parameter(Mandatory = $true)]
