@@ -8,7 +8,7 @@
       "pdf": "INV1001.pdf",
       "expected": "INV1001.expected.json",
       "pdfSha256": "afacf730494ec2f9bd0f3ed3b58176d4ddc62a9a2e0f4199f1705999bc9044dc",
-      "expectedSha256": "8e83153515d6c4ae7da3df293bc2887e93356ecd937aca8664b802e0a72b3883",
+      "expectedSha256": "82e4dc08fc127ba36196422ed14ec8c88e8680a88f3538127ad54f4d9a9c1f47",
       "groundTruthSource": "generated"
     },
     {
@@ -16,7 +16,7 @@
       "pdf": "INV1002.pdf",
       "expected": "INV1002.expected.json",
       "pdfSha256": "5efbaabd616ddd36c471d7926ee1df57a110d62b844feb946b6f1bc4ceba603f",
-      "expectedSha256": "27a87ab37a463bf04e3f83a03aaacbee1cda48a529e761c7a71ea16da1148cdd",
+      "expectedSha256": "518d9a6cc4ec20593d901dbf678714d5caa3d2e2fc39dee85924b7467882367e",
       "groundTruthSource": "generated"
     },
     {
@@ -24,7 +24,7 @@
       "pdf": "INV1003.pdf",
       "expected": "INV1003.expected.json",
       "pdfSha256": "e8b68ad6f2609164154cb870f56771cebd462e9e21fb94aac0b99cc4c3791824",
-      "expectedSha256": "1636aeffdec5450445220f352ce0a6da5e3987ce0a7cc8cb4faf5bf0ec9b01f2",
+      "expectedSha256": "36d8d75df8422f7d9ec34cf4af419a5ce12351ae420ed6d02b22099ebeed2687",
       "groundTruthSource": "generated"
     },
     {
@@ -32,7 +32,7 @@
       "pdf": "INV1004.pdf",
       "expected": "INV1004.expected.json",
       "pdfSha256": "8f688e6bc73b2d321e215b3824e74e848c3004612d47dbfb5d28779442590333",
-      "expectedSha256": "726514a27b8dddce422262b841b5363fdea9e3f266faae748f9374a19d4bf18c",
+      "expectedSha256": "5e4a2cc9d4eed3c46dd61e611cf4dcc7e65929b4ad4b1c4ddbd1b7f208833b90",
       "groundTruthSource": "generated"
     },
     {
@@ -40,7 +40,7 @@
       "pdf": "INV1005.pdf",
       "expected": "INV1005.expected.json",
       "pdfSha256": "a368b51d4309b0e764dcb944d3c5253309d845ffbcd3a120c6be32f553f81447",
-      "expectedSha256": "b2f6eccbfdd5243912ec21d68ff2e854e8945367211f3d8084271e9d4927540e",
+      "expectedSha256": "ac95e1493e310a1a4f352b3dcf860106a8169e67a7b5320da9598b2e3cb071dd",
       "groundTruthSource": "generated"
     }
   ]

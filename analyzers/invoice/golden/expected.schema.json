@@ -51,6 +51,10 @@
     "ClientPhone": {
       "type": "string",
       "description": "Phone number of the client, labeled 'P:' under the For section."
+    },
+    "TotalAmount": {
+      "type": "number",
+      "description": "The total amount due shown on the invoice, e.g. 1234.56."
     }
   },
   "required": [
@@ -65,7 +69,8 @@
     "ClientName",
     "ClientEmail",
     "ClientAddress",
-    "ClientPhone"
+    "ClientPhone",
+    "TotalAmount"
   ],
   "additionalProperties": false
 }

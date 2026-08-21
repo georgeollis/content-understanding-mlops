@@ -25,7 +25,8 @@
       "ClientName": { "type": "string", "description": "Name of the client being billed (For)." },
       "ClientEmail": { "type": "string", "description": "Email address of the client." },
       "ClientAddress": { "type": "string", "description": "Postal address of the client." },
-      "ClientPhone": { "type": "string", "description": "Phone number of the client, labeled 'P:' under the For section." }
+      "ClientPhone": { "type": "string", "description": "Phone number of the client, labeled 'P:' under the For section." },
+      "TotalAmount": { "type": "number", "description": "The total amount due shown on the invoice, e.g. 1234.56." }
     }
   }
 }
