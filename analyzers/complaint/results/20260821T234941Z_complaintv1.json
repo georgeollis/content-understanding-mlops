@@ -1,0 +1,395 @@
+{
+  "timestamp": "2026-08-21T23:49:42.7694862Z",
+  "endpoint": "https://byofoundrylfgymnr5a.cognitiveservices.azure.com",
+  "family": "complaint",
+  "analyzerIds": [
+    "complaintv1"
+  ],
+  "apiVersion": "2025-11-01",
+  "goldenDir": "C:\\GitHub\\content-understand\\scripts\\..\\analyzers\\complaint\\golden",
+  "gitCommit": "7bf2ce09619cd3c75984055fcd3deedc732371c9",
+  "summary": {
+    "complaintv1": {
+      "matched": 35,
+      "total": 35,
+      "accuracyPct": 100.0
+    }
+  },
+  "documents": [
+    {
+      "document": "COMPLAINT0001",
+      "fields": [
+        {
+          "field": "CustomerFirstName",
+          "expected": "Taylor",
+          "results": {
+            "complaintv1": {
+              "actual": "Taylor",
+              "matched": true
+            }
+          }
+        },
+        {
+          "field": "CustomerLastName",
+          "expected": "Williams",
+          "results": {
+            "complaintv1": {
+              "actual": "Williams",
+              "matched": true
+            }
+          }
+        },
+        {
+          "field": "EmailAddress",
+          "expected": "taylor.williams@example.com",
+          "results": {
+            "complaintv1": {
+              "actual": "taylor.williams@example.com",
+              "matched": true
+            }
+          }
+        },
+        {
+          "field": "PhoneNumber",
+          "expected": "(742) 204-9231",
+          "results": {
+            "complaintv1": {
+              "actual": "(742) 204-9231",
+              "matched": true
+            }
+          }
+        },
+        {
+          "field": "NatureOfComplaint",
+          "expected": "Product defect",
+          "results": {
+            "complaintv1": {
+              "actual": "Product defect",
+              "matched": true
+            }
+          }
+        },
+        {
+          "field": "IncidentDetails",
+          "expected": "The item I received (order #ORD10001) arrived with a cracked casing and would not power on when I tested it on April 10, 2025.",
+          "results": {
+            "complaintv1": {
+              "actual": "The item I received (order #ORD10001) arrived with a cracked casing and would not power on when I tested it on April 10, 2025.",
+              "matched": true
+            }
+          }
+        },
+        {
+          "field": "DesiredResolution",
+          "expected": "A full replacement unit shipped at no additional cost, or a full refund if a replacement is not available.",
+          "results": {
+            "complaintv1": {
+              "actual": "A full replacement unit shipped at no additional cost, or a full refund if a replacement is not available.",
+              "matched": true
+            }
+          }
+        }
+      ]
+    },
+    {
+      "document": "COMPLAINT0002",
+      "fields": [
+        {
+          "field": "CustomerFirstName",
+          "expected": "Blake",
+          "results": {
+            "complaintv1": {
+              "actual": "Blake",
+              "matched": true
+            }
+          }
+        },
+        {
+          "field": "CustomerLastName",
+          "expected": "Wilson",
+          "results": {
+            "complaintv1": {
+              "actual": "Wilson",
+              "matched": true
+            }
+          }
+        },
+        {
+          "field": "EmailAddress",
+          "expected": "blake.wilson@example.com",
+          "results": {
+            "complaintv1": {
+              "actual": "blake.wilson@example.com",
+              "matched": true
+            }
+          }
+        },
+        {
+          "field": "PhoneNumber",
+          "expected": "(776) 571-1075",
+          "results": {
+            "complaintv1": {
+              "actual": "(776) 571-1075",
+              "matched": true
+            }
+          }
+        },
+        {
+          "field": "NatureOfComplaint",
+          "expected": "Missing items",
+          "results": {
+            "complaintv1": {
+              "actual": "Missing items",
+              "matched": true
+            }
+          }
+        },
+        {
+          "field": "IncidentDetails",
+          "expected": "Order #ORD10002 arrived on December 18, 2024 but was missing two of the four items listed on the packing slip.",
+          "results": {
+            "complaintv1": {
+              "actual": "Order #ORD10002 arrived on December 18, 2024 but was missing two of the four items listed on the packing slip.",
+              "matched": true
+            }
+          }
+        },
+        {
+          "field": "DesiredResolution",
+          "expected": "The missing items shipped immediately, or a refund for the items that were not delivered.",
+          "results": {
+            "complaintv1": {
+              "actual": "The missing items shipped immediately, or a refund for the items that were not delivered.",
+              "matched": true
+            }
+          }
+        }
+      ]
+    },
+    {
+      "document": "COMPLAINT0003",
+      "fields": [
+        {
+          "field": "CustomerFirstName",
+          "expected": "Jamie",
+          "results": {
+            "complaintv1": {
+              "actual": "Jamie",
+              "matched": true
+            }
+          }
+        },
+        {
+          "field": "CustomerLastName",
+          "expected": "Wilson",
+          "results": {
+            "complaintv1": {
+              "actual": "Wilson",
+              "matched": true
+            }
+          }
+        },
+        {
+          "field": "EmailAddress",
+          "expected": "jamie.wilson@example.com",
+          "results": {
+            "complaintv1": {
+              "actual": "jamie.wilson@example.com",
+              "matched": true
+            }
+          }
+        },
+        {
+          "field": "PhoneNumber",
+          "expected": "(530) 919-6783",
+          "results": {
+            "complaintv1": {
+              "actual": "(530) 919-6783",
+              "matched": true
+            }
+          }
+        },
+        {
+          "field": "NatureOfComplaint",
+          "expected": "Missing items",
+          "results": {
+            "complaintv1": {
+              "actual": "Missing items",
+              "matched": true
+            }
+          }
+        },
+        {
+          "field": "IncidentDetails",
+          "expected": "Order #ORD10003 arrived on January 6, 2025 but was missing two of the four items listed on the packing slip.",
+          "results": {
+            "complaintv1": {
+              "actual": "Order #ORD10003 arrived on January 6, 2025 but was missing two of the four items listed on the packing slip.",
+              "matched": true
+            }
+          }
+        },
+        {
+          "field": "DesiredResolution",
+          "expected": "The missing items shipped immediately, or a refund for the items that were not delivered.",
+          "results": {
+            "complaintv1": {
+              "actual": "The missing items shipped immediately, or a refund for the items that were not delivered.",
+              "matched": true
+            }
+          }
+        }
+      ]
+    },
+    {
+      "document": "COMPLAINT0004",
+      "fields": [
+        {
+          "field": "CustomerFirstName",
+          "expected": "Emerson",
+          "results": {
+            "complaintv1": {
+              "actual": "Emerson",
+              "matched": true
+            }
+          }
+        },
+        {
+          "field": "CustomerLastName",
+          "expected": "Anderson",
+          "results": {
+            "complaintv1": {
+              "actual": "Anderson",
+              "matched": true
+            }
+          }
+        },
+        {
+          "field": "EmailAddress",
+          "expected": "emerson.anderson@example.com",
+          "results": {
+            "complaintv1": {
+              "actual": "emerson.anderson@example.com",
+              "matched": true
+            }
+          }
+        },
+        {
+          "field": "PhoneNumber",
+          "expected": "(632) 455-2430",
+          "results": {
+            "complaintv1": {
+              "actual": "(632) 455-2430",
+              "matched": true
+            }
+          }
+        },
+        {
+          "field": "NatureOfComplaint",
+          "expected": "Missing items",
+          "results": {
+            "complaintv1": {
+              "actual": "Missing items",
+              "matched": true
+            }
+          }
+        },
+        {
+          "field": "IncidentDetails",
+          "expected": "Order #ORD10004 arrived on December 25, 2025 but was missing two of the four items listed on the packing slip.",
+          "results": {
+            "complaintv1": {
+              "actual": "Order #ORD10004 arrived on December 25, 2025 but was missing two of the four items listed on the packing slip.",
+              "matched": true
+            }
+          }
+        },
+        {
+          "field": "DesiredResolution",
+          "expected": "The missing items shipped immediately, or a refund for the items that were not delivered.",
+          "results": {
+            "complaintv1": {
+              "actual": "The missing items shipped immediately, or a refund for the items that were not delivered.",
+              "matched": true
+            }
+          }
+        }
+      ]
+    },
+    {
+      "document": "COMPLAINT0005",
+      "fields": [
+        {
+          "field": "CustomerFirstName",
+          "expected": "Reese",
+          "results": {
+            "complaintv1": {
+              "actual": "Reese",
+              "matched": true
+            }
+          }
+        },
+        {
+          "field": "CustomerLastName",
+          "expected": "Brown",
+          "results": {
+            "complaintv1": {
+              "actual": "Brown",
+              "matched": true
+            }
+          }
+        },
+        {
+          "field": "EmailAddress",
+          "expected": "reese.brown@example.com",
+          "results": {
+            "complaintv1": {
+              "actual": "reese.brown@example.com",
+              "matched": true
+            }
+          }
+        },
+        {
+          "field": "PhoneNumber",
+          "expected": "(818) 622-5211",
+          "results": {
+            "complaintv1": {
+              "actual": "(818) 622-5211",
+              "matched": true
+            }
+          }
+        },
+        {
+          "field": "NatureOfComplaint",
+          "expected": "Late delivery",
+          "results": {
+            "complaintv1": {
+              "actual": "Late delivery",
+              "matched": true
+            }
+          }
+        },
+        {
+          "field": "IncidentDetails",
+          "expected": "My order #ORD10005 was scheduled to arrive on October 3, 2025 but did not show up until a week later, with no notification of the delay.",
+          "results": {
+            "complaintv1": {
+              "actual": "My order #ORD10005 was scheduled to arrive on October 3, 2025 but did not show up until a week later, with no notification of the delay.",
+              "matched": true
+            }
+          }
+        },
+        {
+          "field": "DesiredResolution",
+          "expected": "A partial refund for the delivery fee and confirmation that future orders will ship on time.",
+          "results": {
+            "complaintv1": {
+              "actual": "A partial refund for the delivery fee and confirmation that future orders will ship on time.",
+              "matched": true
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
