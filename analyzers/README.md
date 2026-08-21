@@ -24,8 +24,8 @@ analyzers/<family>/
 
 | Family | Description | Current (live) | Golden docs |
 |---|---|---|---|
-| `complaintForm` | Extracts structured fields from customer complaint forms (customer contact details, complaint nature, incident details, desired resolution). | `_(not deployed)_` | 5 |
-| `invoiceHeader` | Extracts invoice header, business (from) and client (for) contact details. | `invoiceHeaderV2` | 5 |
+| `complaint` | Extracts structured fields from customer complaint forms (customer contact details, complaint nature, incident details, desired resolution). | `_(not deployed)_` | 5 |
+| `invoice` | Extracts invoice header, business (from) and client (for) contact details. | `_(not deployed)_` | 5 |
 
 ## Common commands
 

@@ -28,8 +28,8 @@
 .EXAMPLE
   # Manual one-off upload (prefer scripts\promote-analyzer.ps1 for tracked promotions):
   .\upload-analyzers.ps1 -Endpoint "https://byofoundrylfgymnr5a.cognitiveservices.azure.com" `
-    -AnalyzerFiles ".\analyzers\invoiceHeader\analyzer.json", ".\analyzers\complaintForm\analyzer.json" `
-    -AnalyzerIds "invoiceHeaderDev", "complaintFormDev"
+    -AnalyzerFiles ".\analyzers\invoice\analyzer.json", ".\analyzers\complaint\analyzer.json" `
+    -AnalyzerIds "invoicedev", "complaintdev"
 
 .NOTES
   Analyzer IDs must match ^[a-zA-Z0-9._]{1,64}$ - hyphens are rejected by the service even

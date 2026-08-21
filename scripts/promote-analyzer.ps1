@@ -23,7 +23,7 @@
   The Content Understanding resource endpoint, e.g. https://myresource.cognitiveservices.azure.com
 
 .PARAMETER Family
-  The analyzer family folder name under analyzers/, e.g. "invoiceHeader".
+  The analyzer family folder name under analyzers/, e.g. "invoice".
 
 .PARAMETER Notes
   Free-text note describing what changed in this promotion (stored in manifest.json).
@@ -36,13 +36,13 @@
   Content Understanding API version. Defaults to the current GA version.
 
 .EXAMPLE
-  # After editing analyzers/invoiceHeader/analyzer.json and committing the change:
+  # After editing analyzers/invoice/analyzer.json and committing the change:
   .\promote-analyzer.ps1 -Endpoint "https://byofoundrylfgymnr5a.cognitiveservices.azure.com" `
-    -Family invoiceHeader -Notes "Adds BusinessPhone and ClientPhone fields."
+    -Family invoice -Notes "Adds BusinessPhone and ClientPhone fields."
 
 .NOTES
   Compare the new version against a previous one before (or after) promoting with:
-    .\compare-analyzers.ps1 -Endpoint <endpoint> -AnalyzerIds invoiceHeaderV1, invoiceHeaderV2
+    .\compare-analyzers.ps1 -Endpoint <endpoint> -AnalyzerIds invoicev1, invoicev2
 #>
 param(
   [Parameter(Mandatory = $true)]
@@ -88,8 +88,8 @@ finally {
 $manifest = Get-Content $manifestFile -Raw | ConvertFrom-Json
 $existingVersions = @($manifest.promotions | ForEach-Object { $_.version })
 $nextVersion = if ($existingVersions.Count -gt 0) { ($existingVersions | Measure-Object -Maximum).Maximum + 1 } else { 1 }
-$analyzerId = "$Family" + "V$nextVersion"
-$gitTag = "$Family-v$nextVersion"
+$analyzerId = ("$Family" + "v$nextVersion").ToLowerInvariant()
+$gitTag = "$Family-v$nextVersion".ToLowerInvariant()
 
 Write-Host "Promoting $Family analyzer.json (commit $commitSha) as '$analyzerId' (tag '$gitTag')..." -ForegroundColor Cyan
 

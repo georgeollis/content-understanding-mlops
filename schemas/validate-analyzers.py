@@ -3,7 +3,7 @@ Validates every analyzers/<family>/analyzer.json against schemas/analyzer.schema
 
 Usage:
   python validate-analyzers.py            # validate all families
-  python validate-analyzers.py invoiceHeader
+  python validate-analyzers.py invoice
 
 Exit code is non-zero if any file fails validation (usable as a CI gate / pre-commit hook).
 """

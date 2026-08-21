@@ -8,7 +8,7 @@ Validates a family's golden test-data set:
      that the manifest wasn't regenerated for).
 
 Usage:
-  python validate-golden.py <family>       # e.g. invoiceHeader
+  python validate-golden.py <family>       # e.g. invoice
   python validate-golden.py --all
 
 Exit code is non-zero if any check fails (usable as a CI gate / pre-commit hook).

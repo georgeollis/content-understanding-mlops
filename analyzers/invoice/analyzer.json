@@ -1,7 +1,7 @@
 {
   "description": "Extracts invoice header, business (from) and client (for) details from the sample invoice PDFs.",
   "tags": {
-    "family": "invoiceHeader"
+    "family": "invoice"
   },
   "baseAnalyzerId": "prebuilt-document",
   "config": {

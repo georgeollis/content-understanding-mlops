@@ -4,7 +4,7 @@ test-data set, so we can detect silent edits, corruption, or accidental addition
 and record where each doc came from.
 
 Usage:
-  python build-golden-manifest.py <family>     # e.g. invoiceHeader
+  python build-golden-manifest.py <family>     # e.g. invoice
   python build-golden-manifest.py --all
 
 Writes: analyzers/<family>/golden/manifest.json
@@ -85,7 +85,7 @@ def all_families():
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("family", nargs="?", help="Analyzer family folder name, e.g. invoiceHeader")
+    parser.add_argument("family", nargs="?", help="Analyzer family folder name, e.g. invoice")
     parser.add_argument("--all", action="store_true", help="Build for every family under analyzers/")
     args = parser.parse_args()
 

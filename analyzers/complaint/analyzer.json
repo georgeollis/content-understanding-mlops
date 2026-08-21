@@ -1,7 +1,7 @@
 {
   "description": "Extracts structured fields from scanned/submitted customer complaint forms.",
   "tags": {
-    "family": "complaintForm"
+    "family": "complaint"
   },
   "baseAnalyzerId": "prebuilt-document",
   "config": {

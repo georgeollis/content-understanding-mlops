@@ -12,7 +12,7 @@
        insensitive string matching, and item-by-item comparison for array fields like LineItems)
     5. Prints a per-document, per-analyzer match report plus an overall accuracy summary, so you can
        see regressions/improvements when comparing two versions of the same analyzer (e.g.
-       invoiceHeaderV1 vs invoiceHeaderV2).
+       invoicev1 vs invoicev2).
 
   Authentication uses a Microsoft Entra ID access token (az account get-access-token).
 
@@ -20,25 +20,25 @@
   The Content Understanding resource endpoint, e.g. https://myresource.cognitiveservices.azure.com
 
 .PARAMETER AnalyzerIds
-  One or more analyzer IDs to run against the golden set (e.g. "invoiceHeaderV1", "invoiceHeaderV2").
+  One or more analyzer IDs to run against the golden set (e.g. "invoicev1", "invoicev2").
 
 .PARAMETER Family
-  Analyzer family folder name under analyzers/, e.g. "invoiceHeader" or "complaintForm".
+  Analyzer family folder name under analyzers/, e.g. "invoice" or "complaint".
   Resolves -GoldenDir to "analyzers/<Family>/golden" automatically. Ignored if -GoldenDir is
   also supplied explicitly.
 
 .PARAMETER GoldenDir
   Folder containing "<name>.pdf" + "<name>.expected.json" pairs. If omitted, resolved from
   -Family (analyzers/<Family>/golden); if neither is supplied, defaults to
-  "..\analyzers\invoiceHeader\golden" relative to this script for backward compatibility.
+  "..\analyzers\invoice\golden" relative to this script for backward compatibility.
 
 .PARAMETER ApiVersion
   Content Understanding API version. Defaults to the current GA version.
 
 .EXAMPLE
-  # Compare two versions of the invoice header analyzer against the golden invoice set
+  # Compare two versions of the invoice analyzer against the golden invoice set
   .\compare-analyzers.ps1 -Endpoint "https://byofoundrylfgymnr5a.cognitiveservices.azure.com" `
-    -Family invoiceHeader -AnalyzerIds "invoiceHeaderV1", "invoiceHeaderV2"
+    -Family invoice -AnalyzerIds "invoicev1", "invoicev2"
 #>
 param(
   [Parameter(Mandatory = $true)]
@@ -61,7 +61,7 @@ if (-not $GoldenDir) {
   if ($Family) {
     $GoldenDir = Join-Path $PSScriptRoot "..\analyzers\$Family\golden"
   } else {
-    $GoldenDir = Join-Path $PSScriptRoot "..\analyzers\invoiceHeader\golden"
+    $GoldenDir = Join-Path $PSScriptRoot "..\analyzers\invoice\golden"
     Write-Warning "No -Family or -GoldenDir supplied; defaulting to '$GoldenDir'. Pass -Family <name> to target a different analyzer family."
   }
 }

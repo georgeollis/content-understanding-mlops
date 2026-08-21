@@ -4,7 +4,7 @@ from that family's analyzer.json fieldSchema (not hand-written), so a typo'd or 
 in expected.json fails loudly instead of silently scoring as "missing" in compare-analyzers.ps1.
 
 Usage:
-  python build-ground-truth-schema.py <family>          # e.g. invoiceHeader
+  python build-ground-truth-schema.py <family>          # e.g. invoice
   python build-ground-truth-schema.py --all              # every analyzers/*/analyzer.json
 
 Writes: analyzers/<family>/golden/expected.schema.json
@@ -97,7 +97,7 @@ def all_families():
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("family", nargs="?", help="Analyzer family folder name, e.g. invoiceHeader")
+    parser.add_argument("family", nargs="?", help="Analyzer family folder name, e.g. invoice")
     parser.add_argument("--all", action="store_true", help="Build for every family under analyzers/")
     args = parser.parse_args()
 

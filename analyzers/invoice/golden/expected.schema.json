@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
-  "title": "invoiceHeader ground-truth (expected.json) schema",
-  "description": "Auto-generated from analyzers/invoiceHeader/analyzer.json. Do not hand-edit; re-run build-ground-truth-schema.py after changing the analyzer's fieldSchema.",
+  "title": "invoice ground-truth (expected.json) schema",
+  "description": "Auto-generated from analyzers/invoice/analyzer.json. Do not hand-edit; re-run build-ground-truth-schema.py after changing the analyzer's fieldSchema.",
   "type": "object",
   "properties": {
     "InvoiceNumber": {
