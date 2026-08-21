@@ -1,4 +1,4 @@
-# content-understand
+# ContentUnderstandingOps
 
 A simple, version-controlled way to manage Microsoft Foundry Content Understanding analyzers.
 
