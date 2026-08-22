@@ -31,7 +31,7 @@ $tableStart = "<!-- Regenerate this table with: pwsh -File schemas/list-families
 
 function Get-Rows {
   $rows = @()
-  Get-ChildItem $analyzersDir -Directory | Sort-Object Name | ForEach-Object {
+  Get-ChildItem $analyzersDir -Directory | Where-Object { $_.Name -notlike "_*" } | Sort-Object Name | ForEach-Object {
     $familyDir = $_.FullName
     $family = $_.Name
 

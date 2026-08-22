@@ -1,0 +1,20 @@
+{
+  "description": "<one-line description of what this analyzer extracts>",
+  "tags": {
+    "family": "<family>"
+  },
+  "baseAnalyzerId": "prebuilt-document",
+  "config": {
+    "returnDetails": true
+  },
+  "models": {
+    "completion": "gpt-5"
+  },
+  "fieldSchema": {
+    "name": "<SchemaName>",
+    "description": "<what this fieldSchema captures>",
+    "fields": {
+      "ExampleField": { "type": "string", "description": "<what this field is and where it's found in the document>" }
+    }
+  }
+}

@@ -35,6 +35,7 @@ $baseAnalyzerIdPattern = "^[a-zA-Z0-9._-]{1,64}$"
 
 function Get-AllFamilies {
   Get-ChildItem $analyzersDir -Directory |
+    Where-Object { $_.Name -notlike "_*" } |
     Where-Object { Test-Path (Join-Path $_.FullName "analyzer.json") } |
     ForEach-Object { $_.Name } |
     Sort-Object

@@ -45,6 +45,7 @@ if (-not $All -and -not $Family) {
 
 function Get-AllFamilies {
   Get-ChildItem $analyzersDir -Directory |
+    Where-Object { $_.Name -notlike "_*" } |
     Where-Object { Test-Path (Join-Path $_.FullName "golden") } |
     ForEach-Object { $_.Name } |
     Sort-Object

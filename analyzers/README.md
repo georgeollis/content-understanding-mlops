@@ -7,6 +7,9 @@ schema validation, [`../scripts/`](../scripts/) for the tooling operating on the
 [`../docs/azure-foundry-architecture.md`](../docs/azure-foundry-architecture.md) for the Azure
 REST surface used.
 
+Starting a new family? Copy [`_template/`](_template/) — see its README for what to fill in.
+`_template` (and any folder prefixed `_`) is excluded from validation and the index below.
+
 ## Layout convention (per family)
 
 ```
