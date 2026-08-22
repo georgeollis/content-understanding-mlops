@@ -43,6 +43,7 @@ carry it.
 
 | Doc | Scope |
 |---|---|
+| [`docs/getting-started.md`](docs/getting-started.md) | Step-by-step: prerequisites, first analyzer, first promotion, first evaluation |
 | [`docs/mlops-pipeline.md`](docs/mlops-pipeline.md) | Pipeline stages, versioning model, environment promotion, labeled-data handling |
 | [`docs/azure-foundry-architecture.md`](docs/azure-foundry-architecture.md) | REST operations used, auth flow, Azure resource scope |
 | [`analyzers/README.md`](analyzers/README.md) | Per-family folder layout and generated index |
