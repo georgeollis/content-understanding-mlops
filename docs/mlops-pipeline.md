@@ -47,7 +47,37 @@ Understanding GA REST spec, api-version `2025-11-01`). No deploy occurs at this 
 | Check | Script | Validates |
 |---|---|---|
 | Analyzer schema | `validate-analyzers.ps1` | `analyzer.json` conforms to `analyzer.schema.json` (field types, required properties, `$ref`/`baseAnalyzerId` pattern constraints) |
-| Golden set integrity | `validate-golden.ps1` | Every `<name>.pdf` in `golden/` has a matching `<name>.expected.json`; each `expected.json` conforms to `expected.schema.json` (derived from `analyzer.json`'s `fieldSchema` via `build-ground-truth-schema.ps1`); blob checksums match `golden/manifest.json` (`build-golden-manifest.ps1`) |
+| Golden set integrity | `validate-golden.ps1` | Every `<name>.pdf` in `golden/` has a matching `<name>.expected.json`; each `expected.json` conforms to `expected.schema.json` (derived from `analyzer.json`'s `fieldSchema` via `build-ground-truth-schema.ps1`, so every field currently in `fieldSchema` is required and no undefined field is present); blob checksums match `golden/manifest.json` (`build-golden-manifest.ps1`) |
+
+### Bootstrapping and maintaining the golden set
+
+Hand-writing `<name>.expected.json` for every golden document doesn't scale as a family grows
+past a handful of fields or documents, and a `fieldSchema` change (new/renamed/removed field)
+silently desynchronizes every existing `expected.json` unless something forces the fix.
+
+**Bootstrapping a new golden set** — `bootstrap-golden.ps1 -Environment <env> -Family
+<family> -AnalyzerId <id>` calls the already-deployed `analyzerId`'s own
+`analyzeBinary` against every `golden/*.pdf` missing an `expected.json`, and writes its
+extraction as the starting file (prefixed with an `"_bootstrap"` marker key). This requires at
+least one prior promotion to exist — the normal order is: author → promote v1 → bootstrap
+against v1 → review/correct each file by hand against the source PDF → delete `"_bootstrap"`.
+`validate-golden.ps1` fails on any file that still has `"_bootstrap"` present, so an unreviewed
+bootstrap can't silently pass CI. `golden/manifest.json`'s per-document `groundTruthSource`
+field (`build-golden-manifest.ps1`) stays `"generated"` until you change it to
+`"human-verified"` for a document you've checked.
+
+**Handling `fieldSchema` drift** — after adding/renaming/removing a field in `analyzer.json`'s
+`fieldSchema`:
+```powershell
+pwsh -File .\schemas\build-ground-truth-schema.ps1 -Family <family>   # regenerate expected.schema.json
+pwsh -File .\schemas\sync-golden-fields.ps1 -Family <family>          # patch every expected.json
+```
+`sync-golden-fields.ps1` adds a placeholder (`"<<FILL IN FROM PDF>>"`) for any newly required
+top-level field — deliberately the wrong JSON type for non-string fields, so
+`validate-golden.ps1` keeps failing on that document until a real value replaces it — and warns
+(without deleting) about any top-level field no longer defined in the schema. It only patches
+top-level fields; a changed nested property inside an existing `object`/`array` field still
+needs a manual edit. Re-run `build-golden-manifest.ps1` afterwards (checksums changed).
 
 ---
 
@@ -219,11 +249,13 @@ labeled dataset itself is updated (the `prefix` path is assumed identical across
 |---|---|
 | `promote-analyzer.ps1` | Deploys `analyzer.json` as a new `analyzerId` in one environment; tags + records the promotion |
 | `compare-analyzers.ps1` | Scores one or more `analyzerId`s against the golden set in one environment |
+| `bootstrap-golden.ps1` | Drafts `expected.json` files from a deployed analyzerId's own output, for review |
 | `copy-labeled-data.ps1` | Replicates labeled-data blobs between environments' storage containers |
 | `upload-analyzers.ps1` | Low-level `PUT /analyzers/{id}` + poll (invoked by `promote-analyzer.ps1`) |
 | `ci-check.ps1` | Runs schema validation, golden-set validation, and family-index freshness check |
 | `validate-analyzers.ps1` | Validates `analyzer.json` against `analyzer.schema.json` |
-| `validate-golden.ps1` | Validates golden-set checksums and `expected.json` schema conformance |
+| `validate-golden.ps1` | Validates golden-set checksums, `expected.json` schema conformance, and fieldSchema drift |
+| `sync-golden-fields.ps1` | Patches `expected.json` files with placeholders after a `fieldSchema` change |
 
 | File | Contents |
 |---|---|

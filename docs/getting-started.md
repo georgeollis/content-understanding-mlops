@@ -78,6 +78,12 @@ pwsh -File .\schemas\build-ground-truth-schema.ps1 -Family <family>
 pwsh -File .\schemas\build-golden-manifest.ps1 -Family <family>
 ```
 
+Hand-writing every `expected.json` field-by-field doesn't scale well. An alternative once
+you've promoted a first version (step 5 below): use
+[`bootstrap-golden.ps1`](../scripts/bootstrap-golden.ps1) to draft `expected.json` files from
+the deployed analyzer's own output, then correct them — see
+[`mlops-pipeline.md`](mlops-pipeline.md#bootstrapping-and-maintaining-the-golden-set).
+
 ---
 
 ## 4. Validate before committing
@@ -145,6 +151,15 @@ git push origin main
 Edit `analyzer.json` → `ci-check.ps1` → commit → `promote-analyzer.ps1` → `compare-analyzers.ps1`
 (comparing the new version against the previous one, e.g. `-AnalyzerIds <family>v1, <family>v2`)
 → commit results. See [`mlops-pipeline.md`](mlops-pipeline.md) for full stage-by-stage mechanics.
+
+If the change added, renamed, or removed a `fieldSchema` field, sync the golden set before
+`ci-check.ps1` will pass:
+```powershell
+pwsh -File .\schemas\build-ground-truth-schema.ps1 -Family <family>
+pwsh -File .\schemas\sync-golden-fields.ps1 -Family <family>
+# fill in any "<<FILL IN FROM PDF>>" placeholders it adds, then:
+pwsh -File .\schemas\build-golden-manifest.ps1 -Family <family>
+```
 
 ## 8. Promoting to another environment (`test`, `prod`, ...)
 

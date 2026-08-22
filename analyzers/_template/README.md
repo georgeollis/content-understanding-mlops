@@ -13,7 +13,7 @@ Copy-Item -Recurse analyzers\_template analyzers\<family>
 |---|---|
 | `analyzer.json` | Replace with the JSON exported from Foundry Studio's **Download** action (or hand-write it against [`schemas/analyzer.schema.json`](../../schemas/analyzer.schema.json)) |
 | `manifest.dev.json` | Leave as-is (`{ "current": null, "promotions": [] }`) — `promote-analyzer.ps1` fills this in on first promotion. Copy it again as `manifest.<env>.json` for each additional environment. |
-| `golden/` | Add at least one `<name>.pdf` + hand-written `<name>.expected.json` pair (fields matching `analyzer.json`'s `fieldSchema`), then delete this folder's `.gitkeep` |
+| `golden/` | Add at least one `<name>.pdf`. For `<name>.expected.json`: either hand-write it (fields matching `analyzer.json`'s `fieldSchema`), or promote first and use [`bootstrap-golden.ps1`](../../scripts/bootstrap-golden.ps1) to draft it from the deployed analyzer's own output, then review/correct it. Delete this folder's `.gitkeep`. |
 | `sample-documents/` | Optional: broader pool of sample/synthetic documents for this family, delete `.gitkeep` if unused |
 | `results/` | Leave empty — `compare-analyzers.ps1` writes reports here automatically; delete `.gitkeep` once the first report exists |
 

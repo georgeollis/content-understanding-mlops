@@ -10,6 +10,12 @@
        edits, corruption, or the manifest being stale after someone changed a golden doc).
     3. manifest.json's document list matches what's actually on disk (catches added/removed
        docs that the manifest wasn't regenerated for).
+    4. Every field currently in analyzer.json's fieldSchema is present in each
+       "<name>.expected.json" (catches schema drift - a field added after the golden set was
+       built would otherwise silently never be scored) - run sync-golden-fields.ps1 to patch.
+    5. No "<name>.expected.json" still has an unreviewed "_bootstrap" marker left by
+       bootstrap-golden.ps1, and no field exists that analyzer.json's fieldSchema no longer
+       defines (a rename/removal that expected.json wasn't updated for).
 
 .PARAMETER Family
   Validate only this family, e.g. invoice.
@@ -157,6 +163,21 @@ function Test-GoldenFamily {
     }
 
     $expectedData = Get-Content $expectedPath -Raw | ConvertFrom-Json
+
+    $actualFieldNames = @($expectedData.PSObject.Properties.Name)
+    $schemaFieldNames = @($gtSchema.properties.PSObject.Properties.Name)
+
+    if ($actualFieldNames -contains "_bootstrap") {
+      $errors += "${name}: $($doc.expected) still has an unreviewed '_bootstrap' marker - review the values against the PDF, then delete that key"
+    }
+
+    foreach ($missingField in ($schemaFieldNames | Where-Object { $actualFieldNames -notcontains $_ })) {
+      $errors += "${name}: $($doc.expected) is missing field '$missingField' (present in analyzer.json's fieldSchema) - run 'schemas/sync-golden-fields.ps1 -Family $FamilyName' to add a placeholder, then fill in the real value"
+    }
+    foreach ($extraField in ($actualFieldNames | Where-Object { $_ -ne "_bootstrap" -and $schemaFieldNames -notcontains $_ })) {
+      $errors += "${name}: $($doc.expected) has field '$extraField' not found in analyzer.json's fieldSchema (renamed or removed?) - fix the field name or remove it"
+    }
+
     $schemaErrors = @()
     Test-ExpectedAgainstSchema -Value $expectedData -Schema $gtSchema -Path $doc.expected -Errors ([ref]$schemaErrors)
     foreach ($e in $schemaErrors) { $errors += "${name}: $e" }
