@@ -10,8 +10,13 @@
   Authentication uses a Microsoft Entra ID access token (az account get-access-token),
   since resources with disableLocalAuth=true cannot use subscription keys.
 
+.PARAMETER Environment
+  Environment name (e.g. "dev", "test", "prod") as defined in environments.json at the repo
+  root. Resolves -Endpoint automatically. Either -Environment or -Endpoint is required.
+
 .PARAMETER Endpoint
   The Content Understanding resource endpoint, e.g. https://myresource.cognitiveservices.azure.com
+  Overrides whatever -Environment would have resolved to.
 
 .PARAMETER ApiVersion
   Content Understanding API version. Defaults to the current GA version.
@@ -23,13 +28,14 @@
   Print the full JSON for each analyzer (fieldSchema, config, models, etc.) instead of the summary table.
 
 .EXAMPLE
-  .\list-analyzers.ps1 -Endpoint "https://<your-resource>.cognitiveservices.azure.com"
+  .\list-analyzers.ps1 -Environment dev
 
 .EXAMPLE
   .\list-analyzers.ps1 -Endpoint "https://<your-resource>.cognitiveservices.azure.com" -Detailed
 #>
 param(
-  [Parameter(Mandatory = $true)]
+  [string]$Environment,
+
   [string]$Endpoint,
 
   [string]$ApiVersion = "2025-11-01",
@@ -40,6 +46,19 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
+
+if (-not $Environment -and -not $Endpoint) {
+  throw "Provide -Environment <name> (see environments.json) or -Endpoint <url>."
+}
+if (-not $Endpoint) {
+  $repoRootForEnv = Resolve-Path (Join-Path $PSScriptRoot "..")
+  $envConfigPath = Join-Path $repoRootForEnv "environments.json"
+  if (-not (Test-Path $envConfigPath)) { throw "Not found: $envConfigPath. Create it or pass -Endpoint directly." }
+  $envConfig = Get-Content $envConfigPath -Raw | ConvertFrom-Json
+  $envEntry = $envConfig.environments.$Environment
+  if (-not $envEntry) { throw "Environment '$Environment' not found in $envConfigPath. Add it, or pass -Endpoint directly." }
+  $Endpoint = $envEntry.endpoint
+}
 
 # 1. Get a Microsoft Entra ID access token for Cognitive Services
 $token = az account get-access-token --resource https://cognitiveservices.azure.com --query accessToken -o tsv

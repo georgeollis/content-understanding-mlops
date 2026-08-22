@@ -1,9 +1,12 @@
 <#
 .SYNOPSIS
-  Prints (and can rewrite into analyzers/README.md) a summary index of every analyzer family.
+  Prints (and can rewrite into analyzers/README.md) a summary index of every analyzer family,
+  showing what's currently live in each environment.
 
 .DESCRIPTION
-  Summarizes each family's description, currently-live analyzerId, and golden document count.
+  Each family folder can have one manifest.<environment>.json per environment (e.g.
+  manifest.dev.json, manifest.test.json, manifest.prod.json). This summarizes each family's
+  description, golden document count, and currently-live analyzerId per environment found.
 
 .PARAMETER WriteReadme
   Also update the table in analyzers/README.md (between the `<!-- Regenerate this table with:
@@ -31,11 +34,19 @@ function Get-Rows {
   Get-ChildItem $analyzersDir -Directory | Sort-Object Name | ForEach-Object {
     $familyDir = $_.FullName
     $family = $_.Name
-    $manifestPath = Join-Path $familyDir "manifest.json"
-    if (-not (Test-Path $manifestPath)) { return }
 
-    $manifest = Get-Content $manifestPath -Raw | ConvertFrom-Json
-    $current = if ($manifest.current) { $manifest.current } else { "_(not deployed)_" }
+    $manifestFiles = Get-ChildItem $familyDir -Filter "manifest.*.json" -ErrorAction SilentlyContinue
+    if (-not $manifestFiles -or $manifestFiles.Count -eq 0) { return }
+
+    $description = $null
+    $envStatus = [ordered]@{}
+    foreach ($mf in ($manifestFiles | Sort-Object Name)) {
+      # manifest.<env>.json -> <env>
+      $envName = $mf.Name -replace '^manifest\.', '' -replace '\.json$', ''
+      $manifest = Get-Content $mf.FullName -Raw | ConvertFrom-Json
+      if (-not $description) { $description = $manifest.description }
+      $envStatus[$envName] = if ($manifest.current) { $manifest.current } else { "_(not deployed)_" }
+    }
 
     $goldenManifestPath = Join-Path $familyDir "golden\manifest.json"
     $goldenCount = "0"
@@ -44,10 +55,12 @@ function Get-Rows {
       $goldenCount = "$($goldenManifest.documentCount)"
     }
 
+    $envSummary = ($envStatus.Keys | ForEach-Object { "$_`: ``$($envStatus[$_])``" }) -join "; "
+
     $rows += [PSCustomObject]@{
       Family      = $family
-      Description = $manifest.description
-      Current     = $current
+      Description = $description
+      EnvSummary  = $envSummary
       GoldenCount = $goldenCount
     }
   }
@@ -56,9 +69,9 @@ function Get-Rows {
 
 function Format-Table {
   param($Rows)
-  $lines = @("| Family | Description | Current (live) | Golden docs |", "|---|---|---|---|")
+  $lines = @("| Family | Description | Current (by environment) | Golden docs |", "|---|---|---|---|")
   foreach ($r in $Rows) {
-    $lines += "| ``$($r.Family)`` | $($r.Description) | ``$($r.Current)`` | $($r.GoldenCount) |"
+    $lines += "| ``$($r.Family)`` | $($r.Description) | $($r.EnvSummary) | $($r.GoldenCount) |"
   }
   return ($lines -join "`n")
 }

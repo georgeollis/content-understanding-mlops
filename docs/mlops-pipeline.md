@@ -35,14 +35,17 @@ Edit `analyzer.json` and its test data, just like any code change.
 - 📍 Lives in `analyzers/<family>/analyzer.json`
 
 ### 2️⃣ Promote
-Deploy the current `analyzer.json` to Microsoft Foundry as a **new, permanent version**.
-- 🚀 Run with: `promote-analyzer.ps1 -Family <family>`
+Deploy the current `analyzer.json` to Microsoft Foundry as a **new, permanent version**
+**in one environment**.
+- 🚀 Run with: `promote-analyzer.ps1 -Environment dev -Family <family>`
 - Creates a new `analyzerId` (e.g. `invoicev3`) — old versions are never overwritten
-- Tags the git commit and updates `manifest.json` (so you always know what's live)
+- Tags the git commit and updates that environment's `manifest.<env>.json` (so you always know
+  what's live in each environment)
+- ⚠️ Only deploys to the environment you pass — promoting to `dev` never touches `test`/`prod`
 
 ### 3️⃣ Evaluate
 Run the test documents through one or more live versions and score the results.
-- 📊 Run with: `compare-analyzers.ps1 -Family <family> -AnalyzerIds v1,v2`
+- 📊 Run with: `compare-analyzers.ps1 -Environment dev -Family <family> -AnalyzerIds v1,v2`
 - Compares extracted fields against known-correct answers
 - Great for checking a new version didn't break anything
 
@@ -53,12 +56,46 @@ Every comparison is saved as a JSON file and committed to git.
 
 ---
 
+## 🌍 Multiple environments (dev/test/prod)
+
+Each environment is its own Foundry account, with its own endpoint (listed in
+[`environments.json`](../environments.json)) and its own `manifest.<env>.json` per family.
+
+**The key thing to remember:** a git branch merge (e.g. `dev` → `test`) only moves the
+`analyzer.json` file — it does **not** create the analyzer in the target environment's Azure
+account. Promotion is a separate, explicit step that must be re-run per environment:
+
+```mermaid
+graph LR
+    subgraph GIT["Git branches"]
+        DEVBR["dev branch"] -->|"merge (approved)"| TESTBR["test branch"]
+        TESTBR -->|"merge (approved)"| MAINBR["main branch"]
+    end
+    subgraph DEPLOY["Still required after each merge"]
+        P1["promote-analyzer.ps1<br/>-Environment dev"]
+        P2["promote-analyzer.ps1<br/>-Environment test"]
+        P3["promote-analyzer.ps1<br/>-Environment prod"]
+    end
+    DEVBR -.-> P1
+    TESTBR -.-> P2
+    MAINBR -.-> P3
+    P1 --> FDEV["Foundry (dev)"]
+    P2 --> FTEST["Foundry (test)"]
+    P3 --> FPROD["Foundry (prod)"]
+```
+
+If you try to run/compare an analyzer in an environment before promoting it there, the request
+will fail (the `analyzerId` doesn't exist yet) — that failure is a useful signal that a
+promotion step was missed, not a bug.
+
+---
+
 ## 🧰 What's in the toolbox
 
 | Tool | What it does |
 |---|---|
-| `promote-analyzer.ps1` | Deploys `analyzer.json` as a new version |
-| `compare-analyzers.ps1` | Scores one or more versions against test documents |
+| `promote-analyzer.ps1` | Deploys `analyzer.json` as a new version, in one environment |
+| `compare-analyzers.ps1` | Scores one or more versions against test documents, in one environment |
 | `upload-analyzers.ps1` | Low-level deploy step (used internally by promote) |
 | `ci-check.ps1` | Runs all validation checks in one command |
 | `validate-analyzers.ps1` | Checks `analyzer.json` is valid |
@@ -67,9 +104,10 @@ Every comparison is saved as a JSON file and committed to git.
 | File | What it's for |
 |---|---|
 | `analyzers/<family>/analyzer.json` | The analyzer definition (the thing you edit) |
-| `analyzers/<family>/manifest.json` | Which version is currently live |
+| `analyzers/<family>/manifest.<env>.json` | Which version is currently live, per environment |
 | `analyzers/<family>/golden/` | Test documents + correct answers |
-| `analyzers/<family>/results/` | Saved accuracy reports |
+| `analyzers/<family>/results/` | Saved accuracy reports (per environment) |
+| `environments.json` | Environment name → Foundry endpoint mapping |
 
 ---
 
@@ -111,11 +149,11 @@ graph TB
         CI --> COMMIT
     end
 
-    subgraph PROMOTE["2. Promote"]
-        PROMOTESCRIPT["promote-analyzer.ps1"]
+    subgraph PROMOTE["2. Promote (per environment)"]
+        PROMOTESCRIPT["promote-analyzer.ps1 -Environment &lt;env&gt;"]
         UPLOAD["upload-analyzers.ps1<br/>deploy new analyzerId"]
         TAG["git tag"]
-        MANIFEST["update manifest.json"]
+        MANIFEST["update manifest.&lt;env&gt;.json"]
 
         COMMIT --> PROMOTESCRIPT
         PROMOTESCRIPT --> UPLOAD --> TAG --> MANIFEST
@@ -160,6 +198,8 @@ graph TB
 
 - **Block bad promotions** — stop `promote-analyzer.ps1` if accuracy drops vs. the current version
 - **Automate the checks** — run `ci-check.ps1` automatically on every pull request
-- **Multiple environments** — separate dev/test/prod Foundry accounts (not needed yet)
+- **Auto-promote on merge** — trigger `promote-analyzer.ps1 -Environment <env>` automatically
+  in CI when a branch merges to that environment's branch, instead of relying on someone to
+  remember to run it manually
 - **Drift detection** — catch it automatically if someone edits an analyzer in Studio instead
   of through this pipeline

@@ -105,14 +105,35 @@ Full inventory + diagram: [`docs/azure-foundry-architecture.md`](docs/azure-foun
 
 ---
 
+## 🌍 Environments (dev/test/prod)
+
+Each environment is a **separate Foundry account** with its own endpoint and its own
+`manifest.<env>.json` per family. Add entries to [`environments.json`](environments.json) as
+you get more accounts.
+
+> ⚠️ **Merging a branch does not deploy anything.** If `analyzer.json` moves from `dev` to
+> `test` via a branch merge, that only changes the file — the analyzer won't exist in `test`'s
+> Foundry account until you run `promote-analyzer.ps1 -Environment test` there too.
+
+```powershell
+# Promote to dev
+pwsh -File .\scripts\promote-analyzer.ps1 -Environment dev -Family invoice -Notes "..."
+
+# Once approved/merged, promote the SAME analyzer.json to test
+pwsh -File .\scripts\promote-analyzer.ps1 -Environment test -Family invoice -Notes "..."
+```
+
+---
+
 ## 📁 Folder guide
 
 | Folder | Contains |
 |---|---|
-| `analyzers/<family>/` | One analyzer's definition, deployment history, test data, results |
+| `analyzers/<family>/` | One analyzer's definition, per-environment deployment history, test data, results |
 | `schemas/` | Validation rules + tooling |
 | `scripts/` | The PowerShell tools: upload, promote, compare, CI check |
 | `docs/` | This documentation |
+| `environments.json` | Maps environment names (dev/test/prod) to Foundry endpoints |
 
 ---
 
@@ -122,11 +143,11 @@ Full inventory + diagram: [`docs/azure-foundry-architecture.md`](docs/azure-foun
 # ✅ Check everything is valid before committing
 pwsh -File .\scripts\ci-check.ps1
 
-# 🚀 Deploy an analyzer.json as a new version
-pwsh -File .\scripts\promote-analyzer.ps1 -Endpoint <endpoint> -Family <family> -Notes "..."
+# 🚀 Deploy an analyzer.json as a new version, in one environment
+pwsh -File .\scripts\promote-analyzer.ps1 -Environment dev -Family <family> -Notes "..."
 
-# 📊 Compare two versions against test documents
-pwsh -File .\scripts\compare-analyzers.ps1 -Endpoint <endpoint> -Family <family> -AnalyzerIds <idA>, <idB>
+# 📊 Compare two versions against test documents, in one environment
+pwsh -File .\scripts\compare-analyzers.ps1 -Environment dev -Family <family> -AnalyzerIds <idA>, <idB>
 ```
 
 > ⚠️ **Requires PowerShell 7 (`pwsh`), not Windows PowerShell 5.1** — the older version errors

@@ -48,10 +48,14 @@ Understanding API.
 
 ---
 
-## 🌍 One environment today
+## 🌍 Environments
 
-There's currently just **one** Foundry account — no separate dev/test/prod. If that changes
-later, expect a separate Foundry account per environment, each with its own endpoint.
+There's currently just **one** registered Foundry account (`dev` in
+[`environments.json`](../environments.json)). Add a new entry there (name + endpoint) for each
+additional environment (`test`, `prod`, ...) as more Foundry accounts get provisioned — each
+is fully independent, with its own analyzers and its own `manifest.<env>.json` per family. See
+[`mlops-pipeline.md`](./mlops-pipeline.md#-multiple-environments-devtestprod) for how promotion
+works across environments.
 
 ---
 

@@ -1,0 +1,8 @@
+{
+  "note": "Maps environment names to Content Understanding endpoints. Add an entry here for each Foundry account (dev/test/prod). Scripts resolve -Environment against this file; -Endpoint always overrides it directly.",
+  "environments": {
+    "dev": {
+      "endpoint": "https://<your-dev-resource>.cognitiveservices.azure.com"
+    }
+  }
+}

@@ -16,8 +16,13 @@
 
   Authentication uses a Microsoft Entra ID access token (az account get-access-token).
 
+.PARAMETER Environment
+  Environment name (e.g. "dev", "test", "prod") as defined in environments.json at the repo
+  root. Resolves -Endpoint automatically. Either -Environment or -Endpoint is required.
+
 .PARAMETER Endpoint
   The Content Understanding resource endpoint, e.g. https://myresource.cognitiveservices.azure.com
+  Overrides whatever -Environment would have resolved to.
 
 .PARAMETER AnalyzerIds
   One or more analyzer IDs to run against the golden set (e.g. "invoicev1", "invoicev2").
@@ -46,11 +51,11 @@
 
 .EXAMPLE
   # Compare two versions of the invoice analyzer against the golden invoice set
-  .\compare-analyzers.ps1 -Endpoint "https://<your-resource>.cognitiveservices.azure.com" `
-    -Family invoice -AnalyzerIds "invoicev1", "invoicev2"
+  .\compare-analyzers.ps1 -Environment dev -Family invoice -AnalyzerIds "invoicev1", "invoicev2"
 #>
 param(
-  [Parameter(Mandatory = $true)]
+  [string]$Environment,
+
   [string]$Endpoint,
 
   [Parameter(Mandatory = $true)]
@@ -68,6 +73,21 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
+
+# ---------- Resolve endpoint ----------
+if (-not $Environment -and -not $Endpoint) {
+  throw "Provide -Environment <name> (see environments.json) or -Endpoint <url>."
+}
+if (-not $Endpoint) {
+  $repoRootForEnv = Resolve-Path (Join-Path $PSScriptRoot "..")
+  $envConfigPath = Join-Path $repoRootForEnv "environments.json"
+  if (-not (Test-Path $envConfigPath)) { throw "Not found: $envConfigPath. Create it or pass -Endpoint directly." }
+  $envConfig = Get-Content $envConfigPath -Raw | ConvertFrom-Json
+  $envEntry = $envConfig.environments.$Environment
+  if (-not $envEntry) { throw "Environment '$Environment' not found in $envConfigPath. Add it, or pass -Endpoint directly." }
+  $Endpoint = $envEntry.endpoint
+}
+if (-not $Environment) { $Environment = "default" }
 
 # ---------- Resolve golden directory ----------
 if (-not $GoldenDir) {
@@ -282,12 +302,13 @@ if ($SaveResults) {
     New-Item -ItemType Directory -Force -Path $ResultsDir | Out-Null
     $timestamp = Get-Date -AsUTC -Format "yyyyMMddTHHmmssZ"
     $safeIds = ($AnalyzerIds -join "_")
-    $reportPath = Join-Path $ResultsDir "$timestamp`_$safeIds.json"
+    $reportPath = Join-Path $ResultsDir "$timestamp`_$Environment`_$safeIds.json"
 
     $gitCommit = (git -C $PSScriptRoot rev-parse HEAD 2>$null)
 
     $report = [ordered]@{
       timestamp    = (Get-Date -AsUTC -Format "o")
+      environment  = $Environment
       endpoint     = $Endpoint
       family       = $Family
       analyzerIds  = $AnalyzerIds
