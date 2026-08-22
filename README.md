@@ -1,4 +1,4 @@
-# ContentUnderstandingOps
+# content-understanding-mlops
 
 Version-controlled deployment pipeline for Azure AI Content Understanding analyzers. Analyzer
 definitions are stored as JSON in this repository; `scripts/*.ps1` deploy them to Microsoft
