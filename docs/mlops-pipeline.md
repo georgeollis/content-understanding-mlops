@@ -5,58 +5,58 @@ history of everything.
 
 ---
 
-## 🎯 Studio vs. this repo
+## Studio vs. this repo
 
 | | Foundry Studio | This repo |
 |---|---|---|
 | Good for | Quick experiments | Anything real |
-| Has version history? | ❌ No | ✅ Yes (git) |
-| Has repeatable tests? | ❌ No | ✅ Yes (golden test set) |
-| Should you trust it long-term? | ❌ No | ✅ Yes |
+| Has version history? | No | Yes (git) |
+| Has repeatable tests? | No | Yes (golden test set) |
+| Should you trust it long-term? | No | Yes |
 
 **Rule of thumb:** prototype in Studio → once it works, copy it into `analyzer.json` → from
 then on, only this repo's scripts should touch that analyzer.
 
 ---
 
-## 🔄 The 4 stages
+## The 4 stages
 
 ```mermaid
 graph LR
-    A["1️⃣ Author"] --> B["2️⃣ Promote"]
-    B --> C["3️⃣ Evaluate"]
-    C --> D["4️⃣ Record"]
+    A["1. Author"] --> B["2. Promote"]
+    B --> C["3. Evaluate"]
+    C --> D["4. Record"]
     D -.-> A
 ```
 
-### 1️⃣ Author
+### 1. Author
 Edit `analyzer.json` and its test data, just like any code change.
-- ✅ Checked automatically by `ci-check.ps1`
-- 📍 Lives in `analyzers/<family>/analyzer.json`
+- Checked automatically by `ci-check.ps1`
+- Lives in `analyzers/<family>/analyzer.json`
 
-### 2️⃣ Promote
+### 2. Promote
 Deploy the current `analyzer.json` to Microsoft Foundry as a **new, permanent version**
 **in one environment**.
-- 🚀 Run with: `promote-analyzer.ps1 -Environment dev -Family <family>`
+- Run with: `promote-analyzer.ps1 -Environment dev -Family <family>`
 - Creates a new `analyzerId` (e.g. `invoicev3`) — old versions are never overwritten
 - Tags the git commit and updates that environment's `manifest.<env>.json` (so you always know
   what's live in each environment)
-- ⚠️ Only deploys to the environment you pass — promoting to `dev` never touches `test`/`prod`
+- Only deploys to the environment you pass — promoting to `dev` never touches `test`/`prod`
 
-### 3️⃣ Evaluate
+### 3. Evaluate
 Run the test documents through one or more live versions and score the results.
-- 📊 Run with: `compare-analyzers.ps1 -Environment dev -Family <family> -AnalyzerIds v1,v2`
+- Run with: `compare-analyzers.ps1 -Environment dev -Family <family> -AnalyzerIds v1,v2`
 - Compares extracted fields against known-correct answers
 - Great for checking a new version didn't break anything
 
-### 4️⃣ Record
+### 4. Record
 Every comparison is saved as a JSON file and committed to git.
-- 📁 Saved to `analyzers/<family>/results/`
+- Saved to `analyzers/<family>/results/`
 - Lets you track accuracy over time just by looking at git history
 
 ---
 
-## 🌍 Multiple environments (dev/test/prod)
+## Multiple environments (dev/test/prod)
 
 Each environment is its own Foundry account, with its own endpoint (listed in
 [`environments.json`](../environments.json)) and its own `manifest.<env>.json` per family.
@@ -90,7 +90,7 @@ promotion step was missed, not a bug.
 
 ---
 
-## 🧰 What's in the toolbox
+## What's in the toolbox
 
 | Tool | What it does |
 |---|---|
@@ -111,7 +111,7 @@ promotion step was missed, not a bug.
 
 ---
 
-## 🔍 How versioning works
+## How versioning works
 
 - `analyzer.json` is **edited like normal code** — git tracks its full history.
 - Azure doesn't understand "versions" — each promotion just creates a brand-new,
@@ -119,7 +119,7 @@ promotion step was missed, not a bug.
 - `manifest.json` always says which one is `current`. It's auto-generated — never edit it
   by hand.
 
-## 🔍 How the quality check works
+## How the quality check works
 
 `compare-analyzers.ps1` runs the same test documents through two (or more) versions and shows
 a side-by-side score. Because every result is saved to git, you can see accuracy trends over
@@ -194,7 +194,7 @@ graph TB
 
 ---
 
-## 💡 Ideas for later (not built yet — this is a lab)
+## Ideas for later (not built yet — this is a lab)
 
 - **Block bad promotions** — stop `promote-analyzer.ps1` if accuracy drops vs. the current version
 - **Automate the checks** — run `ci-check.ps1` automatically on every pull request

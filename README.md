@@ -6,7 +6,7 @@ Think of it like this: **git is where analyzers are designed and tested. Azure i
 
 ---
 
-## 🎯 The one rule to remember
+## The one rule to remember
 
 | | Use for | Treat as |
 |---|---|---|
@@ -21,7 +21,7 @@ Studio, git and Azure quietly go out of sync — and nobody would notice.
 
 ---
 
-## 📖 Read next
+## Read next
 
 | Doc | What it covers |
 |---|---|
@@ -32,22 +32,22 @@ Studio, git and Azure quietly go out of sync — and nobody would notice.
 
 ---
 
-## 🔄 The 4-step pipeline
+## The 4-step pipeline
 
 ```mermaid
 graph LR
-    A["1️⃣ Author<br/>edit analyzer.json"] --> B["2️⃣ Promote<br/>deploy to Foundry"]
-    B --> C["3️⃣ Evaluate<br/>score vs. test docs"]
-    C --> D["4️⃣ Record<br/>save results to git"]
+    A["1. Author<br/>edit analyzer.json"] --> B["2. Promote<br/>deploy to Foundry"]
+    B --> C["3. Evaluate<br/>score vs. test docs"]
+    C --> D["4. Record<br/>save results to git"]
     D -.->|"repeat"| A
 ```
 
 | Step | What happens | Command |
 |---|---|---|
-| 1️⃣ **Author** | Edit `analyzer.json` like normal code | *(just edit + commit)* |
-| 2️⃣ **Promote** | Deploy it to Foundry as a new version | `promote-analyzer.ps1` |
-| 3️⃣ **Evaluate** | Test it against known-correct answers | `compare-analyzers.ps1` |
-| 4️⃣ **Record** | Save the score as a file in git | *(done automatically)* |
+| 1. **Author** | Edit `analyzer.json` like normal code | *(just edit + commit)* |
+| 2. **Promote** | Deploy it to Foundry as a new version | `promote-analyzer.ps1` |
+| 3. **Evaluate** | Test it against known-correct answers | `compare-analyzers.ps1` |
+| 4. **Record** | Save the score as a file in git | *(done automatically)* |
 
 Full details: [`docs/mlops-pipeline.md`](docs/mlops-pipeline.md).
 
@@ -91,7 +91,7 @@ graph TB
 
 ---
 
-## ☁️ The Azure setup (short version)
+## The Azure setup (short version)
 
 Analyzers run on a private Microsoft Foundry account. Only the Content Understanding API is
 used by this pipeline — nothing else needs to be touched.
@@ -105,13 +105,13 @@ Full inventory + diagram: [`docs/azure-foundry-architecture.md`](docs/azure-foun
 
 ---
 
-## 🌍 Environments (dev/test/prod)
+## Environments (dev/test/prod)
 
 Each environment is a **separate Foundry account** with its own endpoint and its own
 `manifest.<env>.json` per family. Add entries to [`environments.json`](environments.json) as
 you get more accounts.
 
-> ⚠️ **Merging a branch does not deploy anything.** If `analyzer.json` moves from `dev` to
+> **Merging a branch does not deploy anything.** If `analyzer.json` moves from `dev` to
 > `test` via a branch merge, that only changes the file — the analyzer won't exist in `test`'s
 > Foundry account until you run `promote-analyzer.ps1 -Environment test` there too.
 
@@ -125,7 +125,7 @@ pwsh -File .\scripts\promote-analyzer.ps1 -Environment test -Family invoice -Not
 
 ---
 
-## 📁 Folder guide
+## Folder guide
 
 | Folder | Contains |
 |---|---|
@@ -137,18 +137,18 @@ pwsh -File .\scripts\promote-analyzer.ps1 -Environment test -Family invoice -Not
 
 ---
 
-## ⚡ Quick commands
+## Quick commands
 
 ```powershell
-# ✅ Check everything is valid before committing
+# Check everything is valid before committing
 pwsh -File .\scripts\ci-check.ps1
 
-# 🚀 Deploy an analyzer.json as a new version, in one environment
+# Deploy an analyzer.json as a new version, in one environment
 pwsh -File .\scripts\promote-analyzer.ps1 -Environment dev -Family <family> -Notes "..."
 
-# 📊 Compare two versions against test documents, in one environment
+# Compare two versions against test documents, in one environment
 pwsh -File .\scripts\compare-analyzers.ps1 -Environment dev -Family <family> -AnalyzerIds <idA>, <idB>
 ```
 
-> ⚠️ **Requires PowerShell 7 (`pwsh`), not Windows PowerShell 5.1** — the older version errors
+> **Requires PowerShell 7 (`pwsh`), not Windows PowerShell 5.1** — the older version errors
 > out on these scripts.

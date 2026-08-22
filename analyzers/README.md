@@ -49,7 +49,7 @@ mapping used by `-Environment` on the scripts below.
 .\scripts\compare-analyzers.ps1 -Environment dev -Family <family> -AnalyzerIds <idA>, <idB>
 ```
 
-> ⚠️ **Promoting to one environment does not deploy to any other.** After merging a branch
+> **Promoting to one environment does not deploy to any other.** After merging a branch
 > that changes `analyzer.json` into `test` or `main`, you still need to run
 > `promote-analyzer.ps1 -Environment <that-environment>` to actually create the analyzer there
 > — a git merge only changes the file, it never calls Azure.

@@ -4,7 +4,7 @@ Where analyzers actually run, and what's around them.
 
 ---
 
-## 🎯 Quick summary
+## Quick summary
 
 Analyzers deploy to a **private Microsoft Foundry account** — no public internet access, all
 traffic stays inside a private network. Only one part of it matters for this repo: the
@@ -15,12 +15,12 @@ graph LR
     REPO["This repo's scripts"] -->|"HTTPS + Entra ID login<br/>(no passwords/keys)"| FOUNDRY["Microsoft Foundry account<br/>Content Understanding API"]
 ```
 
-> ℹ️ **Studio note**: Foundry Studio (the web UI) is for dev/POC experiments only. It's not
+> **Studio note**: Foundry Studio (the web UI) is for dev/POC experiments only. It's not
 > part of this repo's deployment pipeline — see [`mlops-pipeline.md`](./mlops-pipeline.md).
 
 ---
 
-## 🧩 What we actually use
+## What we actually use
 
 This repo only ever talks to **one thing**: the Foundry account's Content Understanding API.
 The account may have other Azure resources sitting next to it (networking, logging, etc.) but
@@ -28,7 +28,7 @@ none of that matters here — the scripts don't touch it.
 
 ---
 
-## 🔒 Security basics
+## Security basics
 
 - **No passwords or API keys** — everything uses Microsoft Entra ID login tokens
   (`disableLocalAuth: true` on the Foundry account).
@@ -37,7 +37,7 @@ none of that matters here — the scripts don't touch it.
 
 ---
 
-## 🌍 Environments
+## Environments
 
 There's currently just **one** registered Foundry account (`dev` in
 [`environments.json`](../environments.json)). Add a new entry there (name + endpoint) for each
