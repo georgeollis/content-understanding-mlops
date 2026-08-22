@@ -16,18 +16,29 @@ Foundry analyzer, per environment.
 
 Studio is used to interactively construct `fieldSchema` and, where applicable, build a labeled
 training set (`knowledgeSources[].kind == "labeledData"`) against the `dev` Foundry account.
-After validating the result in Studio:
+Unlike a one-time export, you can keep iterating directly in Studio against `dev` for as long
+as you want — there's no requirement to stop after the first import. When you're ready to
+commit the current state:
 
-1. Export the built analyzer via Studio's Download action (produces the same JSON body used by
-   `PUT /analyzers/{id}`).
-2. Commit it as `analyzers/<family>/analyzer.json`.
-3. All subsequent deployments — including re-deployments to `dev` — go through
-   `promote-analyzer.ps1`. Studio is not used to modify a live analyzer post-authoring: there
-   is no reconciliation mechanism between Studio-side edits and the git-tracked file, so any
-   direct Studio edit after this point silently desyncs Azure state from source control.
+1. Pull it down with
+   [`sync-analyzer-from-studio.ps1`](../scripts/sync-analyzer-from-studio.ps1)
+   (`GET /analyzers/{analyzerId}`, strips Studio/API-only metadata like `analyzerId`,
+   `createdAt`, `status`), which overwrites `analyzers/<family>/analyzer.json`. Equivalent to
+   Studio's Download action, but repeatable and scriptable.
+2. Review the diff (`git diff analyzers/<family>/analyzer.json`); if `fieldSchema` changed, run
+   `build-ground-truth-schema.ps1` + `sync-golden-fields.ps1` for that family (see
+   [Bootstrapping and maintaining the golden set](#bootstrapping-and-maintaining-the-golden-set)).
+3. Commit `analyzer.json`.
+4. Run `promote-analyzer.ps1 -Environment dev` as usual. This is what actually creates the
+   next official, git-tagged `analyzerId` — the pull step only gets the JSON out of Studio and
+   into git; it never deploys anything itself. Every entry in `manifest.dev.json` still maps to
+   an exact, reviewable commit, even though the analyzer was designed live in Studio.
 
-For any environment above `dev` (`test`, `prod`, ...), promotion is the only supported
-mechanism — there is no Studio access path to those environments in this model.
+`sync-analyzer-from-studio.ps1` refuses to run against any environment other than `dev` (pass
+`-AllowNonDev` to override, which is not recommended). For any environment above `dev` (`test`,
+`prod`, ...), `promote-analyzer.ps1` is the only supported mechanism — there is no Studio access
+path to those environments in this model, and pulling from Studio there would make the deployed
+state stop mapping to a git commit.
 
 If the analyzer references labeled training data, see
 [Labeled data across environments](#labeled-data-across-environments) below — the underlying
@@ -248,6 +259,7 @@ labeled dataset itself is updated (the `prefix` path is assumed identical across
 | Script | Function |
 |---|---|
 | `promote-analyzer.ps1` | Deploys `analyzer.json` as a new `analyzerId` in one environment; tags + records the promotion |
+| `sync-analyzer-from-studio.ps1` | Pulls a live analyzer's current definition from Studio (dev only) into `analyzer.json` |
 | `compare-analyzers.ps1` | Scores one or more `analyzerId`s against the golden set in one environment |
 | `bootstrap-golden.ps1` | Drafts `expected.json` files from a deployed analyzerId's own output, for review |
 | `copy-labeled-data.ps1` | Replicates labeled-data blobs between environments' storage containers |

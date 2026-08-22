@@ -49,10 +49,12 @@ contain secrets (no keys are stored here; auth is token-based — see
 Two ways to produce `analyzers/<family>/analyzer.json`:
 
 - **Build it in Foundry Studio** (recommended for `dev`): design `fieldSchema` interactively,
-  optionally attach labeled training data, then use Studio's **Download** action to export the
-  JSON. See
-  [`mlops-pipeline.md`](mlops-pipeline.md#authoring-studio-dev-vs-this-repo-dev) for the
-  authoring-boundary rules.
+  optionally attach labeled training data, then export the JSON. For a brand-new family, use
+  Studio's **Download** action once to get the initial file. For an existing family, you can
+  keep iterating live in Studio indefinitely and pull the current state down anytime with
+  `sync-analyzer-from-studio.ps1` (dev only — see step 8 below and
+  [`mlops-pipeline.md`](mlops-pipeline.md#authoring-studio-dev-vs-this-repo-dev)).
+- **Write it by hand**, matching [`schemas/analyzer.schema.json`](../schemas/analyzer.schema.json).
 - **Write it by hand**, matching [`schemas/analyzer.schema.json`](../schemas/analyzer.schema.json).
 
 Create the family folder and required files:
@@ -148,9 +150,22 @@ git push origin main
 
 ## 7. Iterate
 
-Edit `analyzer.json` → `ci-check.ps1` → commit → `promote-analyzer.ps1` → `compare-analyzers.ps1`
-(comparing the new version against the previous one, e.g. `-AnalyzerIds <family>v1, <family>v2`)
-→ commit results. See [`mlops-pipeline.md`](mlops-pipeline.md) for full stage-by-stage mechanics.
+Two ways to iterate on an existing family, either can be committed and promoted the same way:
+
+**Edit `analyzer.json` directly**: edit → `ci-check.ps1` → commit → `promote-analyzer.ps1` →
+`compare-analyzers.ps1` (comparing the new version against the previous one, e.g.
+`-AnalyzerIds <family>v1, <family>v2`) → commit results.
+
+**Edit live in Studio (dev only)**: keep iterating in Studio against `dev` for as long as you
+want, then pull the current state down when ready:
+```powershell
+pwsh -File .\scripts\sync-analyzer-from-studio.ps1 -Environment dev -Family <family> -AnalyzerId <id>
+```
+This overwrites `analyzer.json` locally and never deploys anything itself — review the diff,
+then continue with `ci-check.ps1` → commit → `promote-analyzer.ps1` as above. Restricted to
+`dev`; `test`/`prod` are never edited in Studio.
+
+Either way, see [`mlops-pipeline.md`](mlops-pipeline.md) for full stage-by-stage mechanics.
 
 If the change added, renamed, or removed a `fieldSchema` field, sync the golden set before
 `ci-check.ps1` will pass:

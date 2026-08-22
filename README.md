@@ -15,22 +15,23 @@ reconciled one direction only: git → Azure, via `promote-analyzer.ps1`.
 
 | | Foundry Studio | This repo |
 |---|---|---|
-| Scope | `dev` environment only | All environments, including `dev` after initial authoring |
+| Scope | `dev` environment only | All environments, including `dev` |
 | Persistence | Azure-side analyzer state only; no diff/history | Full git history per commit |
 | Repeatable evaluation | None | `compare-analyzers.ps1` against a fixed golden set |
-| Output artifact | Analyzer JSON (via Studio's "Download" action) | Same JSON, committed as `analyzers/<family>/analyzer.json` |
+| Output artifact | Analyzer JSON (pulled via `sync-analyzer-from-studio.ps1`) | Same JSON, committed as `analyzers/<family>/analyzer.json` |
 
 Studio is the recommended tool for interactively designing `fieldSchema` and building labeled
-training sets (`knowledgeSources[].kind == "labeledData"`) against the `dev` Foundry account.
-Once an analyzer is validated in Studio:
+training sets (`knowledgeSources[].kind == "labeledData"`) against the `dev` Foundry account —
+and you can keep iterating in Studio for as long as you like, not just once. When ready to
+commit the current state:
 
-1. Use Studio's **Download** action on the built analyzer to export its JSON definition.
-2. Commit that JSON as `analyzers/<family>/analyzer.json` (see
-   [`schemas/analyzer.schema.json`](schemas/analyzer.schema.json) for the required shape).
-3. From that commit forward, `dev` (re-promotions), `test`, `prod`, etc. are all deployed
-   exclusively via `promote-analyzer.ps1`. Studio is not used again for that analyzer — editing
-   it live in Studio would desynchronize the Azure-side analyzer from the git-tracked
-   `analyzer.json`, with no mechanism to detect or reconcile the drift.
+1. Run `sync-analyzer-from-studio.ps1 -Environment dev -Family <family> -AnalyzerId <id>` to
+   pull the live definition down into `analyzers/<family>/analyzer.json` (strips Studio/API-only
+   metadata; restricted to `dev`).
+2. Review the diff, fix golden-set drift if `fieldSchema` changed, and commit.
+3. Run `promote-analyzer.ps1 -Environment dev` as usual — this is what actually creates the
+   next official, git-tagged `analyzerId`. `test`, `prod`, etc. are reached exclusively via
+   `promote-analyzer.ps1`; there is no Studio access path to those environments in this model.
 
 If the analyzer references labeled training data, see
 [Labeled data across environments](docs/mlops-pipeline.md#labeled-data-across-environments) —
@@ -162,11 +163,17 @@ equivalent for `test`/`prod`/etc.
 # Run all validation checks (schema, golden-set integrity, family index freshness)
 pwsh -File .\scripts\ci-check.ps1
 
+# Pull a live analyzer's current definition from Studio (dev only) into analyzer.json
+pwsh -File .\scripts\sync-analyzer-from-studio.ps1 -Environment dev -Family <family> -AnalyzerId <id>
+
 # Deploy analyzer.json as a new analyzerId in one environment; tags the commit; updates manifest.<env>.json
 pwsh -File .\scripts\promote-analyzer.ps1 -Environment dev -Family <family> -Notes "..."
 
 # Run the golden PDF set through one or more analyzerIds; prints + saves per-field accuracy
 pwsh -File .\scripts\compare-analyzers.ps1 -Environment dev -Family <family> -AnalyzerIds <idA>, <idB>
+
+# Draft expected.json files from a deployed analyzerId's own output, for review
+pwsh -File .\scripts\bootstrap-golden.ps1 -Environment dev -Family <family> -AnalyzerId <id>
 
 # Copy labeled-data blobs from one environment's storage container to another's (same prefix)
 pwsh -File .\scripts\copy-labeled-data.ps1 -SourceEnvironment dev -DestinationEnvironment test -Prefix "labelingProjects/<id>/train"
