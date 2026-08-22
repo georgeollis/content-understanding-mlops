@@ -1,8 +1,9 @@
 {
-  "note": "Maps environment names to Content Understanding endpoints. Add an entry here for each Foundry account (dev/test/prod). Scripts resolve -Environment against this file; -Endpoint always overrides it directly.",
+  "note": "Maps environment names to Content Understanding endpoints and their labeled-data storage. Add an entry here for each Foundry account (dev/test/prod). Scripts resolve -Environment against this file; -Endpoint always overrides it directly. labeledDataContainerUrl is where knowledgeSources[].kind=labeledData training data lives for that environment - copy-labeled-data.ps1 copies blobs between environments' containers, and promote-analyzer.ps1 rewrites analyzer.json's containerUrl to match the target environment at deploy time.",
   "environments": {
     "dev": {
-      "endpoint": "https://<your-dev-resource>.cognitiveservices.azure.com"
+      "endpoint": "https://<your-dev-resource>.cognitiveservices.azure.com",
+      "labeledDataContainerUrl": "https://<your-dev-storage>.blob.core.windows.net/<container>"
     }
   }
 }

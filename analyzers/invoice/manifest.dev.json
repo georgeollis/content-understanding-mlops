@@ -21,9 +21,18 @@
       "gitTag": "invoice-v2",
       "commit": "42a258f",
       "createdAt": "2026-08-21",
-      "status": "active",
+      "status": "superseded",
       "notes": "Added TotalAmount field extraction."
+    },
+    {
+      "version": 3.0,
+      "analyzerId": "invoicev3",
+      "gitTag": "invoice-dev-v3",
+      "commit": "6b4e9d2",
+      "createdAt": "2026-08-22",
+      "status": "active",
+      "notes": "test: verify labeled-data rewrite logic doesn't break normal promotion"
     }
   ],
-  "current": "invoicev2"
+  "current": "invoicev3"
 }

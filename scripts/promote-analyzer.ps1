@@ -20,9 +20,13 @@
     2. Determines the next version number for THIS environment (max existing promotion + 1).
     3. Requires a clean git working tree for this file (so the tag points at an exact,
        reviewable commit) unless -AllowDirty is passed.
-    4. Uploads analyzer.json to Azure as "<family>V<N>" via upload-analyzers.ps1.
-    5. Creates an annotated git tag "<family>-<environment>-v<N>" at the current commit.
-    6. Appends a new entry to manifest.<Environment>.json's "promotions" array and updates
+    4. If analyzer.json references labeled training data (knowledgeSources[].kind ==
+       "labeledData"), rewrites containerUrl to this environment's labeledDataContainerUrl
+       (from environments.json) before deploying - see copy-labeled-data.ps1 for how the
+       actual blob data gets copied to each environment's storage account.
+    5. Uploads analyzer.json to Azure as "<family>V<N>" via upload-analyzers.ps1.
+    6. Creates an annotated git tag "<family>-<environment>-v<N>" at the current commit.
+    7. Appends a new entry to manifest.<Environment>.json's "promotions" array and updates
        "current".
 
 .PARAMETER Environment
@@ -84,6 +88,7 @@ if (-not $Environment -and -not $Endpoint) {
   throw "Provide -Environment <name> (see environments.json) or -Endpoint <url>."
 }
 
+$labeledDataContainerUrl = $null
 if (-not $Endpoint) {
   $envConfigPath = Join-Path $repoRoot "environments.json"
   if (-not (Test-Path $envConfigPath)) { throw "Not found: $envConfigPath. Create it or pass -Endpoint directly." }
@@ -91,6 +96,7 @@ if (-not $Endpoint) {
   $envEntry = $envConfig.environments.$Environment
   if (-not $envEntry) { throw "Environment '$Environment' not found in $envConfigPath. Add it, or pass -Endpoint directly." }
   $Endpoint = $envEntry.endpoint
+  $labeledDataContainerUrl = $envEntry.labeledDataContainerUrl
 }
 
 if (-not $Environment) { $Environment = "default" }
@@ -124,10 +130,38 @@ $gitTag = "$Family-$Environment-v$nextVersion".ToLowerInvariant()
 
 Write-Host "Promoting $Family analyzer.json (commit $commitSha) to environment '$Environment' as '$analyzerId' (tag '$gitTag')..." -ForegroundColor Cyan
 
+# ---------- Rewrite knowledgeSources for this environment (labeled data) ----------
+# analyzer.json is shared across all environments. If it references labeled training data
+# (knowledgeSources[].kind == "labeledData"), its containerUrl points at ONE environment's
+# storage account. Before deploying, rewrite it to point at the CURRENT environment's
+# container (from environments.json), so the same analyzer.json works everywhere as long as
+# each environment has a copy of the labeled data at the same blob path (see
+# copy-labeled-data.ps1). The rewritten file is only used for this deploy - the source
+# analyzer.json on disk is never modified.
+$analyzerDef = Get-Content $analyzerFile -Raw | ConvertFrom-Json
+$deployFile = $analyzerFile
+$hasLabeledData = $analyzerDef.knowledgeSources | Where-Object { $_.kind -eq "labeledData" }
+if ($hasLabeledData) {
+  if (-not $labeledDataContainerUrl) {
+    Write-Host "  WARNING: analyzer.json references labeled data, but environment '$Environment' has no 'labeledDataContainerUrl' set in environments.json. Deploying with the containerUrl already in analyzer.json (may point at the wrong environment's storage)." -ForegroundColor Yellow
+  } else {
+    foreach ($src in $analyzerDef.knowledgeSources) {
+      if ($src.kind -eq "labeledData") {
+        Write-Host "  Rewriting labeled-data containerUrl -> $labeledDataContainerUrl (environment '$Environment')"
+        $src.containerUrl = $labeledDataContainerUrl
+      }
+    }
+    $tempDir = Join-Path ([System.IO.Path]::GetTempPath()) "cu-promote-$([guid]::NewGuid())"
+    New-Item -ItemType Directory -Path $tempDir | Out-Null
+    $deployFile = Join-Path $tempDir "analyzer.json"
+    $analyzerDef | ConvertTo-Json -Depth 20 | Set-Content $deployFile -Encoding utf8
+  }
+}
+
 # ---------- Deploy to Azure ----------
 & (Join-Path $PSScriptRoot "upload-analyzers.ps1") `
   -Endpoint $Endpoint `
-  -AnalyzerFiles $analyzerFile `
+  -AnalyzerFiles $deployFile `
   -AnalyzerIds $analyzerId `
   -ApiVersion $ApiVersion
 

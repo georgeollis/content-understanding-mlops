@@ -9,13 +9,22 @@ history of everything.
 
 | | Foundry Studio | This repo |
 |---|---|---|
-| Good for | Quick experiments | Anything real |
+| Good for | Designing/labeling analyzers in `dev` | Deploying to every environment |
 | Has version history? | No | Yes (git) |
 | Has repeatable tests? | No | Yes (golden test set) |
-| Should you trust it long-term? | No | Yes |
+| Used past `dev`? | No | Yes — exclusively |
 
-**Rule of thumb:** prototype in Studio → once it works, copy it into `analyzer.json` → from
-then on, only this repo's scripts should touch that analyzer.
+**Rule of thumb:** design and label the analyzer in Studio (in `dev` only) → once it works,
+click "Download" in Studio to export the analyzer JSON, and commit it as
+`analyzers/<family>/analyzer.json` → from then on, every environment (including `dev` itself,
+going forward) is deployed by this repo's scripts, never by hand in Studio. Think of the
+Studio export as the equivalent of writing your first draft of code locally before it goes
+through source control and CI/CD — it's a legitimate way to start, just not a legitimate way
+to keep updating a live environment.
+
+If the analyzer uses labeled training data, that data (stored in a blob container, not in
+`analyzer.json`) needs to be copied to each new environment's storage too — see
+[copy-labeled-data.ps1](#labeled-data-across-environments) below.
 
 ---
 
@@ -120,6 +129,46 @@ If you try to run/compare an analyzer in an environment before promoting it ther
 will fail (the `analyzerId` doesn't exist yet) — that failure is a useful signal that a
 promotion step was missed, not a bug.
 
+**Only `dev` is ever touched through Studio.** Every environment above it — `test`, `prod`,
+and any others — only ever receives changes via `promote-analyzer.ps1`, run either by hand or
+(eventually) by a CI/CD pipeline triggered on merge. There's no "log into Studio for test" step
+at all; if it's not in git, it doesn't get promoted.
+
+### Labeled data across environments
+
+Studio lets you attach **labeled training data** to an analyzer (documents you've manually
+labeled to improve extraction quality). That data is referenced from `analyzer.json` as a
+`knowledgeSources` entry:
+
+```json
+"knowledgeSources": [
+  {
+    "kind": "labeledData",
+    "containerUrl": "https://<storage-account>.blob.core.windows.net/<container>",
+    "prefix": "labelingProjects/<project-id>/train"
+  }
+]
+```
+
+`containerUrl` points at a blob container in **one specific environment's storage account** —
+it is not portable by itself. If `test` doesn't have a copy of that labeled data at the same
+path, deploying the analyzer there won't have anything to train against.
+
+Two things handle this:
+1. **`copy-labeled-data.ps1`** copies the labeled blobs from one environment's storage to
+   another's, at the same `-Prefix`, using `azcopy`:
+   ```powershell
+   pwsh -File .\scripts\copy-labeled-data.ps1 -SourceEnvironment dev -DestinationEnvironment test `
+     -Prefix "labelingProjects/<project-id>/train"
+   ```
+2. **`promote-analyzer.ps1` automatically rewrites `containerUrl`** to match the target
+   environment's storage (read from `environments.json`'s `labeledDataContainerUrl`) before
+   deploying — so the same, unmodified `analyzer.json` in git works correctly in every
+   environment, as long as the labeled data has been copied there first.
+
+Run the copy step before promoting to a new environment for the first time; after that, only
+re-run it if the labeled dataset itself changes.
+
 ---
 
 ## What's in the toolbox
@@ -128,6 +177,7 @@ promotion step was missed, not a bug.
 |---|---|
 | `promote-analyzer.ps1` | Deploys `analyzer.json` as a new version, in one environment |
 | `compare-analyzers.ps1` | Scores one or more versions against test documents, in one environment |
+| `copy-labeled-data.ps1` | Copies labeled training data blobs from one environment's storage to another's |
 | `upload-analyzers.ps1` | Low-level deploy step (used internally by promote) |
 | `ci-check.ps1` | Runs all validation checks in one command |
 | `validate-analyzers.ps1` | Checks `analyzer.json` is valid |
@@ -135,11 +185,11 @@ promotion step was missed, not a bug.
 
 | File | What it's for |
 |---|---|
-| `analyzers/<family>/analyzer.json` | The analyzer definition (the thing you edit) |
+| `analyzers/<family>/analyzer.json` | The analyzer definition (the thing you edit, or download from Studio) |
 | `analyzers/<family>/manifest.<env>.json` | Which version is currently live, per environment |
 | `analyzers/<family>/golden/` | Test documents + correct answers |
 | `analyzers/<family>/results/` | Saved accuracy reports (per environment) |
-| `environments.json` | Environment name → Foundry endpoint mapping |
+| `environments.json` | Environment name → Foundry endpoint + labeled-data storage mapping |
 
 ---
 
