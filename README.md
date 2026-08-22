@@ -45,9 +45,9 @@ graph LR
 | Step | What happens | Command |
 |---|---|---|
 | 1. **Author** | Edit `analyzer.json` like normal code | *(just edit + commit)* |
-| 2. **Promote** | Deploy it to Foundry as a new version | `promote-analyzer.ps1` |
-| 3. **Evaluate** | Test it against known-correct answers | `compare-analyzers.ps1` |
-| 4. **Record** | Save the score as a file in git | *(done automatically)* |
+| 2. **Promote** | Deploy it to Foundry as a new, permanent `analyzerId` — old ones stay live too | `promote-analyzer.ps1` |
+| 3. **Evaluate** | Send real test PDFs through Azure and score extracted fields vs. known answers | `compare-analyzers.ps1` |
+| 4. **Record** | Save the score as a JSON file in git — accuracy history is just `git log` | *(done automatically)* |
 
 Full details: [`docs/mlops-pipeline.md`](docs/mlops-pipeline.md).
 
