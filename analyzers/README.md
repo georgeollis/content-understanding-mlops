@@ -1,10 +1,11 @@
 # Analyzer Families
 
-Each subfolder here is a self-contained analyzer family: its versioned definition, deployment
-history, and test data all live together so it's obvious what documents/forms an analyzer relates
-to. See `../schemas/README.md` for schema validation and `../scripts/` for the tooling that
-operates on these folders. See `../docs/mlops-pipeline.md` for a full diagram of this pipeline,
-and `../docs/azure-foundry-architecture.md` for the underlying Azure infrastructure.
+Each subfolder is a self-contained analyzer family: definition, per-environment deployment
+history, and test data live together. See [`../schemas/README.md`](../schemas/README.md) for
+schema validation, [`../scripts/`](../scripts/) for the tooling operating on these folders,
+[`../docs/mlops-pipeline.md`](../docs/mlops-pipeline.md) for full pipeline mechanics, and
+[`../docs/azure-foundry-architecture.md`](../docs/azure-foundry-architecture.md) for the Azure
+REST surface used.
 
 ## Layout convention (per family)
 

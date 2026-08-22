@@ -1,118 +1,159 @@
 # MLOps Pipeline
 
-How this repo takes an analyzer from an idea to a tested, deployed version — and keeps a
-history of everything.
+Technical reference for how analyzer changes move from a git commit to a deployed, scored
+Foundry analyzer, per environment.
 
 ---
 
-## Studio vs. this repo
+## Authoring: Studio (dev) vs. this repo (dev+)
 
 | | Foundry Studio | This repo |
 |---|---|---|
-| Good for | Designing/labeling analyzers in `dev` | Deploying to every environment |
-| Has version history? | No | Yes (git) |
-| Has repeatable tests? | No | Yes (golden test set) |
-| Used past `dev`? | No | Yes — exclusively |
+| Scope | `dev` environment only | All environments |
+| State tracking | None (Azure-side only) | git commit history |
+| Repeatable evaluation | None | Fixed golden set, scored per `analyzerId` |
+| Deployment mechanism | UI-driven, direct | `promote-analyzer.ps1`, tagged per commit |
 
-**Rule of thumb:** design and label the analyzer in Studio (in `dev` only) → once it works,
-click "Download" in Studio to export the analyzer JSON, and commit it as
-`analyzers/<family>/analyzer.json` → from then on, every environment (including `dev` itself,
-going forward) is deployed by this repo's scripts, never by hand in Studio. Think of the
-Studio export as the equivalent of writing your first draft of code locally before it goes
-through source control and CI/CD — it's a legitimate way to start, just not a legitimate way
-to keep updating a live environment.
+Studio is used to interactively construct `fieldSchema` and, where applicable, build a labeled
+training set (`knowledgeSources[].kind == "labeledData"`) against the `dev` Foundry account.
+After validating the result in Studio:
 
-If the analyzer uses labeled training data, that data (stored in a blob container, not in
-`analyzer.json`) needs to be copied to each new environment's storage too — see
-[copy-labeled-data.ps1](#labeled-data-across-environments) below.
+1. Export the built analyzer via Studio's Download action (produces the same JSON body used by
+   `PUT /analyzers/{id}`).
+2. Commit it as `analyzers/<family>/analyzer.json`.
+3. All subsequent deployments — including re-deployments to `dev` — go through
+   `promote-analyzer.ps1`. Studio is not used to modify a live analyzer post-authoring: there
+   is no reconciliation mechanism between Studio-side edits and the git-tracked file, so any
+   direct Studio edit after this point silently desyncs Azure state from source control.
+
+For any environment above `dev` (`test`, `prod`, ...), promotion is the only supported
+mechanism — there is no Studio access path to those environments in this model.
+
+If the analyzer references labeled training data, see
+[Labeled data across environments](#labeled-data-across-environments) below — the underlying
+blob data must be replicated per environment independently of the analyzer definition.
 
 ---
 
-## The 4 stages
+## Stage 1 — Author
 
-```mermaid
-graph LR
-    A["1. Author"] --> B["2. Promote"]
-    B --> C["3. Evaluate"]
-    C --> D["4. Record"]
-    D -.-> A
+`analyzer.json` is the single mutable source of truth per family (`analyzers/<family>/`). It
+is the exact request body for `PUT /analyzers/{analyzerId}` (see
+[`schemas/analyzer.schema.json`](../schemas/analyzer.schema.json), derived from the Content
+Understanding GA REST spec, api-version `2025-11-01`). No deploy occurs at this stage.
+
+`ci-check.ps1` runs two validations before this stage is considered complete:
+
+| Check | Script | Validates |
+|---|---|---|
+| Analyzer schema | `validate-analyzers.ps1` | `analyzer.json` conforms to `analyzer.schema.json` (field types, required properties, `$ref`/`baseAnalyzerId` pattern constraints) |
+| Golden set integrity | `validate-golden.ps1` | Every `<name>.pdf` in `golden/` has a matching `<name>.expected.json`; each `expected.json` conforms to `expected.schema.json` (derived from `analyzer.json`'s `fieldSchema` via `build-ground-truth-schema.ps1`); blob checksums match `golden/manifest.json` (`build-golden-manifest.ps1`) |
+
+---
+
+## Stage 2 — Promote
+
+`promote-analyzer.ps1 -Environment <env> -Family <family> -Notes "<text>"`
+
+Resolves `<env>` against `environments.json` to an `endpoint` (and, if present,
+`labeledDataContainerUrl`). Execution:
+
+1. **Git precondition**: `git status --porcelain -- analyzers/<family>/analyzer.json` must be
+   empty (fails unless `-AllowDirty`), so every deployed `analyzerId` maps to an exact commit.
+2. **Version resolution**: reads `manifest.<env>.json`, computes
+   `nextVersion = max(existing promotions[].version) + 1` for that environment specifically —
+   version numbering is per-environment, not global.
+3. **Labeled-data containerUrl rewrite** (conditional): if
+   `analyzer.json.knowledgeSources[].kind == "labeledData"`, the script writes a temporary copy
+   of `analyzer.json` with `containerUrl` replaced by the target environment's
+   `labeledDataContainerUrl`, and deploys that copy instead of the source file. If no
+   `labeledDataContainerUrl` is configured for the environment, it deploys the file as-is and
+   emits a warning. The source `analyzer.json` on disk is never modified.
+4. **Deploy**: `analyzerId = "<family>v<nextVersion>"` (lowercase); calls
+   `upload-analyzers.ps1`, which issues `PUT /analyzers/{analyzerId}?allowReplace=true` and
+   polls the returned `Operation-Location` until `status == "Succeeded"`. This always creates a
+   new analyzer object — it never mutates or replaces an existing `analyzerId`.
+5. **Git tag**: `git tag -a <family>-<env>-v<nextVersion>` at the current commit
+   (e.g. `invoice-dev-v3`).
+6. **Manifest update**: marks any prior `active` entry in `manifest.<env>.json` as
+   `superseded`, appends the new promotion record (`version`, `analyzerId`, `gitTag`, `commit`,
+   `createdAt`, `notes`), and sets `current = analyzerId`.
+
+Each environment is deployed to independently — promoting to `dev` issues no request against
+any other environment's endpoint.
+
+---
+
+## Stage 3 — Evaluate
+
+`compare-analyzers.ps1 -Environment <env> -Family <family> -AnalyzerIds <id1>[, <id2>, ...]`
+
+For every `<name>.pdf` + `<name>.expected.json` pair under `analyzers/<family>/golden/`:
+
+1. Submits the PDF to each listed `analyzerId` via
+   `POST /analyzers/{id}:analyzeBinary?api-version=2025-11-01`, then polls
+   `Operation-Location` until `status == "Succeeded"`.
+2. Flattens the response's `result.contents[0].fields` (raw `ContentField` objects, each with a
+   `type` and a `value<Type>` property) into plain scalar/array/object values.
+3. Compares each flattened field against the corresponding key in `expected.json`:
+   - Numeric types: `Math.Abs(expected - actual) < 0.01`.
+   - Strings: case-insensitive, trimmed equality.
+   - Arrays/objects (e.g. `LineItems`): recursive per-element/per-property comparison using the
+     same rules.
+4. Prints a per-document table (`OK` / `MISMATCH (<value>)` per field per analyzer) and an
+   aggregate `matched/total (pct%)` summary per `analyzerId`.
+
+This calls the live `analyzeBinary` endpoint — there is no local/simulated scoring path.
+
+---
+
+## Stage 4 — Record
+
+Unless `-SaveResults:$false` is passed, stage 3 writes a JSON report to
+`analyzers/<family>/results/<timestampUTC>_<environment>_<analyzerIds>.json`, containing:
+`timestamp`, `environment`, `endpoint`, `family`, `analyzerIds`, `apiVersion`, `goldenDir`,
+`gitCommit` (of this repo at run time), the per-analyzer `summary` (matched/total/accuracyPct),
+and per-document/per-field `results` (actual value + matched boolean). Intended to be committed
+alongside the promotion it evaluates, giving an audit trail queryable via
+`git log analyzers/<family>/results/`.
+
+---
+
+## Environments
+
+Each entry in [`environments.json`](../environments.json) is:
+
+```json
+{
+  "environments": {
+    "<name>": {
+      "endpoint": "https://<resource>.cognitiveservices.azure.com",
+      "labeledDataContainerUrl": "https://<storage-account>.blob.core.windows.net/<container>"
+    }
+  }
+}
 ```
 
-### 1. Author
-Edit `analyzer.json` and its test data, just like any code change.
-- `analyzer.json` is the **single source of truth** for one document type (a "family", e.g.
-  `invoice`). It defines the schema: which fields to extract (`InvoiceNumber`, `TotalAmount`,
-  ...), their types, and any extraction hints.
-- Nothing is deployed yet at this point — it's just a file in git.
-- Checked automatically by `ci-check.ps1`, which runs two validations:
-  - `validate-analyzers.ps1` checks `analyzer.json` itself matches the required shape
-    (`schemas/analyzer.schema.json`) — catches typos in field names/types before you deploy.
-  - `validate-golden.ps1` checks the test documents in `analyzers/<family>/golden/` are
-    consistent: every `<name>.pdf` has a matching `<name>.expected.json` (the "correct
-    answers"), and each `expected.json` matches the schema derived from `analyzer.json`.
-- Lives in `analyzers/<family>/analyzer.json`
+Each named environment is backed by a distinct Foundry account. There is no shared state
+between environments at any layer:
+- **Deployed analyzers**: `dev`'s `invoicev2` and `test`'s `invoicev2` (if it exists) are
+  independent deployments in separate accounts that happen to share an ID string.
+- **Manifests**: `manifest.<env>.json` tracks promotion history and version numbering
+  per-environment; there is no cross-environment manifest.
+- **Labeled data**: stored in each environment's own blob container; not automatically
+  replicated (see below).
 
-### 2. Promote
-Deploy the current `analyzer.json` to Microsoft Foundry as a **new, permanent version**
-**in one environment**. This is the only step that actually talks to Azure.
-- Run with: `promote-analyzer.ps1 -Environment dev -Family <family>`
-- What it does, step by step:
-  1. Refuses to run if `analyzer.json` has uncommitted changes (so every deployed version maps
-     back to an exact, reviewable git commit).
-  2. Looks up the next version number for *this environment* by reading
-     `manifest.<env>.json` and adding 1 to the highest existing version.
-  3. Uploads `analyzer.json` to the Foundry account as a **brand-new analyzer** with a new ID,
-     e.g. `invoicev3` — it never overwrites `invoicev2`. Both stay live in Azure side by side.
-  4. Creates a git tag `<family>-<environment>-v<N>` (e.g. `invoice-dev-v3`) at the current
-     commit, so you can always find the exact source code behind any deployed analyzer.
-  5. Appends a new entry to that environment's `manifest.<env>.json` and marks it `current`.
-- Only deploys to the environment you pass — promoting to `dev` never touches `test`/`prod`,
-  because each environment is a completely separate Foundry account with its own endpoint.
-
-### 3. Evaluate
-Run the test documents through one or more live versions and score the results.
-- Run with: `compare-analyzers.ps1 -Environment dev -Family <family> -AnalyzerIds v1,v2`
-- What it does, step by step:
-  1. For every `<name>.pdf` in `analyzers/<family>/golden/`, sends the document to each
-     analyzer ID you listed, using Azure's `analyzeBinary` API, then polls until Azure finishes
-     processing it.
-  2. Flattens Azure's response into plain field values (e.g. `TotalAmount: 2904.24`).
-  3. Compares each field against the matching `<name>.expected.json` "correct answer" —
-     numbers within a small tolerance, text ignoring case/whitespace, and item-by-item for
-     list fields.
-  4. Prints a table per document (`OK` / mismatch per field) and an overall
-     `X/Y fields matched (Z%)` score per analyzer, so you can directly compare e.g. `invoicev1`
-     vs `invoicev2` and see whether the new version is actually better.
-
-### 4. Record
-Every comparison is saved as a JSON file and committed to git.
-- Saved to `analyzers/<family>/results/<timestamp>_<environment>_<analyzerIds>.json`
-- The file records the full per-field results and the overall score, so `git log` on that
-  folder is literally a history of accuracy over time — no separate dashboard needed.
-
----
-
-## Multiple environments (dev/test/prod)
-
-Each environment is its own **separate Foundry account** — a completely different Azure
-resource, with its own endpoint (listed in [`environments.json`](../environments.json)),
-its own set of deployed `analyzerId`s, and its own `manifest.<env>.json` per family. They
-don't share anything at runtime; `dev`'s `invoicev2` and `test`'s `invoicev2` (if it exists)
-are two unrelated deployments that happen to share a name.
-
-**The key thing to remember:** a git branch merge (e.g. `dev` → `test`) only moves the
-`analyzer.json` file between branches on GitHub — it does **not** call Azure, and it does
-**not** create the analyzer in the target environment's account. Promotion is a separate,
-explicit step that must be re-run per environment, using that environment's `manifest.<env>.json`
-to track versions independently:
+A branch merge (e.g. `dev` → `test` in git) changes which commit is on the `test` branch; it
+performs no Azure API call. The analyzer does not exist in `test`'s Foundry account until
+`promote-analyzer.ps1 -Environment test` is run explicitly against that commit:
 
 ```mermaid
 graph LR
     subgraph GIT["Git branches"]
-        DEVBR["dev branch"] -->|"merge (approved)"| TESTBR["test branch"]
-        TESTBR -->|"merge (approved)"| MAINBR["main branch"]
+        DEVBR["dev"] -->|"merge"| TESTBR["test"]
+        TESTBR -->|"merge"| MAINBR["main"]
     end
-    subgraph DEPLOY["Still required after each merge"]
+    subgraph DEPLOY["Explicit per-environment step"]
         P1["promote-analyzer.ps1<br/>-Environment dev"]
         P2["promote-analyzer.ps1<br/>-Environment test"]
         P3["promote-analyzer.ps1<br/>-Environment prod"]
@@ -125,20 +166,16 @@ graph LR
     P3 --> FPROD["Foundry (prod)"]
 ```
 
-If you try to run/compare an analyzer in an environment before promoting it there, the request
-will fail (the `analyzerId` doesn't exist yet) — that failure is a useful signal that a
-promotion step was missed, not a bug.
+Attempting `compare-analyzers.ps1` (or any direct API call) against an `analyzerId` that has
+not been promoted to that environment fails with a 404 from `analyzeBinary` — this is expected
+and indicates a missing promotion step, not a defect.
 
-**Only `dev` is ever touched through Studio.** Every environment above it — `test`, `prod`,
-and any others — only ever receives changes via `promote-analyzer.ps1`, run either by hand or
-(eventually) by a CI/CD pipeline triggered on merge. There's no "log into Studio for test" step
-at all; if it's not in git, it doesn't get promoted.
+---
 
-### Labeled data across environments
+## Labeled data across environments
 
-Studio lets you attach **labeled training data** to an analyzer (documents you've manually
-labeled to improve extraction quality). That data is referenced from `analyzer.json` as a
-`knowledgeSources` entry:
+`knowledgeSources[].kind == "labeledData"` references a blob container holding manually
+labeled training documents (produced via Studio labeling):
 
 ```json
 "knowledgeSources": [
@@ -150,75 +187,77 @@ labeled to improve extraction quality). That data is referenced from `analyzer.j
 ]
 ```
 
-`containerUrl` points at a blob container in **one specific environment's storage account** —
-it is not portable by itself. If `test` doesn't have a copy of that labeled data at the same
-path, deploying the analyzer there won't have anything to train against.
+`containerUrl` is bound to one environment's storage account at authoring time. It is not
+environment-portable on its own: deploying the same `analyzer.json` to a different environment
+without also replicating the underlying blobs results in a `containerUrl` that either doesn't
+resolve, or resolves to the wrong (source) environment's storage.
 
-Two things handle this:
-1. **`copy-labeled-data.ps1`** copies the labeled blobs from one environment's storage to
-   another's, at the same `-Prefix`, using `azcopy`:
+Two mechanisms handle this:
+
+1. **`copy-labeled-data.ps1`** — copies blobs under `-Prefix` from the source environment's
+   `labeledDataContainerUrl` to the destination environment's, via `azcopy copy --recursive`.
+   Requires `azcopy` on `PATH` and an authenticated `azcopy login` session (or equivalent
+   RBAC — `Storage Blob Data Reader` on source, `Storage Blob Data Contributor` on
+   destination).
    ```powershell
    pwsh -File .\scripts\copy-labeled-data.ps1 -SourceEnvironment dev -DestinationEnvironment test `
      -Prefix "labelingProjects/<project-id>/train"
    ```
-2. **`promote-analyzer.ps1` automatically rewrites `containerUrl`** to match the target
-   environment's storage (read from `environments.json`'s `labeledDataContainerUrl`) before
-   deploying — so the same, unmodified `analyzer.json` in git works correctly in every
-   environment, as long as the labeled data has been copied there first.
+2. **`promote-analyzer.ps1`'s automatic rewrite** (Stage 2, step 3 above) — replaces
+   `containerUrl` with the target environment's `labeledDataContainerUrl` at deploy time, so
+   the same, unmodified `analyzer.json` is valid across every environment once the blob copy
+   has been performed.
 
-Run the copy step before promoting to a new environment for the first time; after that, only
-re-run it if the labeled dataset itself changes.
-
----
-
-## What's in the toolbox
-
-| Tool | What it does |
-|---|---|
-| `promote-analyzer.ps1` | Deploys `analyzer.json` as a new version, in one environment |
-| `compare-analyzers.ps1` | Scores one or more versions against test documents, in one environment |
-| `copy-labeled-data.ps1` | Copies labeled training data blobs from one environment's storage to another's |
-| `upload-analyzers.ps1` | Low-level deploy step (used internally by promote) |
-| `ci-check.ps1` | Runs all validation checks in one command |
-| `validate-analyzers.ps1` | Checks `analyzer.json` is valid |
-| `validate-golden.ps1` | Checks the test data is valid and matches the schema |
-
-| File | What it's for |
-|---|---|
-| `analyzers/<family>/analyzer.json` | The analyzer definition (the thing you edit, or download from Studio) |
-| `analyzers/<family>/manifest.<env>.json` | Which version is currently live, per environment |
-| `analyzers/<family>/golden/` | Test documents + correct answers |
-| `analyzers/<family>/results/` | Saved accuracy reports (per environment) |
-| `environments.json` | Environment name → Foundry endpoint + labeled-data storage mapping |
+Run the copy step before the first promotion to a new environment; re-run only when the
+labeled dataset itself is updated (the `prefix` path is assumed identical across environments).
 
 ---
 
-## How versioning works
+## Tooling reference
 
-- `analyzer.json` is **edited like normal code** — git tracks its full history via normal
-  commits. There's no `analyzer-v2.json`, `analyzer-v3.json`, etc. — one file, one history.
-- Azure has no concept of "editing" an analyzer in place — each promotion creates a
-  brand-new, permanent `analyzerId` (`invoicev1`, `invoicev2`, ...). Old ones are never deleted
-  or overwritten, so you can always roll back by pointing traffic at an older `analyzerId`, or
-  compare old vs. new side by side.
-- `manifest.<env>.json` is the map between the two: it lists every promotion (version number,
-  `analyzerId`, git commit, git tag, date, notes) and always says which one is `current` for
-  that environment. It's fully auto-generated by `promote-analyzer.ps1` — never edit it by
-  hand, or the record will drift from what's actually deployed.
+| Script | Function |
+|---|---|
+| `promote-analyzer.ps1` | Deploys `analyzer.json` as a new `analyzerId` in one environment; tags + records the promotion |
+| `compare-analyzers.ps1` | Scores one or more `analyzerId`s against the golden set in one environment |
+| `copy-labeled-data.ps1` | Replicates labeled-data blobs between environments' storage containers |
+| `upload-analyzers.ps1` | Low-level `PUT /analyzers/{id}` + poll (invoked by `promote-analyzer.ps1`) |
+| `ci-check.ps1` | Runs schema validation, golden-set validation, and family-index freshness check |
+| `validate-analyzers.ps1` | Validates `analyzer.json` against `analyzer.schema.json` |
+| `validate-golden.ps1` | Validates golden-set checksums and `expected.json` schema conformance |
 
-## How the quality check works
+| File | Contents |
+|---|---|
+| `analyzers/<family>/analyzer.json` | `PUT /analyzers/{id}` request body — authored by hand or exported from Studio |
+| `analyzers/<family>/manifest.<env>.json` | Per-environment promotion history + `current` analyzerId |
+| `analyzers/<family>/golden/` | `<name>.pdf` + `<name>.expected.json` pairs, `expected.schema.json`, checksummed `manifest.json` |
+| `analyzers/<family>/results/` | Per-run comparison reports (per environment) |
+| `environments.json` | Environment name → `{ endpoint, labeledDataContainerUrl }` |
 
-`compare-analyzers.ps1` runs the same test documents through two (or more) live `analyzerId`s
-and shows a side-by-side score for each. Under the hood this is calling Azure's real
-`analyzeBinary` API (the same one used in production) — it's not a mock or a local simulation,
-so the score reflects exactly what Azure would extract for a real document. Because every
-result is saved as a JSON file and committed to git, you can see accuracy trends over time
-with a normal `git log analyzers/<family>/results/`.
+---
+
+## Versioning model
+
+- `analyzer.json` has no in-file version field; git commit history is the version record for
+  the *definition*.
+- Azure has no update-in-place semantics for analyzers in this workflow — every promotion
+  creates a new, permanent `analyzerId`. Prior IDs are never deleted, enabling rollback (point
+  traffic at an older ID) or direct side-by-side comparison.
+- `manifest.<env>.json` is the join between the two: `analyzerId` ↔ git `commit`/`gitTag`,
+  scoped per environment. It is generated exclusively by `promote-analyzer.ps1`; manual edits
+  will desynchronize the record from actual deployed state.
+
+## Evaluation model
+
+`compare-analyzers.ps1` calls the production `analyzeBinary` endpoint directly — there is no
+mocked or offline scoring path, so reported accuracy reflects exactly what the deployed
+analyzer would return for a real request. Because each run's report is a discrete, git-tracked
+JSON file, accuracy over time is queryable via normal git history on
+`analyzers/<family>/results/`, without a separate metrics store.
 
 ---
 
 <details>
-<summary>Show full technical diagram</summary>
+<summary>Full technical diagram</summary>
 
 ```mermaid
 graph TB
@@ -241,15 +280,16 @@ graph TB
 
     subgraph PROMOTE["2. Promote (per environment)"]
         PROMOTESCRIPT["promote-analyzer.ps1 -Environment &lt;env&gt;"]
-        UPLOAD["upload-analyzers.ps1<br/>deploy new analyzerId"]
-        TAG["git tag"]
+        REWRITE["rewrite knowledgeSources[].containerUrl<br/>(if labeledData present)"]
+        UPLOAD["upload-analyzers.ps1<br/>PUT /analyzers/{id}"]
+        TAG["git tag &lt;family&gt;-&lt;env&gt;-v&lt;N&gt;"]
         MANIFEST["update manifest.&lt;env&gt;.json"]
 
         COMMIT --> PROMOTESCRIPT
-        PROMOTESCRIPT --> UPLOAD --> TAG --> MANIFEST
+        PROMOTESCRIPT --> REWRITE --> UPLOAD --> TAG --> MANIFEST
     end
 
-    subgraph AZURE["Microsoft Foundry"]
+    subgraph AZURE["Microsoft Foundry (this environment's account)"]
         ANALYZERV1["analyzerId: v1"]
         ANALYZERV2["analyzerId: v2"]
         ANALYZERVN["analyzerId: vN"]
@@ -260,8 +300,8 @@ graph TB
     UPLOAD ==> ANALYZERVN
 
     subgraph EVALUATE["3. Evaluate"]
-        COMPARESCRIPT["compare-analyzers.ps1"]
-        SCORE["Score vs. test answers"]
+        COMPARESCRIPT["compare-analyzers.ps1<br/>POST /analyzers/{id}:analyzeBinary"]
+        SCORE["Field-level match vs. expected.json"]
 
         MANIFEST -.-> COMPARESCRIPT
         COMPARESCRIPT --> ANALYZERV1
@@ -271,25 +311,26 @@ graph TB
     end
 
     subgraph RECORD["4. Record"]
-        REPORT["results/&lt;timestamp&gt;.json"]
+        REPORT["results/&lt;ts&gt;_&lt;env&gt;_&lt;ids&gt;.json"]
         COMMIT2["git commit"]
 
         SCORE --> REPORT --> COMMIT2
     end
 
-    COMMIT2 -.->|"informs next"| EDIT
+    COMMIT2 -.->|"informs next iteration"| EDIT
 ```
 
 </details>
 
 ---
 
-## Ideas for later (not built yet — this is a lab)
+## Not yet implemented
 
-- **Block bad promotions** — stop `promote-analyzer.ps1` if accuracy drops vs. the current version
-- **Automate the checks** — run `ci-check.ps1` automatically on every pull request
-- **Auto-promote on merge** — trigger `promote-analyzer.ps1 -Environment <env>` automatically
-  in CI when a branch merges to that environment's branch, instead of relying on someone to
-  remember to run it manually
-- **Drift detection** — catch it automatically if someone edits an analyzer in Studio instead
-  of through this pipeline
+- **Accuracy gating** — blocking `promote-analyzer.ps1` if a candidate scores below the
+  currently active version.
+- **CI-triggered validation** — running `ci-check.ps1` automatically on pull requests.
+- **CI-triggered promotion** — invoking `promote-analyzer.ps1 -Environment <env>` automatically
+  when a branch merges into that environment's corresponding branch, rather than requiring a
+  manual run.
+- **Drift detection** — detecting out-of-band changes to a live analyzer (e.g. a Studio edit
+  post-authoring) that are not reflected in the git-tracked `analyzer.json`/manifest.

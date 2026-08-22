@@ -1,196 +1,174 @@
 # ContentUnderstandingOps
 
-A simple, version-controlled way to manage Microsoft Foundry Content Understanding analyzers.
+Version-controlled deployment pipeline for Azure AI Content Understanding analyzers. Analyzer
+definitions are stored as JSON in this repository; `scripts/*.ps1` deploy them to Microsoft
+Foundry resources via the Content Understanding REST API and record every deployment as a git
+tag + manifest entry.
 
-Think of it like this: **git is where analyzers are designed and tested. Azure is where they run.**
+**Source of truth model:** `analyzer.json` (per family, per repo) is authoritative. Each
+Foundry account (`environments.json` entry) is a deployment target, not a source. State is
+reconciled one direction only: git → Azure, via `promote-analyzer.ps1`.
 
 ---
 
-## The one rule to remember
+## Authoring model: Studio (dev) vs. this repo (dev+)
 
-| | Use for | Treat as |
+| | Foundry Studio | This repo |
 |---|---|---|
-| **Foundry Studio** | Building/labeling analyzers in `dev` only | A design tool, not a deployment target |
-| **This repo** | Everything from `test` onward | The source of truth for every environment |
+| Scope | `dev` environment only | All environments, including `dev` after initial authoring |
+| Persistence | Azure-side analyzer state only; no diff/history | Full git history per commit |
+| Repeatable evaluation | None | `compare-analyzers.ps1` against a fixed golden set |
+| Output artifact | Analyzer JSON (via Studio's "Download" action) | Same JSON, committed as `analyzers/<family>/analyzer.json` |
 
-Studio is genuinely useful — it's the easiest way to design an analyzer's fields and label
-training documents. Use it freely in `dev`. When you're happy with the result, **build the
-analyzer in Studio, then use its "Download" option to export the analyzer JSON**, and commit
-that file as `analyzers/<family>/analyzer.json`. From that point on, this repo's scripts are
-what deploy it everywhere else — `test`, `prod`, etc. are promoted via `promote-analyzer.ps1`,
-never edited by hand in Studio.
+Studio is the recommended tool for interactively designing `fieldSchema` and building labeled
+training sets (`knowledgeSources[].kind == "labeledData"`) against the `dev` Foundry account.
+Once an analyzer is validated in Studio:
 
-**Why draw the line there?** Studio has no version history and no tests, so it's fine for fast
-iteration in one environment. But once other environments matter, deployments need to be
-repeatable and reviewable — that only works if a git commit, not a person clicking in a UI, is
-what produces each environment's analyzer.
+1. Use Studio's **Download** action on the built analyzer to export its JSON definition.
+2. Commit that JSON as `analyzers/<family>/analyzer.json` (see
+   [`schemas/analyzer.schema.json`](schemas/analyzer.schema.json) for the required shape).
+3. From that commit forward, `dev` (re-promotions), `test`, `prod`, etc. are all deployed
+   exclusively via `promote-analyzer.ps1`. Studio is not used again for that analyzer — editing
+   it live in Studio would desynchronize the Azure-side analyzer from the git-tracked
+   `analyzer.json`, with no mechanism to detect or reconcile the drift.
 
----
-
-## Labeled data travels with the analyzer
-
-Some analyzers reference **labeled training data** (`knowledgeSources` in `analyzer.json`)
-that you created by labeling documents in Studio. That data lives in a **storage account**
-attached to Content Understanding — it is *not* embedded in `analyzer.json`, only a pointer to
-it is (`containerUrl` + `prefix`).
-
-```json
-"knowledgeSources": [
-  {
-    "kind": "labeledData",
-    "containerUrl": "https://<storage-account>.blob.core.windows.net/<container>",
-    "prefix": "labelingProjects/<project-id>/train"
-  }
-]
-```
-
-Because `containerUrl` points at *one* environment's storage account, the labeled data itself
-must be **copied to each environment's storage** before an analyzer that depends on it is
-promoted there — the analyzer definition alone isn't enough.
-
-```powershell
-# 1. Copy the labeled blobs from dev's storage to test's storage (same prefix in both)
-pwsh -File .\scripts\copy-labeled-data.ps1 -SourceEnvironment dev -DestinationEnvironment test `
-  -Prefix "labelingProjects/<project-id>/train"
-
-# 2. Now promote as usual - promote-analyzer.ps1 automatically rewrites containerUrl to
-#    the target environment's storage (from environments.json), so the same analyzer.json
-#    works unmodified in every environment
-pwsh -File .\scripts\promote-analyzer.ps1 -Environment test -Family <family> -Notes "..."
-```
+If the analyzer references labeled training data, see
+[Labeled data across environments](docs/mlops-pipeline.md#labeled-data-across-environments) —
+the data itself (blob storage) has to be copied per environment; `analyzer.json` alone doesn't
+carry it.
 
 ---
 
-## Read next
+## Reference documentation
 
-| Doc | What it covers |
+| Doc | Scope |
 |---|---|
-| [`docs/mlops-pipeline.md`](docs/mlops-pipeline.md) | How the 4-step pipeline works |
-| [`docs/azure-foundry-architecture.md`](docs/azure-foundry-architecture.md) | The Azure setup analyzers run on |
-| [`analyzers/README.md`](analyzers/README.md) | List of analyzers and their status |
-| [`schemas/README.md`](schemas/README.md) | How `analyzer.json` gets validated |
+| [`docs/mlops-pipeline.md`](docs/mlops-pipeline.md) | Pipeline stages, versioning model, environment promotion, labeled-data handling |
+| [`docs/azure-foundry-architecture.md`](docs/azure-foundry-architecture.md) | REST operations used, auth flow, Azure resource scope |
+| [`analyzers/README.md`](analyzers/README.md) | Per-family folder layout and generated index |
+| [`schemas/README.md`](schemas/README.md) | `analyzer.json` / golden-set schema validation |
 
 ---
 
-## The 4-step pipeline
+## Pipeline stages
 
 ```mermaid
 graph LR
-    A["1. Author<br/>edit analyzer.json"] --> B["2. Promote<br/>deploy to Foundry"]
-    B --> C["3. Evaluate<br/>score vs. test docs"]
-    C --> D["4. Record<br/>save results to git"]
+    A["1. Author<br/>analyzer.json"] --> B["2. Promote<br/>PUT /analyzers/{id}"]
+    B --> C["3. Evaluate<br/>POST /analyzers/{id}:analyzeBinary"]
+    C --> D["4. Record<br/>results/*.json committed"]
     D -.->|"repeat"| A
 ```
 
-| Step | What happens | Command |
+| Stage | Operation | Script |
 |---|---|---|
-| 1. **Author** | Edit `analyzer.json` like normal code | *(just edit + commit)* |
-| 2. **Promote** | Deploy it to Foundry as a new, permanent `analyzerId` — old ones stay live too | `promote-analyzer.ps1` |
-| 3. **Evaluate** | Send real test PDFs through Azure and score extracted fields vs. known answers | `compare-analyzers.ps1` |
-| 4. **Record** | Save the score as a JSON file in git — accuracy history is just `git log` | *(done automatically)* |
+| 1. Author | Edit `analyzer.json`; validated against `schemas/analyzer.schema.json` | *(edit + `ci-check.ps1` + commit)* |
+| 2. Promote | Deploys as a new immutable `analyzerId` in one target environment; tags the commit | `promote-analyzer.ps1` |
+| 3. Evaluate | Runs the golden PDF set through one or more live `analyzerId`s via `analyzeBinary`; scores field-level accuracy | `compare-analyzers.ps1` |
+| 4. Record | Persists the scored comparison as JSON under `analyzers/<family>/results/` | *(automatic, part of stage 3)* |
 
-Full details: [`docs/mlops-pipeline.md`](docs/mlops-pipeline.md).
+Full mechanics: [`docs/mlops-pipeline.md`](docs/mlops-pipeline.md).
 
 <details>
-<summary>Show detailed pipeline diagram</summary>
+<summary>Detailed data-flow diagram</summary>
 
 ```mermaid
 graph TB
     subgraph AUTHOR["1. Author"]
-        EDIT["Edit analyzer.json"] --> VALA["Validate"]
+        EDIT["analyzer.json"] --> VALA["validate-analyzers.ps1"]
         VALA --> CI["ci-check.ps1"] --> COMMIT["git commit"]
     end
 
     subgraph PROMOTE["2. Promote"]
-        PROMOTESCRIPT["promote-analyzer.ps1"] --> UPLOAD["Deploy to Foundry"]
-        UPLOAD --> TAG["git tag"]
-        TAG --> MANIFEST["update manifest.json"]
+        PROMOTESCRIPT["promote-analyzer.ps1<br/>-Environment &lt;env&gt;"] --> UPLOAD["PUT /analyzers/{id}<br/>(upload-analyzers.ps1)"]
+        UPLOAD --> TAG["git tag &lt;family&gt;-&lt;env&gt;-v&lt;N&gt;"]
+        TAG --> MANIFEST["manifest.&lt;env&gt;.json"]
         COMMIT --> PROMOTESCRIPT
     end
 
-    subgraph FOUNDRY_G["Microsoft Foundry"]
-        ANALYZERS["Live analyzer versions"]
+    subgraph FOUNDRY_G["Microsoft Foundry (per environment)"]
+        ANALYZERS["Deployed analyzerIds<br/>(immutable, never overwritten)"]
     end
     UPLOAD ==> ANALYZERS
 
     subgraph EVALUATE["3. Evaluate"]
-        COMPARESCRIPT["compare-analyzers.ps1"] --> SCORE["Score vs. test data"]
+        COMPARESCRIPT["compare-analyzers.ps1"] --> SCORE["Field-level match vs. golden set"]
         MANIFEST -.-> COMPARESCRIPT
         ANALYZERS --> SCORE
     end
 
     subgraph RECORD["4. Record"]
-        REPORT["Save results as JSON"]
+        REPORT["results/&lt;ts&gt;_&lt;env&gt;_&lt;ids&gt;.json"]
         SCORE --> REPORT --> COMMIT2["git commit"]
     end
 
-    COMMIT2 -.->|"informs next"| EDIT
+    COMMIT2 -.->|"informs next iteration"| EDIT
 ```
 
 </details>
 
 ---
 
-## The Azure setup (short version)
+## Azure surface area
 
-Analyzers run on a private Microsoft Foundry account. Only the Content Understanding API is
-used by this pipeline — nothing else needs to be touched.
+Only the Content Understanding data-plane API is used: `PUT /analyzers/{id}` (create) and
+`POST /analyzers/{id}:analyzeBinary` (extract). Auth is Microsoft Entra ID token-based
+(`disableLocalAuth: true`; no subscription keys). Full detail:
+[`docs/azure-foundry-architecture.md`](docs/azure-foundry-architecture.md).
 
 ```mermaid
 graph LR
-    REPO["This repo"] -->|"deploy / test"| FOUNDRY["Microsoft Foundry<br/>(private network)"]
+    REPO["scripts/*.ps1"] -->|"Bearer token (Entra ID)"| FOUNDRY["Foundry account<br/>Content Understanding API"]
 ```
-
-Full inventory + diagram: [`docs/azure-foundry-architecture.md`](docs/azure-foundry-architecture.md).
 
 ---
 
-## Environments (dev/test/prod)
+## Environments
 
-Each environment is a **separate Foundry account** with its own endpoint, its own storage for
-labeled data, and its own `manifest.<env>.json` per family. Add entries to
-[`environments.json`](environments.json) as you get more accounts.
+Each named environment in [`environments.json`](environments.json) maps to a distinct Foundry
+account (`endpoint`) and, optionally, a distinct labeled-data blob container
+(`labeledDataContainerUrl`). Environments do not share deployed `analyzerId`s, manifests, or
+labeled data — each is independently promoted to.
 
-> **Merging a branch does not deploy anything.** If `analyzer.json` moves from `dev` to
-> `test` via a branch merge, that only changes the file — the analyzer won't exist in `test`'s
-> Foundry account until you run `promote-analyzer.ps1 -Environment test` there too. Above
-> `dev`, **every** change reaches an environment through this same promotion step — there is
-> no Studio equivalent past `dev`.
+A git branch merge changes tracked files only; it never invokes the Azure API. Promoting to an
+environment is always an explicit, separate step:
 
 ```powershell
-# Promote to dev (usually after downloading the analyzer JSON from Studio)
-pwsh -File .\scripts\promote-analyzer.ps1 -Environment dev -Family invoice -Notes "..."
-
-# Once approved/merged, promote the SAME analyzer.json to test (CI/CD from here on)
+pwsh -File .\scripts\promote-analyzer.ps1 -Environment dev  -Family invoice -Notes "..."
 pwsh -File .\scripts\promote-analyzer.ps1 -Environment test -Family invoice -Notes "..."
 ```
 
+Beyond `dev`, promotion is the only supported path to any environment — there is no Studio
+equivalent for `test`/`prod`/etc.
+
 ---
 
-## Folder guide
+## Repository layout
 
-| Folder | Contains |
+| Path | Contents |
 |---|---|
-| `analyzers/<family>/` | One analyzer's definition, per-environment deployment history, test data, results |
-| `schemas/` | Validation rules + tooling |
-| `scripts/` | The PowerShell tools: upload, promote, compare, copy labeled data, CI check |
-| `docs/` | This documentation |
-| `environments.json` | Maps environment names (dev/test/prod) to Foundry endpoints + labeled-data storage |
+| `analyzers/<family>/` | `analyzer.json`, per-environment `manifest.<env>.json`, `golden/` test set, `results/` |
+| `schemas/` | JSON Schemas + validation/generation scripts |
+| `scripts/` | `promote-analyzer.ps1`, `compare-analyzers.ps1`, `upload-analyzers.ps1`, `copy-labeled-data.ps1`, `ci-check.ps1` |
+| `docs/` | Reference documentation |
+| `environments.json` | Environment name → `{ endpoint, labeledDataContainerUrl }` |
 
 ---
 
-## Quick commands
+## Command reference
 
 ```powershell
-# Check everything is valid before committing
+# Run all validation checks (schema, golden-set integrity, family index freshness)
 pwsh -File .\scripts\ci-check.ps1
 
-# Deploy an analyzer.json as a new version, in one environment
+# Deploy analyzer.json as a new analyzerId in one environment; tags the commit; updates manifest.<env>.json
 pwsh -File .\scripts\promote-analyzer.ps1 -Environment dev -Family <family> -Notes "..."
 
-# Compare two versions against test documents, in one environment
+# Run the golden PDF set through one or more analyzerIds; prints + saves per-field accuracy
 pwsh -File .\scripts\compare-analyzers.ps1 -Environment dev -Family <family> -AnalyzerIds <idA>, <idB>
+
+# Copy labeled-data blobs from one environment's storage container to another's (same prefix)
+pwsh -File .\scripts\copy-labeled-data.ps1 -SourceEnvironment dev -DestinationEnvironment test -Prefix "labelingProjects/<id>/train"
 ```
 
-> **Requires PowerShell 7 (`pwsh`), not Windows PowerShell 5.1** — the older version errors
-> out on these scripts.
+> Requires PowerShell 7+ (`pwsh`). `Invoke-WebRequest` throws under Windows PowerShell 5.1.

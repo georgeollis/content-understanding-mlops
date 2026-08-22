@@ -1,69 +1,89 @@
 # Azure Setup: Microsoft Foundry
 
-Where analyzers actually run, and what's around them.
+Technical reference for the Azure surface area this repository interacts with.
 
 ---
 
-## Quick summary
+## Scope
 
-Analyzers deploy to a **private Microsoft Foundry account** — no public internet access, all
-traffic stays inside a private network. Only one part of it matters for this repo: the
-**Content Understanding API**.
+The pipeline exclusively targets the Content Understanding data-plane API on a Microsoft
+Foundry account (Cognitive Services kind `AIServices`/Foundry). No other Azure resource type
+is called by any script in this repo.
+
+Two REST operations are used, both under `{endpoint}/contentunderstanding`, api-version
+`2025-11-01` (GA):
+
+| Operation | Method + path | Used by | Purpose |
+|---|---|---|---|
+| Create analyzer | `PUT /analyzers/{analyzerId}?api-version=2025-11-01&allowReplace=true` | `upload-analyzers.ps1` (via `promote-analyzer.ps1`) | Creates a new analyzer from an `analyzer.json` body; returns `Operation-Location` for polling |
+| Analyze document | `POST /analyzers/{analyzerId}:analyzeBinary?api-version=2025-11-01` | `compare-analyzers.ps1` | Submits document bytes for extraction; returns `Operation-Location` for polling |
+
+Both operations are asynchronous: the initial response returns `202 Accepted` with an
+`Operation-Location` header; the caller polls `GET {Operation-Location}` until
+`status ∈ {"Succeeded", "Failed"}`.
 
 ```mermaid
 graph LR
-    REPO["This repo's scripts"] -->|"HTTPS + Entra ID login<br/>(no passwords/keys)"| FOUNDRY["Microsoft Foundry account<br/>Content Understanding API"]
+    REPO["scripts/*.ps1"] -->|"HTTPS, Bearer token"| FOUNDRY["Foundry account<br/>Content Understanding API"]
 ```
 
-> **Studio note**: Foundry Studio (the web UI) is for dev/POC experiments only. It's not
-> part of this repo's deployment pipeline — see [`mlops-pipeline.md`](./mlops-pipeline.md).
+> Foundry Studio (the web UI) is used only for `dev`-scoped authoring — see
+> [`mlops-pipeline.md`](./mlops-pipeline.md#authoring-studio-dev-vs-this-repo-dev) for the
+> workflow boundary.
 
 ---
 
-## What we actually use
+## Authentication
 
-This repo only ever talks to **one thing**: the Foundry account's Content Understanding API.
-Specifically, the scripts call two REST operations on it:
-- `PUT .../analyzers/{analyzerId}` — creates a new analyzer from `analyzer.json`
-  (used by `promote-analyzer.ps1` / `upload-analyzers.ps1`).
-- `POST .../analyzers/{analyzerId}:analyzeBinary` — submits a document (a PDF) and starts
-  extraction; the result is fetched by polling an `Operation-Location` URL Azure returns until
-  it reports `Succeeded` (used by `compare-analyzers.ps1`).
+`disableLocalAuth: true` is set on the Foundry account — subscription-key auth
+(`Ocp-Apim-Subscription-Key`) is rejected entirely. All requests use Microsoft Entra ID
+bearer tokens.
 
-The account may have other Azure resources sitting next to it (networking, logging, etc.) but
-none of that matters here — the scripts don't touch it.
+Token acquisition (identical in every script):
+```powershell
+az account get-access-token --resource https://cognitiveservices.azure.com --query accessToken -o tsv
+```
+This returns a short-lived (typically ~1 hour) access token scoped to the Cognitive Services
+resource provider, for whichever principal is currently logged in via `az login` (interactive
+user or service principal, if run non-interactively via `az login --service-principal`). The
+token is sent as `Authorization: Bearer <token>` on every request. No token or key is persisted
+to disk or committed to this repository.
 
----
-
-## Security basics
-
-- **No passwords or API keys** — everything uses Microsoft Entra ID login tokens
-  (`disableLocalAuth: true` on the Foundry account, so key-based auth is switched off entirely).
-- Every script authenticates the same way: it runs
-  `az account get-access-token --resource https://cognitiveservices.azure.com` to get a
-  short-lived token for the currently logged-in Azure CLI user, and sends it as a normal
-  `Authorization: Bearer <token>` header on each request. There's no secret stored anywhere in
-  this repo.
+RBAC requirement: the calling principal needs a role granting
+`Microsoft.CognitiveServices/accounts/*` data-plane access on the target Foundry account (e.g.
+`Cognitive Services User` or a custom role with equivalent `analyzers` permissions).
 
 ---
 
 ## Environments
 
-There's currently just **one** registered Foundry account (`dev` in
-[`environments.json`](../environments.json)). Add a new entry there (name + endpoint) for each
-additional environment (`test`, `prod`, ...) as more Foundry accounts get provisioned — each
-is fully independent, with its own analyzers and its own `manifest.<env>.json` per family. See
-[`mlops-pipeline.md`](./mlops-pipeline.md#-multiple-environments-devtestprod) for how promotion
-works across environments.
+`environments.json` maps environment names to Foundry accounts:
+
+```json
+{
+  "environments": {
+    "<name>": {
+      "endpoint": "https://<resource>.cognitiveservices.azure.com",
+      "labeledDataContainerUrl": "https://<storage-account>.blob.core.windows.net/<container>"
+    }
+  }
+}
+```
+
+Each environment corresponds to a physically distinct Foundry account (own subscription,
+resource group, or region as appropriate) — analyzers, manifests, and labeled-data storage are
+not shared across entries. See
+[`mlops-pipeline.md`](./mlops-pipeline.md#environments) for the promotion model across
+environments and [`mlops-pipeline.md`](./mlops-pipeline.md#labeled-data-across-environments)
+for how labeled training data is replicated between them.
 
 ---
 
-<details>
-<summary>Show technical diagram</summary>
+## Out of scope
 
-```mermaid
-graph LR
-    DEV["This repo's scripts<br/>(Entra ID token auth)"] ==>|"deploy / test analyzers"| FOUNDRY["Foundry account<br/>Content Understanding API"]
-```
-
-</details>
+The Foundry account may sit alongside other Azure resources (networking, Log Analytics,
+associated AI Search/Cosmos/Storage/Container Registry resources typical of a Foundry
+deployment) depending on how the account was provisioned. None of these are read, written, or
+otherwise referenced by any script in this repo, with one exception: the storage account
+referenced by `labeledDataContainerUrl`, accessed directly via `azcopy` in
+`copy-labeled-data.ps1` (see [`mlops-pipeline.md`](./mlops-pipeline.md#labeled-data-across-environments)).
