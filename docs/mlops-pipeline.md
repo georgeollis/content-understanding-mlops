@@ -30,7 +30,7 @@ commit the current state:
    [Bootstrapping and maintaining the golden set](#bootstrapping-and-maintaining-the-golden-set)).
 3. Commit `analyzer.json`.
 4. Run `promote-analyzer.ps1 -Environment dev` as usual. This is what actually creates the
-   next official, git-tagged `analyzerId` — the pull step only gets the JSON out of Studio and
+   next official, tracked `analyzerId` — the pull step only gets the JSON out of Studio and
    into git; it never deploys anything itself. Every entry in `manifest.dev.json` still maps to
    an exact, reviewable commit, even though the analyzer was designed live in Studio.
 
@@ -135,11 +135,10 @@ Resolves `<env>` against `environments.json` to an `endpoint` (and, if present,
    `upload-analyzers.ps1`, which issues `PUT /analyzers/{analyzerId}?allowReplace=true` and
    polls the returned `Operation-Location` until `status == "Succeeded"`. This always creates a
    new analyzer object — it never mutates or replaces an existing `analyzerId`.
-5. **Git tag**: `git tag -a <family>-<env>-v<nextVersion>` at the current commit
-   (e.g. `<family>-dev-v3`).
-6. **Manifest update**: marks any prior `active` entry in `manifest.<env>.json` as
-   `superseded`, appends the new promotion record (`version`, `analyzerId`, `gitTag`, `commit`,
-   `createdAt`, `notes`), and sets `current = analyzerId`.
+5. **Manifest update**: marks any prior `active` entry in `manifest.<env>.json` as
+   `superseded`, appends the new promotion record (`version`, `analyzerId`, `commit`,
+   `createdAt`, `notes`), and sets `current = analyzerId`. The recorded `commit` SHA is what
+   ties a deployed `analyzerId` back to an exact, reviewable point in git history.
 
 Each environment is deployed to independently — promoting to `dev` issues no request against
 any other environment's endpoint.
@@ -326,9 +325,9 @@ labeled dataset itself is updated (the `prefix` path is assumed identical across
 - Azure has no update-in-place semantics for analyzers in this workflow — every promotion
   creates a new, permanent `analyzerId`. Prior IDs are never deleted, enabling rollback (point
   traffic at an older ID) or direct side-by-side comparison.
-- `manifest.<env>.json` is the join between the two: `analyzerId` ↔ git `commit`/`gitTag`,
-  scoped per environment. It is generated exclusively by `promote-analyzer.ps1`; manual edits
-  will desynchronize the record from actual deployed state.
+- `manifest.<env>.json` is the join between the two: `analyzerId` ↔ git `commit`, scoped per
+  environment. It is generated exclusively by `promote-analyzer.ps1`; manual edits will
+  desynchronize the record from actual deployed state.
 
 ## Evaluation model
 
@@ -445,11 +444,10 @@ graph TB
         PROMOTESCRIPT["promote-analyzer.ps1 -Environment &lt;env&gt;"]
         REWRITE["rewrite knowledgeSources[].containerUrl<br/>(if labeledData present)"]
         UPLOAD["upload-analyzers.ps1<br/>PUT /analyzers/{id}"]
-        TAG["git tag &lt;family&gt;-&lt;env&gt;-v&lt;N&gt;"]
         MANIFEST["update manifest.&lt;env&gt;.json"]
 
         COMMIT --> PROMOTESCRIPT
-        PROMOTESCRIPT --> REWRITE --> UPLOAD --> TAG --> MANIFEST
+        PROMOTESCRIPT --> REWRITE --> UPLOAD --> MANIFEST
     end
 
     subgraph AZURE["Microsoft Foundry (this environment's account)"]

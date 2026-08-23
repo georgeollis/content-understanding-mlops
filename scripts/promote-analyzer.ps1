@@ -1,7 +1,7 @@
 <#
 .SYNOPSIS
-  Promotes the current analyzers/<family>/analyzer.json to a new versioned Azure deployment,
-  tags the git commit, and records the promotion in that environment's manifest file.
+  Promotes the current analyzers/<family>/analyzer.json to a new versioned Azure deployment
+  and records the promotion in that environment's manifest file.
 
 .DESCRIPTION
   Local analyzer definitions are version-controlled as a single mutable file per family
@@ -18,16 +18,15 @@
   This script:
     1. Reads analyzers/<family>/analyzer.json and analyzers/<family>/manifest.<Environment>.json.
     2. Determines the next version number for THIS environment (max existing promotion + 1).
-    3. Requires a clean git working tree for this file (so the tag points at an exact,
-       reviewable commit) unless -AllowDirty is passed.
+    3. Requires a clean git working tree for this file (so the recorded commit points at an
+       exact, reviewable version) unless -AllowDirty is passed.
     4. If analyzer.json references labeled training data (knowledgeSources[].kind ==
        "labeledData"), rewrites containerUrl to this environment's labeledDataContainerUrl
        (from environments.json) before deploying - see copy-labeled-data.ps1 for how the
        actual blob data gets copied to each environment's storage account.
     5. Uploads analyzer.json to Azure as "<family>V<N>" via upload-analyzers.ps1.
-    6. Creates an annotated git tag "<family>-<environment>-v<N>" at the current commit.
-    7. Appends a new entry to manifest.<Environment>.json's "promotions" array and updates
-       "current".
+    6. Appends a new entry to manifest.<Environment>.json's "promotions" array (recording the
+       commit SHA it was deployed from) and updates "current".
 
 .PARAMETER Environment
   Environment name (e.g. "dev", "test", "prod") as defined in environments.json at the repo
@@ -44,8 +43,8 @@
   Free-text note describing what changed in this promotion (stored in the manifest).
 
 .PARAMETER AllowDirty
-  Skip the clean-working-tree check (not recommended - the whole point of tagging is that the
-  deployed analyzerId maps to an exact, reviewable git commit).
+  Skip the clean-working-tree check (not recommended - the whole point of recording the commit
+  SHA is that the deployed analyzerId maps to an exact, reviewable git commit).
 
 .PARAMETER ApiVersion
   Content Understanding API version. Defaults to the current GA version.
@@ -112,7 +111,7 @@ try {
   $relPath = "analyzers/$Family/analyzer.json"
   $dirty = git status --porcelain -- $relPath
   if ($dirty -and -not $AllowDirty) {
-    throw "Uncommitted changes in $relPath. Commit them first (so the git tag points at an exact, reviewable version), or pass -AllowDirty to override."
+    throw "Uncommitted changes in $relPath. Commit them first (so the recorded commit SHA points at an exact, reviewable version), or pass -AllowDirty to override."
   }
 
   $commitSha = (git rev-parse --short HEAD).Trim()
@@ -126,9 +125,8 @@ $manifest = Get-Content $manifestFile -Raw | ConvertFrom-Json
 $existingVersions = @($manifest.promotions | ForEach-Object { $_.version })
 $nextVersion = if ($existingVersions.Count -gt 0) { ($existingVersions | Measure-Object -Maximum).Maximum + 1 } else { 1 }
 $analyzerId = ("$Family" + "v$nextVersion").ToLowerInvariant()
-$gitTag = "$Family-$Environment-v$nextVersion".ToLowerInvariant()
 
-Write-Host "Promoting $Family analyzer.json (commit $commitSha) to environment '$Environment' as '$analyzerId' (tag '$gitTag')..." -ForegroundColor Cyan
+Write-Host "Promoting $Family analyzer.json (commit $commitSha) to environment '$Environment' as '$analyzerId'..." -ForegroundColor Cyan
 
 # ---------- Rewrite knowledgeSources for this environment (labeled data) ----------
 # analyzer.json is shared across all environments. If it references labeled training data
@@ -165,16 +163,6 @@ if ($hasLabeledData) {
   -AnalyzerIds $analyzerId `
   -ApiVersion $ApiVersion
 
-# ---------- Tag the commit ----------
-Push-Location $repoRoot
-try {
-  git tag -a $gitTag -m "$Family v${nextVersion} ($Environment): $Notes"
-  Write-Host "Created git tag '$gitTag'. Push it with: git push origin $gitTag" -ForegroundColor Yellow
-}
-finally {
-  Pop-Location
-}
-
 # ---------- Update manifest.<Environment>.json ----------
 foreach ($p in $manifest.promotions) {
   if ($p.status -eq "active") { $p.status = "superseded" }
@@ -183,7 +171,6 @@ foreach ($p in $manifest.promotions) {
 $newPromotion = [ordered]@{
   version    = $nextVersion
   analyzerId = $analyzerId
-  gitTag     = $gitTag
   commit     = $commitSha
   createdAt  = (Get-Date -Format "yyyy-MM-dd")
   status     = "active"

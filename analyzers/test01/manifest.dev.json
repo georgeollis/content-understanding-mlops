@@ -3,12 +3,11 @@
   "description": "Extracts seller/buyer invoice fields (contact details, line items, tax, totals) using a labeled training dataset.",
   "goldenDataset": "golden",
   "sourceFile": "analyzer.json",
-  "note": "analyzer.json is the single mutable source of truth, tracked by git. Each promoted version is tagged in git (git tag test01-vN) and deployed to Azure under a distinct analyzerId (lowercase, e.g. test01v1) so multiple historical versions can be live and compared side by side. Run scripts/promote-analyzer.ps1 to tag + deploy + record a new entry here.",
+  "note": "analyzer.json is the single mutable source of truth, tracked by git. Each promoted version is deployed to Azure under a distinct analyzerId (lowercase, e.g. invoicev1) so multiple historical versions can be live and compared side by side. Run scripts/promote-analyzer.ps1 to deploy + record a new entry here.",
   "promotions": [
     {
       "version": 1,
       "analyzerId": "test01v1",
-      "gitTag": "test01-dev-v1",
       "commit": "8b4c738",
       "createdAt": "2026-08-23",
       "status": "active",

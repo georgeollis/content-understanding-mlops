@@ -32,7 +32,7 @@ commit the current state:
    metadata; restricted to `dev`).
 2. Review the diff, fix golden-set drift if `fieldSchema` changed, and commit.
 3. Run `promote-analyzer.ps1 -Environment dev` as usual — this is what actually creates the
-   next official, git-tagged `analyzerId`. `test`, `prod`, etc. are reached exclusively via
+   next official, tracked `analyzerId`. `test`, `prod`, etc. are reached exclusively via
    `promote-analyzer.ps1`; there is no Studio access path to those environments in this model.
 
 If the analyzer references labeled training data, see
@@ -67,7 +67,7 @@ graph LR
 | Stage | Operation | Script |
 |---|---|---|
 | 1. Author | Edit `analyzer.json`; validated against `schemas/analyzer.schema.json` | *(edit + `ci-check.ps1` + commit)* |
-| 2. Promote | Deploys as a new immutable `analyzerId` in one target environment; tags the commit | `promote-analyzer.ps1` |
+| 2. Promote | Deploys as a new immutable `analyzerId` in one target environment; records the commit | `promote-analyzer.ps1` |
 | 3. Evaluate | Runs the golden PDF set through one or more live `analyzerId`s via `analyzeBinary`; scores field-level accuracy | `compare-analyzers.ps1` |
 | 4. Record | Persists the scored comparison as JSON under `analyzers/<family>/results/` | *(automatic, part of stage 3)* |
 
@@ -85,8 +85,7 @@ graph TB
 
     subgraph PROMOTE["2. Promote"]
         PROMOTESCRIPT["promote-analyzer.ps1<br/>-Environment &lt;env&gt;"] --> UPLOAD["PUT /analyzers/{id}<br/>(upload-analyzers.ps1)"]
-        UPLOAD --> TAG["git tag &lt;family&gt;-&lt;env&gt;-v&lt;N&gt;"]
-        TAG --> MANIFEST["manifest.&lt;env&gt;.json"]
+        UPLOAD --> MANIFEST["manifest.&lt;env&gt;.json"]
         COMMIT --> PROMOTESCRIPT
     end
 

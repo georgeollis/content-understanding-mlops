@@ -4,12 +4,11 @@
   "goldenDataset": "golden",
   "sampleDocumentGenerator": "sample-documents",
   "sourceFile": "analyzer.json",
-  "note": "analyzer.json is the single mutable source of truth, tracked by git. Each promoted version is tagged in git (git tag invoice-vN) and deployed to Azure under a distinct analyzerId (lowercase, e.g. invoicev1) so multiple historical versions can be live and compared side by side. Run scripts/promote-analyzer.ps1 to tag + deploy + record a new entry here.",
+  "note": "analyzer.json is the single mutable source of truth, tracked by git. Each promoted version is deployed to Azure under a distinct analyzerId (lowercase, e.g. invoicev1) so multiple historical versions can be live and compared side by side. Run scripts/promote-analyzer.ps1 to deploy + record a new entry here.",
   "promotions": [
     {
       "version": 1,
       "analyzerId": "invoicev1",
-      "gitTag": "invoice-v1",
       "commit": "5a9d902",
       "createdAt": "2026-08-21",
       "status": "superseded",
@@ -18,7 +17,6 @@
     {
       "version": 2.0,
       "analyzerId": "invoicev2",
-      "gitTag": "invoice-v2",
       "commit": "42a258f",
       "createdAt": "2026-08-21",
       "status": "superseded",
@@ -27,7 +25,6 @@
     {
       "version": 3.0,
       "analyzerId": "invoicev3",
-      "gitTag": "invoice-dev-v3",
       "commit": "6b4e9d2",
       "createdAt": "2026-08-22",
       "status": "active",

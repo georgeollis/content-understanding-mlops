@@ -14,7 +14,7 @@ Starting a new family? Copy [`_template/`](_template/) — see its README for wh
 
 ```
 analyzers/<family>/
-  analyzer.json         # single mutable source of truth (git-tracked; history via commits/tags)
+  analyzer.json         # single mutable source of truth (git-tracked; history via commits)
   manifest.<env>.json    # one per environment (dev/test/prod, ...) - which analyzerId is
                            # currently live IN THAT ENVIRONMENT'S Foundry account. Promoting to
                            # one environment never affects another's manifest or deployment.

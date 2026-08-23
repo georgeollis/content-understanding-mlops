@@ -15,16 +15,16 @@
   supportedModels - see schemas/analyzer.schema.json's ContentAnalyzer definition for the exact
   request-body shape), and overwrites analyzers/<family>/analyzer.json with the result.
 
-  This does NOT create a new officially tracked/tagged deployment - after reviewing and
+  This does NOT create a new officially tracked deployment - after reviewing and
   committing the pulled file, run promote-analyzer.ps1 -Environment dev as usual to record it
-  as a proper versioned, git-tagged promotion. That keeps every entry in manifest.dev.json
+  as a proper versioned promotion. That keeps every entry in manifest.dev.json
   backed by an exact, reviewable git commit, even though the analyzer was actually designed
   live in Studio.
 
   Restricted to the "dev" environment (or -Endpoint pointed at whatever your dev account is):
   test/prod/etc. must only ever be reached via promote-analyzer.ps1, never Studio, never this
   script - pass -AllowNonDev to override, but doing so defeats the entire promotion model for
-  that environment (its deployed state would no longer map to a git-tagged commit).
+  that environment (its deployed state would no longer map to a reviewable git commit).
 
 .PARAMETER Environment
   Environment name as defined in environments.json. Must be "dev" unless -AllowNonDev is
@@ -163,4 +163,4 @@ Write-Host "     and:                            pwsh -File ./schemas/sync-golde
 Write-Host "  2. pwsh -File ./scripts/ci-check.ps1"
 Write-Host "  3. git add analyzers/$Family/analyzer.json `&`& git commit -m `"$Family`: pull Studio edits`""
 Write-Host "  4. pwsh -File ./scripts/promote-analyzer.ps1 -Environment dev -Family $Family -Notes `"...`""
-Write-Host "     (this creates the next official, git-tagged dev version from what you just pulled)"
+Write-Host "     (this creates the next official, tracked dev version from what you just pulled)"

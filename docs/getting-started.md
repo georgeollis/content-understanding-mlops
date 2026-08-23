@@ -110,12 +110,11 @@ pwsh -File ./scripts/promote-analyzer.ps1 -Environment dev -Family <family> -Not
 ```
 
 This requires a clean git working tree for `analyzer.json` (commit first). It deploys
-`analyzerId = "<family>v1"`, creates git tag `<family>-dev-v1`, and updates
-`manifest.dev.json`. Push the tag:
+`analyzerId = "<family>v1"` and updates `manifest.dev.json` with the deploying commit SHA.
+Push your commit:
 
 ```powershell
 git push origin main
-git push origin <family>-dev-v1
 ```
 
 If `analyzer.json` references labeled data and `dev`'s `labeledDataContainerUrl` doesn't yet
