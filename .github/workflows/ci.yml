@@ -1,0 +1,30 @@
+name: CI
+
+# Runs scripts/ci-check.ps1 (schema validation, golden-set integrity, family-index freshness)
+# on every push and pull request. This is the same command documented in README.md and
+# docs/getting-started.md for local pre-commit use - CI just guarantees it actually ran.
+#
+# Does NOT call Azure / any live Content Understanding endpoint - see the separate
+# compare-analyzers.ps1 workflow (or run it manually) for that.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch: {}
+
+jobs:
+  ci-check:
+    # windows-latest, not ubuntu-latest: several scripts under scripts/ and schemas/ join
+    # paths with literal backslashes (e.g. "$Family\golden"), which only resolve correctly
+    # on Windows. GitHub-hosted windows-latest runners ship PowerShell 7 (pwsh) already.
+    runs-on: windows-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Run ci-check.ps1
+        shell: pwsh
+        run: ./scripts/ci-check.ps1

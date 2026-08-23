@@ -319,6 +319,59 @@ JSON file, accuracy over time is queryable via normal git history on
 
 ---
 
+## Continuous integration
+
+[`.github/workflows/ci.yml`](../.github/workflows/ci.yml) runs `ci-check.ps1` (the same
+command documented in [Stage 1 — Author](#stage-1--author) and
+[`getting-started.md`](getting-started.md#4-validate-before-committing)) automatically on
+every push and pull request against `main`, plus on-demand via the Actions tab
+(`workflow_dispatch`).
+
+```yaml
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch: {}
+
+jobs:
+  ci-check:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - shell: pwsh
+        run: ./scripts/ci-check.ps1
+```
+
+Key points:
+
+- **Runs on `windows-latest`, not `ubuntu-latest`.** Several scripts (`compare-analyzers.ps1`,
+  `validate-golden.ps1`, `list-families.ps1`, `bootstrap-golden.ps1`) build paths with literal
+  backslashes (e.g. `"$Family\golden"`), which only resolve correctly on Windows. GitHub-hosted
+  `windows-latest` runners ship PowerShell 7 (`pwsh`) preinstalled, so no setup step is needed.
+- **No Azure access required or used.** `ci-check.ps1` only validates files already in the
+  checkout (schema conformance, golden-set checksums, family-index freshness) — it never calls
+  `analyzeBinary` or any live endpoint, so it needs no secrets/credentials and runs identically
+  for any contributor's fork or PR.
+- **This is the PR gate, not the promotion gate.** It catches authoring-stage mistakes (bad
+  `analyzer.json`, drifted golden set, stale `analyzers/README.md`) before merge. It does not
+  run `compare-analyzers.ps1` (that requires a live Foundry endpoint and credentials) and it
+  does not run `promote-analyzer.ps1` — both remain manual, intentional steps per
+  [Stage 2 — Promote](#stage-2--promote) and [Stage 3 — Evaluate](#stage-3--evaluate).
+- **Failure mode matches local usage** — a failing check (e.g. stale `analyzers/README.md`)
+  produces the same console output as running `ci-check.ps1` locally, including the fix
+  instructions (e.g. `git diff analyzers/README.md`).
+
+To require this before merge, enable it as a required status check under the repository's
+branch protection rules for `main` (Settings → Branches → Branch protection rules).
+
+Not yet automated (see [Not yet implemented](#not-yet-implemented) below): running
+`compare-analyzers.ps1` in CI (would need a service principal/OIDC credential for the target
+Foundry account) and gating/triggering `promote-analyzer.ps1` from CI.
+
+---
+
 <details>
 <summary>Full technical diagram</summary>
 
@@ -391,9 +444,14 @@ graph TB
 
 - **Accuracy gating** — blocking `promote-analyzer.ps1` if a candidate scores below the
   currently active version.
-- **CI-triggered validation** — running `ci-check.ps1` automatically on pull requests.
+- **CI-triggered live evaluation** — running `compare-analyzers.ps1` automatically (e.g.
+  nightly against `dev`) — requires provisioning a service principal/OIDC credential for CI,
+  since it calls a live Foundry endpoint. `ci-check.ps1` (schema/golden-set validation only,
+  no Azure calls) is already CI-triggered — see [Continuous
+  integration](#continuous-integration) above.
 - **CI-triggered promotion** — invoking `promote-analyzer.ps1 -Environment <env>` automatically
   when a branch merges into that environment's corresponding branch, rather than requiring a
   manual run.
 - **Drift detection** — detecting out-of-band changes to a live analyzer (e.g. a Studio edit
   post-authoring) that are not reflected in the git-tracked `analyzer.json`/manifest.
+

@@ -96,6 +96,11 @@ git add analyzers/<family>
 git commit -m "Add <family> analyzer"
 ```
 
+This same check re-runs automatically in GitHub Actions on every push/PR to `main`
+([`.github/workflows/ci.yml`](../.github/workflows/ci.yml)) — running it locally first just
+lets you catch and fix problems before pushing. See [Continuous
+integration](mlops-pipeline.md#continuous-integration) for details.
+
 ---
 
 ## 5. First promotion (deploy to `dev`)

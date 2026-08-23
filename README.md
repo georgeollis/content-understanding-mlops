@@ -1,5 +1,7 @@
 # content-understanding-mlops
 
+[![CI](https://github.com/georgeollis/content-understanding-mlops/actions/workflows/ci.yml/badge.svg)](https://github.com/georgeollis/content-understanding-mlops/actions/workflows/ci.yml)
+
 Version-controlled deployment pipeline for Azure AI Content Understanding analyzers. Analyzer
 definitions are stored as JSON in this repository; `scripts/*.ps1` deploy them to Microsoft
 Foundry resources via the Content Understanding REST API and record every deployment as a git
@@ -45,7 +47,7 @@ carry it.
 | Doc | Scope |
 |---|---|
 | [`docs/getting-started.md`](docs/getting-started.md) | Step-by-step: prerequisites, first analyzer, first promotion, first evaluation |
-| [`docs/mlops-pipeline.md`](docs/mlops-pipeline.md) | Pipeline stages, versioning model, environment promotion, labeled-data handling |
+| [`docs/mlops-pipeline.md`](docs/mlops-pipeline.md) | Pipeline stages, versioning model, environment promotion, labeled-data handling, [CI](docs/mlops-pipeline.md#continuous-integration) |
 | [`docs/azure-foundry-architecture.md`](docs/azure-foundry-architecture.md) | REST operations used, auth flow, Azure resource scope |
 | [`analyzers/README.md`](analyzers/README.md) | Per-family folder layout and generated index |
 | [`schemas/README.md`](schemas/README.md) | `analyzer.json` / golden-set schema validation |
@@ -153,6 +155,7 @@ equivalent for `test`/`prod`/etc.
 | `schemas/` | JSON Schemas + validation/generation scripts |
 | `scripts/` | `new-analyzer.ps1`, `promote-analyzer.ps1`, `compare-analyzers.ps1`, `upload-analyzers.ps1`, `list-analyzers.ps1`, `copy-labeled-data.ps1`, `ci-check.ps1` |
 | `docs/` | Reference documentation |
+| `.github/workflows/ci.yml` | Runs `ci-check.ps1` on every push/PR to `main` (see [Continuous integration](docs/mlops-pipeline.md#continuous-integration)) |
 | `environments.json` | Environment name → `{ endpoint, labeledDataContainerUrl }` |
 
 ---
