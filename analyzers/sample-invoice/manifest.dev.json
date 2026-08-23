@@ -1,0 +1,9 @@
+{
+  "family": "sample-invoice",
+  "description": "<one-line description of what this analyzer extracts - shown in analyzers/README.md's family index>",
+  "goldenDataset": "golden",
+  "sourceFile": "analyzer.json",
+  "note": "analyzer.json is the single mutable source of truth, tracked by git. Each promoted version is deployed to Azure under a distinct analyzerId (lowercase, e.g. invoicev1) so multiple historical versions can be live and compared side by side. Run scripts/promote-analyzer.ps1 to deploy + record a new entry here.",
+  "promotions": [],
+  "current": null
+}
