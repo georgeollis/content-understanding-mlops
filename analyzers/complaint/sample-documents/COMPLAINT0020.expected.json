@@ -1,9 +1,0 @@
-{
-  "CustomerFirstName": "Quinn",
-  "CustomerLastName": "Jackson",
-  "EmailAddress": "quinn.jackson@example.com",
-  "PhoneNumber": "(826) 669-7548",
-  "NatureOfComplaint": "Website/app issue",
-  "IncidentDetails": "I was unable to complete checkout for order #ORD10020 on October 1, 2025; the payment page repeatedly returned an error after I entered my card details.",
-  "DesiredResolution": "Confirmation that my card was not charged and a working discount code for the inconvenience."
-}

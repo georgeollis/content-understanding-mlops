@@ -1,9 +1,0 @@
-{
-  "CustomerFirstName": "Reese",
-  "CustomerLastName": "Brown",
-  "EmailAddress": "reese.brown@example.com",
-  "PhoneNumber": "(818) 622-5211",
-  "NatureOfComplaint": "Late delivery",
-  "IncidentDetails": "My order #ORD10005 was scheduled to arrive on October 3, 2025 but did not show up until a week later, with no notification of the delay.",
-  "DesiredResolution": "A partial refund for the delivery fee and confirmation that future orders will ship on time."
-}

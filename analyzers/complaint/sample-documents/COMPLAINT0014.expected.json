@@ -1,9 +1,0 @@
-{
-  "CustomerFirstName": "Peyton",
-  "CustomerLastName": "Miller",
-  "EmailAddress": "peyton.miller@example.com",
-  "PhoneNumber": "(841) 632-4240",
-  "NatureOfComplaint": "Rude customer service",
-  "IncidentDetails": "When I called support on October 3, 2024 about order #ORD10014, the representative was dismissive and hung up before resolving my issue.",
-  "DesiredResolution": "A formal apology and follow-up call from a supervisor to properly resolve the original issue."
-}

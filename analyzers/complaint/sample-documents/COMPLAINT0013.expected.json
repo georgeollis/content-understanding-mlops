@@ -1,9 +1,0 @@
-{
-  "CustomerFirstName": "Cameron",
-  "CustomerLastName": "Moore",
-  "EmailAddress": "cameron.moore@example.com",
-  "PhoneNumber": "(384) 841-2657",
-  "NatureOfComplaint": "Billing error",
-  "IncidentDetails": "I was charged twice for order #ORD10013 on July 22, 2025. My bank statement shows two separate charges of the same amount.",
-  "DesiredResolution": "A refund of the duplicate charge processed back to my original payment method."
-}
