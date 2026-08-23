@@ -2,10 +2,9 @@
 
 [![CI](https://github.com/georgeollis/content-understanding-mlops/actions/workflows/ci.yml/badge.svg)](https://github.com/georgeollis/content-understanding-mlops/actions/workflows/ci.yml)
 
-Version-controlled deployment pipeline for Azure AI Content Understanding analyzers. Analyzer
+Version-controlled deployment pipeline for Microsoft Foundry Content Understanding analyzers. Analyzer
 definitions are stored as JSON in this repository; `scripts/*.ps1` deploy them to Microsoft
-Foundry resources via the Content Understanding REST API and record every deployment as a git
-tag + manifest entry.
+Foundry resources via the Content Understanding REST API and record each deployment in a manifest.
 
 **Source of truth model:** `analyzer.json` (per family, per repo) is authoritative. Each
 Foundry account (`environments.json` entry) is a deployment target, not a source. State is
@@ -68,7 +67,7 @@ graph LR
 |---|---|---|
 | 1. Author | Edit `analyzer.json`; validated against `schemas/analyzer.schema.json` | *(edit + `ci-check.ps1` + commit)* |
 | 2. Promote | Deploys as a new immutable `analyzerId` in one target environment | `promote-analyzer.ps1` |
-| 3. Evaluate | Runs the golden PDF set through one or more live `analyzerId`s via `analyzeBinary`; scores field-level accuracy | `compare-analyzers.ps1` |
+| 3. Evaluate | Runs the golden document set through one or more live `analyzerId`s via `analyzeBinary`; scores field-level accuracy | `compare-analyzers.ps1` |
 | 4. Record | Persists the scored comparison as JSON under `analyzers/<family>/results/` | *(automatic, part of stage 3)* |
 
 Full mechanics: [`docs/mlops-pipeline.md`](docs/mlops-pipeline.md).
@@ -161,6 +160,9 @@ equivalent for `test`/`prod`/etc.
 ---
 
 ## Command reference
+
+Run these commands from the repository root. Replace values in angle brackets with values for
+your analyzer or environment.
 
 ```powershell
 # Run all validation checks (schema, golden-set integrity)

@@ -11,7 +11,7 @@ Step-by-step path from a clean checkout to a promoted, evaluated analyzer.
 | PowerShell 7+ (`pwsh`) | All scripts use `Invoke-RestMethod`/`Invoke-WebRequest` features that throw under Windows PowerShell 5.1 | `pwsh -v` |
 | Azure CLI (`az`), logged in | Scripts get an Entra ID token via `az account get-access-token` | `az account show` |
 | RBAC on the target Foundry account | Data-plane calls need `Microsoft.CognitiveServices/accounts/*` access | `Cognitive Services User` role (or equivalent) assigned on the account |
-| A Foundry account (`AIServices`/Foundry kind) with `disableLocalAuth: true` | This is the deployment target; see [`azure-foundry-architecture.md`](azure-foundry-architecture.md) | `az cognitiveservices account show -n <name> -g <rg>` |
+| A Microsoft Foundry account with Content Understanding enabled and local authentication disabled | This is the deployment target; see [`azure-foundry-architecture.md`](azure-foundry-architecture.md) | Confirm the account's endpoint and your access |
 | `azcopy` on `PATH` (only if using labeled training data) | Required by `copy-labeled-data.ps1` | `azcopy --version` |
 
 Log in once per session:
@@ -200,7 +200,7 @@ If the change added, renamed, or removed a `fieldSchema` field, sync the golden 
 ```powershell
 pwsh -File ./schemas/build-ground-truth-schema.ps1 -Family <family>
 pwsh -File ./schemas/sync-golden-fields.ps1 -Family <family>
-# fill in any "<<FILL IN FROM PDF>>" placeholders it adds, then:
+# fill in any "<<FILL IN FROM SOURCE DOCUMENT>>" placeholders it adds, then:
 pwsh -File ./schemas/build-golden-manifest.ps1 -Family <family>
 ```
 
