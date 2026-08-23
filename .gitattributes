@@ -1,1 +1,11 @@
+# Force LF line endings for text files regardless of a checkout's core.autocrlf setting.
+# Without this, analyzers/README.md's family-index table (written with LF-only line breaks by
+# schemas/list-families.ps1) can end up mixed with CRLF elsewhere in the same file depending on
+# the OS/git config that last touched it - which makes ci-check.ps1's "is the index stale"
+# check produce a false positive on a different machine/runner than the one that committed it
+# (seen: local Windows checkout with core.autocrlf=true vs. the CI windows-latest runner).
+* text=auto eol=lf
+
+# Must come after the "*" rule above (git attributes: last matching line wins per attribute) -
+# otherwise "text=auto" would override this file's binary/LFS handling.
 *.pdf filter=lfs diff=lfs merge=lfs -text
