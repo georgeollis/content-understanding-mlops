@@ -6,9 +6,8 @@ Technical reference for the Azure surface area this repository interacts with.
 
 ## Scope
 
-The pipeline exclusively targets the Content Understanding data-plane API on a Microsoft
-Foundry account (Cognitive Services kind `AIServices`/Foundry). No other Azure resource type
-is called by any script in this repo.
+The pipeline targets the Content Understanding data-plane API on a Microsoft Foundry account.
+No other Azure resource type is called by the analyzer-management scripts in this repo.
 
 Four REST operations are used, all under `{endpoint}/contentunderstanding`, api-version
 `2025-11-01` (GA):

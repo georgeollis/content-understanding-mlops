@@ -34,11 +34,9 @@ commit the current state:
    into git; it never deploys anything itself. Every entry in `manifest.dev.json` still maps to
    an exact, reviewable commit, even though the analyzer was designed live in Studio.
 
-`sync-analyzer-from-studio.ps1` refuses to run against any environment other than `dev` (pass
-`-AllowNonDev` to override, which is not recommended). For any environment above `dev` (`test`,
-`prod`, ...), `promote-analyzer.ps1` is the only supported mechanism — there is no Studio access
-path to those environments in this model, and pulling from Studio there would make the deployed
-state stop mapping to a git commit.
+`sync-analyzer-from-studio.ps1` defaults to `dev`-only use. It requires `-AllowNonDev` for any
+other named environment, but that override is discouraged because it can make deployed state stop
+mapping to a git commit. Use `promote-analyzer.ps1` for `test`, `prod`, and other environments.
 
 If the analyzer references labeled training data, see
 [Labeled data across environments](#labeled-data-across-environments) below — the underlying
@@ -299,14 +297,14 @@ labeled dataset itself is updated (the `prefix` path is assumed identical across
 | Script | Function |
 |---|---|
 | `new-analyzer.ps1` | Scaffolds a new family from `analyzers/_template` with placeholders pre-filled |
-| `promote-analyzer.ps1` | Deploys `analyzer.json` as a new `analyzerId` in one environment; tags + records the promotion |
+| `promote-analyzer.ps1` | Deploys `analyzer.json` as a new `analyzerId` in one environment and records the promotion in its manifest |
 | `sync-analyzer-from-studio.ps1` | Pulls a live analyzer's current definition from Studio (dev only) into `analyzer.json` |
 | `compare-analyzers.ps1` | Scores one or more `analyzerId`s against the golden set in one environment |
 | `bootstrap-golden.ps1` | Drafts `expected.json` files from a deployed analyzerId's own output, for review |
 | `list-analyzers.ps1` | Lists analyzers currently deployed in an environment (id, status, base analyzer, created date) |
 | `copy-labeled-data.ps1` | Replicates labeled-data blobs between environments' storage containers |
 | `upload-analyzers.ps1` | Low-level `PUT /analyzers/{id}` + poll (invoked by `promote-analyzer.ps1`) |
-| `ci-check.ps1` | Runs schema validation, golden-set validation, and family-index freshness check |
+| `ci-check.ps1` | Runs analyzer-schema and golden-set validation |
 | `validate-analyzers.ps1` | Validates `analyzer.json` against `analyzer.schema.json` |
 | `validate-golden.ps1` | Validates golden-set checksums, `expected.json` schema conformance, and fieldSchema drift |
 | `sync-golden-fields.ps1` | Patches `expected.json` files with placeholders after a `fieldSchema` change |

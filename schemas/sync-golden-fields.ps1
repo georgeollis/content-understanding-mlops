@@ -12,7 +12,7 @@
 
   For every "<name>.expected.json" under analyzers/<family>/golden/, this script:
     1. Adds any top-level field defined in expected.schema.json but missing from the file, as
-       a deliberately wrong-typed placeholder ("<<FILL IN FROM PDF>>") - wrong-typed on purpose
+       a deliberately wrong-typed placeholder ("<<FILL IN FROM SOURCE DOCUMENT>>") - wrong-typed on purpose
        so validate-golden.ps1 keeps failing on that document until you replace the placeholder
        with a real value.
     2. Warns (does not delete) about any top-level field present in the file but no longer
@@ -33,7 +33,7 @@
   # After adding a new field to analyzers/invoice/analyzer.json's fieldSchema:
   .\build-ground-truth-schema.ps1 -Family invoice
   .\sync-golden-fields.ps1 -Family invoice
-  # Then open each golden/*.expected.json and replace the "<<FILL IN FROM PDF>>" placeholders.
+  # Then open each golden/*.expected.json and replace the "<<FILL IN FROM SOURCE DOCUMENT>>" placeholders.
 
 .NOTES
   Re-run build-golden-manifest.ps1 -Family <family> afterwards - the files' checksums changed.
@@ -78,7 +78,7 @@ function New-Placeholder {
       return $obj
     }
     default {
-      return "<<FILL IN FROM PDF>>"
+      return "<<FILL IN FROM SOURCE DOCUMENT>>"
     }
   }
 }
