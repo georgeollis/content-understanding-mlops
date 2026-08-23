@@ -49,7 +49,7 @@ contain secrets (no keys are stored here; auth is token-based — see
 Scaffold the folder (copies `analyzers/_template`, fills in placeholders):
 
 ```powershell
-pwsh -File .\scripts\new-analyzer.ps1 -Family <family> -Description "One-line description of what this analyzer extracts"
+pwsh -File ./scripts/new-analyzer.ps1 -Family <family> -Description "One-line description of what this analyzer extracts"
 ```
 
 This creates `analyzers/<family>/` with `analyzer.json`, `manifest.dev.json`, and empty
@@ -70,8 +70,8 @@ For the golden set, add PDFs plus hand-written `<name>.expected.json` files (mat
 `fieldSchema`), then generate the derived schema/checksums:
 
 ```powershell
-pwsh -File .\schemas\build-ground-truth-schema.ps1 -Family <family>
-pwsh -File .\schemas\build-golden-manifest.ps1 -Family <family>
+pwsh -File ./schemas/build-ground-truth-schema.ps1 -Family <family>
+pwsh -File ./schemas/build-golden-manifest.ps1 -Family <family>
 ```
 
 Hand-writing every `expected.json` field-by-field doesn't scale well. An alternative once
@@ -85,7 +85,7 @@ the deployed analyzer's own output, then correct them — see
 ## 4. Validate before committing
 
 ```powershell
-pwsh -File .\scripts\ci-check.ps1
+pwsh -File ./scripts/ci-check.ps1
 ```
 
 Runs analyzer-schema validation, golden-set integrity checks, and regenerates
@@ -106,7 +106,7 @@ integration](mlops-pipeline.md#continuous-integration) for details.
 ## 5. First promotion (deploy to `dev`)
 
 ```powershell
-pwsh -File .\scripts\promote-analyzer.ps1 -Environment dev -Family <family> -Notes "Initial deployment"
+pwsh -File ./scripts/promote-analyzer.ps1 -Environment dev -Family <family> -Notes "Initial deployment"
 ```
 
 This requires a clean git working tree for `analyzer.json` (commit first). It deploys
@@ -123,7 +123,7 @@ have the training blobs, copy them first (see
 [`mlops-pipeline.md`](mlops-pipeline.md#labeled-data-across-environments)):
 
 ```powershell
-pwsh -File .\scripts\copy-labeled-data.ps1 -SourceEnvironment <studio-source> -DestinationEnvironment dev -Prefix "labelingProjects/<id>/train"
+pwsh -File ./scripts/copy-labeled-data.ps1 -SourceEnvironment <studio-source> -DestinationEnvironment dev -Prefix "labelingProjects/<id>/train"
 ```
 
 ---
@@ -133,7 +133,7 @@ pwsh -File .\scripts\copy-labeled-data.ps1 -SourceEnvironment <studio-source> -D
 Score the newly deployed analyzer against its own golden set:
 
 ```powershell
-pwsh -File .\scripts\compare-analyzers.ps1 -Environment dev -Family <family> -AnalyzerIds <family>v1
+pwsh -File ./scripts/compare-analyzers.ps1 -Environment dev -Family <family> -AnalyzerIds <family>v1
 ```
 
 Prints a per-document, per-field match table plus an aggregate accuracy percentage (and, since
@@ -160,7 +160,7 @@ Two ways to iterate on an existing family, either can be committed and promoted 
 **Edit live in Studio (dev only)**: keep iterating in Studio against `dev` for as long as you
 want, then pull the current state down when ready:
 ```powershell
-pwsh -File .\scripts\sync-analyzer-from-studio.ps1 -Environment dev -Family <family> -AnalyzerId <id>
+pwsh -File ./scripts/sync-analyzer-from-studio.ps1 -Environment dev -Family <family> -AnalyzerId <id>
 ```
 This overwrites `analyzer.json` locally and never deploys anything itself — review the diff,
 then continue with `ci-check.ps1` → commit → `promote-analyzer.ps1` as above. Restricted to
@@ -171,10 +171,10 @@ Either way, see [`mlops-pipeline.md`](mlops-pipeline.md) for full stage-by-stage
 If the change added, renamed, or removed a `fieldSchema` field, sync the golden set before
 `ci-check.ps1` will pass:
 ```powershell
-pwsh -File .\schemas\build-ground-truth-schema.ps1 -Family <family>
-pwsh -File .\schemas\sync-golden-fields.ps1 -Family <family>
+pwsh -File ./schemas/build-ground-truth-schema.ps1 -Family <family>
+pwsh -File ./schemas/sync-golden-fields.ps1 -Family <family>
 # fill in any "<<FILL IN FROM PDF>>" placeholders it adds, then:
-pwsh -File .\schemas\build-golden-manifest.ps1 -Family <family>
+pwsh -File ./schemas/build-golden-manifest.ps1 -Family <family>
 ```
 
 ## 8. Promoting to another environment (`test`, `prod`, ...)
@@ -183,7 +183,7 @@ Add the new environment to `environments.json`, copy `manifest.dev.json` to
 `manifest.<env>.json` (reset `current`/`promotions`), copy labeled data if applicable, then:
 
 ```powershell
-pwsh -File .\scripts\promote-analyzer.ps1 -Environment <env> -Family <family> -Notes "Promote to <env>"
+pwsh -File ./scripts/promote-analyzer.ps1 -Environment <env> -Family <family> -Notes "Promote to <env>"
 ```
 
 Studio is not used beyond `dev` — every other environment is reached exclusively through

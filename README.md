@@ -138,8 +138,8 @@ A git branch merge changes tracked files only; it never invokes the Azure API. P
 environment is always an explicit, separate step:
 
 ```powershell
-pwsh -File .\scripts\promote-analyzer.ps1 -Environment dev  -Family <family> -Notes "..."
-pwsh -File .\scripts\promote-analyzer.ps1 -Environment test -Family <family> -Notes "..."
+pwsh -File ./scripts/promote-analyzer.ps1 -Environment dev  -Family <family> -Notes "..."
+pwsh -File ./scripts/promote-analyzer.ps1 -Environment test -Family <family> -Notes "..."
 ```
 
 Beyond `dev`, promotion is the only supported path to any environment — there is no Studio
@@ -164,28 +164,28 @@ equivalent for `test`/`prod`/etc.
 
 ```powershell
 # Run all validation checks (schema, golden-set integrity, family index freshness)
-pwsh -File .\scripts\ci-check.ps1
+pwsh -File ./scripts/ci-check.ps1
 
 # Scaffold a new analyzer family from analyzers/_template, placeholders pre-filled
-pwsh -File .\scripts\new-analyzer.ps1 -Family <family> -Description "..."
+pwsh -File ./scripts/new-analyzer.ps1 -Family <family> -Description "..."
 
 # Pull a live analyzer's current definition from Studio (dev only) into analyzer.json
-pwsh -File .\scripts\sync-analyzer-from-studio.ps1 -Environment dev -Family <family> -AnalyzerId <id>
+pwsh -File ./scripts/sync-analyzer-from-studio.ps1 -Environment dev -Family <family> -AnalyzerId <id>
 
 # Deploy analyzer.json as a new analyzerId in one environment; tags the commit; updates manifest.<env>.json
-pwsh -File .\scripts\promote-analyzer.ps1 -Environment dev -Family <family> -Notes "..."
+pwsh -File ./scripts/promote-analyzer.ps1 -Environment dev -Family <family> -Notes "..."
 
 # Run the golden PDF set through one or more analyzerIds; prints + saves per-field accuracy
-pwsh -File .\scripts\compare-analyzers.ps1 -Environment dev -Family <family> -AnalyzerIds <idA>, <idB>
+pwsh -File ./scripts/compare-analyzers.ps1 -Environment dev -Family <family> -AnalyzerIds <idA>, <idB>
 
 # Draft expected.json files from a deployed analyzerId's own output, for review
-pwsh -File .\scripts\bootstrap-golden.ps1 -Environment dev -Family <family> -AnalyzerId <id>
+pwsh -File ./scripts/bootstrap-golden.ps1 -Environment dev -Family <family> -AnalyzerId <id>
 
 # List analyzers deployed in an environment (useful to check what's live, or find a forgotten analyzerId)
-pwsh -File .\scripts\list-analyzers.ps1 -Environment dev
+pwsh -File ./scripts/list-analyzers.ps1 -Environment dev
 
 # Copy labeled-data blobs from one environment's storage container to another's (same prefix)
-pwsh -File .\scripts\copy-labeled-data.ps1 -SourceEnvironment dev -DestinationEnvironment test -Prefix "labelingProjects/<id>/train"
+pwsh -File ./scripts/copy-labeled-data.ps1 -SourceEnvironment dev -DestinationEnvironment test -Prefix "labelingProjects/<id>/train"
 ```
 
 > Requires PowerShell 7+ (`pwsh`). `Invoke-WebRequest` throws under Windows PowerShell 5.1.

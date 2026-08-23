@@ -81,7 +81,7 @@ param(
 $ErrorActionPreference = "Stop"
 
 $repoRoot = Resolve-Path (Join-Path $PSScriptRoot "..")
-$familyDir = Join-Path $repoRoot "analyzers\$Family"
+$familyDir = Join-Path $repoRoot "analyzers" $Family
 $analyzerFile = Join-Path $familyDir "analyzer.json"
 
 if (-not $Environment -and -not $Endpoint) {

@@ -67,7 +67,7 @@ function Test-FieldDef {
 function Test-Analyzer {
   param([string]$FamilyName)
 
-  $path = Join-Path $analyzersDir "$FamilyName\analyzer.json"
+  $path = Join-Path $analyzersDir $FamilyName "analyzer.json"
   $data = Get-Content $path -Raw | ConvertFrom-Json
   $errors = @()
 

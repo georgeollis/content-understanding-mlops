@@ -76,7 +76,7 @@ param(
 $ErrorActionPreference = "Stop"
 
 $repoRoot = Resolve-Path (Join-Path $PSScriptRoot "..")
-$familyDir = Join-Path $repoRoot "analyzers\$Family"
+$familyDir = Join-Path $repoRoot "analyzers" $Family
 $analyzerFile = Join-Path $familyDir "analyzer.json"
 
 if (-not (Test-Path $familyDir)) { throw "Family folder not found: $familyDir. Create it first (see analyzers/_template)." }
@@ -158,9 +158,9 @@ if ($hadExisting) {
 }
 Write-Host ""
 Write-Host "Next steps:" -ForegroundColor Cyan
-Write-Host "  1. If fieldSchema changed, re-run: pwsh -File .\schemas\build-ground-truth-schema.ps1 -Family $Family"
-Write-Host "     and:                            pwsh -File .\schemas\sync-golden-fields.ps1 -Family $Family"
-Write-Host "  2. pwsh -File .\scripts\ci-check.ps1"
+Write-Host "  1. If fieldSchema changed, re-run: pwsh -File ./schemas/build-ground-truth-schema.ps1 -Family $Family"
+Write-Host "     and:                            pwsh -File ./schemas/sync-golden-fields.ps1 -Family $Family"
+Write-Host "  2. pwsh -File ./scripts/ci-check.ps1"
 Write-Host "  3. git add analyzers/$Family/analyzer.json `&`& git commit -m `"$Family`: pull Studio edits`""
-Write-Host "  4. pwsh -File .\scripts\promote-analyzer.ps1 -Environment dev -Family $Family -Notes `"...`""
+Write-Host "  4. pwsh -File ./scripts/promote-analyzer.ps1 -Environment dev -Family $Family -Notes `"...`""
 Write-Host "     (this creates the next official, git-tagged dev version from what you just pulled)"

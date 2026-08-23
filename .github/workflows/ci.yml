@@ -16,10 +16,14 @@ on:
 
 jobs:
   ci-check:
-    # windows-latest, not ubuntu-latest: several scripts under scripts/ and schemas/ join
-    # paths with literal backslashes (e.g. "$Family\golden"), which only resolve correctly
-    # on Windows. GitHub-hosted windows-latest runners ship PowerShell 7 (pwsh) already.
-    runs-on: windows-latest
+    # All scripts under scripts/ and schemas/ use Join-Path with separate arguments (never
+    # literal backslash-joined strings), so they resolve correctly on any OS pwsh runs on.
+    # Test on both Linux and Windows runners to guard against that regressing.
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
 
     steps:
       - name: Check out repository
@@ -33,3 +37,4 @@ jobs:
       - name: Run ci-check.ps1
         shell: pwsh
         run: ./scripts/ci-check.ps1
+

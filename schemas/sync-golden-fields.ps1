@@ -86,7 +86,7 @@ function New-Placeholder {
 function Sync-Family {
   param([string]$FamilyName)
 
-  $goldenDir = Join-Path $analyzersDir "$FamilyName\golden"
+  $goldenDir = Join-Path $analyzersDir $FamilyName "golden"
   $schemaPath = Join-Path $goldenDir "expected.schema.json"
   if (-not (Test-Path $schemaPath)) {
     Write-Host "SKIP $FamilyName - no expected.schema.json (run build-ground-truth-schema.ps1 -Family $FamilyName first)"
@@ -133,4 +133,4 @@ foreach ($f in $families) {
 }
 
 Write-Host ""
-Write-Host "Re-run 'pwsh -File .\schemas\build-golden-manifest.ps1 -Family <family>' for any family with patched files (checksums changed)." -ForegroundColor Cyan
+Write-Host "Re-run 'pwsh -File ./schemas/build-golden-manifest.ps1 -Family <family>' for any family with patched files (checksums changed)." -ForegroundColor Cyan

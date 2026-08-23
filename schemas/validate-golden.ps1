@@ -119,7 +119,7 @@ function Test-ExpectedAgainstSchema {
 function Test-GoldenFamily {
   param([string]$FamilyName)
 
-  $goldenDir = Join-Path $analyzersDir "$FamilyName\golden"
+  $goldenDir = Join-Path $analyzersDir $FamilyName "golden"
   $manifestPath = Join-Path $goldenDir "manifest.json"
   $schemaPath = Join-Path $goldenDir "expected.schema.json"
   $errors = @()

@@ -29,9 +29,9 @@
   Content Understanding API version. Defaults to the current GA version.
 
 .EXAMPLE
-  # Manual one-off upload (prefer scripts\promote-analyzer.ps1 for tracked promotions):
-  .\upload-analyzers.ps1 -Endpoint "https://<your-resource>.cognitiveservices.azure.com" `
-    -AnalyzerFiles ".\analyzers\invoice\analyzer.json", ".\analyzers\complaint\analyzer.json" `
+  # Manual one-off upload (prefer scripts/promote-analyzer.ps1 for tracked promotions):
+  ./upload-analyzers.ps1 -Endpoint "https://<your-resource>.cognitiveservices.azure.com" `
+    -AnalyzerFiles "./analyzers/invoice/analyzer.json", "./analyzers/complaint/analyzer.json" `
     -AnalyzerIds "invoicedev", "complaintdev"
 
 .NOTES

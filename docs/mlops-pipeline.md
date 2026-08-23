@@ -80,8 +80,8 @@ field (`build-golden-manifest.ps1`) stays `"generated"` until you change it to
 **Handling `fieldSchema` drift** — after adding/renaming/removing a field in `analyzer.json`'s
 `fieldSchema`:
 ```powershell
-pwsh -File .\schemas\build-ground-truth-schema.ps1 -Family <family>   # regenerate expected.schema.json
-pwsh -File .\schemas\sync-golden-fields.ps1 -Family <family>          # patch every expected.json
+pwsh -File ./schemas/build-ground-truth-schema.ps1 -Family <family>   # regenerate expected.schema.json
+pwsh -File ./schemas/sync-golden-fields.ps1 -Family <family>          # patch every expected.json
 ```
 `sync-golden-fields.ps1` adds a placeholder (`"<<FILL IN FROM PDF>>"`) for any newly required
 top-level field — deliberately the wrong JSON type for non-string fields, so
@@ -258,7 +258,7 @@ Two mechanisms handle this:
    RBAC — `Storage Blob Data Reader` on source, `Storage Blob Data Contributor` on
    destination).
    ```powershell
-   pwsh -File .\scripts\copy-labeled-data.ps1 -SourceEnvironment dev -DestinationEnvironment test `
+   pwsh -File ./scripts/copy-labeled-data.ps1 -SourceEnvironment dev -DestinationEnvironment test `
      -Prefix "labelingProjects/<project-id>/train"
    ```
 2. **`promote-analyzer.ps1`'s automatic rewrite** (Stage 2, step 3 above) — replaces
@@ -337,7 +337,11 @@ on:
 
 jobs:
   ci-check:
-    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -348,10 +352,14 @@ jobs:
 
 Key points:
 
-- **Runs on `windows-latest`, not `ubuntu-latest`.** Several scripts (`compare-analyzers.ps1`,
-  `validate-golden.ps1`, `list-families.ps1`, `bootstrap-golden.ps1`) build paths with literal
-  backslashes (e.g. `"$Family\golden"`), which only resolve correctly on Windows. GitHub-hosted
-  `windows-latest` runners ship PowerShell 7 (`pwsh`) preinstalled, so no setup step is needed.
+- **Runs on both Linux and Windows** (`ubuntu-latest` and `windows-latest`, via a matrix).
+  Every script under `scripts/` and `schemas/` builds paths with `Join-Path` using separate
+  arguments (e.g. `Join-Path $analyzersDir $Family "golden"`, never a literal-backslash string
+  like `"$Family\golden"`), so they resolve correctly on any OS `pwsh` runs on. All scripts and
+  docs use forward-slash paths (`./scripts/...`) for the same reason — PowerShell 7 accepts
+  forward slashes as path separators on Windows too, so this works everywhere. Running the
+  matrix on every push/PR guards against a future change accidentally reintroducing an
+  OS-specific path.
 - **No Azure access required or used.** `ci-check.ps1` only validates files already in the
   checkout (schema conformance, golden-set checksums, family-index freshness) — it never calls
   `analyzeBinary` or any live endpoint, so it needs no secrets/credentials and runs identically

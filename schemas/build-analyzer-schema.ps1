@@ -9,11 +9,11 @@
     specification/ai/data-plane/ContentUnderstanding/stable/2025-11-01/ContentUnderstanding.json
     (Swagger 2.0, generated from the TypeSpec source of truth)
 
-  Reads:  $env:TEMP\ContentUnderstanding.swagger.json  (auto-downloaded if missing)
+  Reads:  $env:TEMP/ContentUnderstanding.swagger.json  (auto-downloaded if missing)
   Writes: schemas/analyzer.schema.json
 
 .EXAMPLE
-  .\build-analyzer-schema.ps1
+  ./build-analyzer-schema.ps1
 #>
 
 $ErrorActionPreference = "Stop"

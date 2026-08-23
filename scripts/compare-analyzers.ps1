@@ -114,11 +114,11 @@ if (-not $Environment) { $Environment = "default" }
 
 # ---------- Resolve golden directory ----------
 if (-not $GoldenDir) {
-  $analyzersRoot = Join-Path $PSScriptRoot "..\analyzers"
+  $analyzersRoot = Join-Path $PSScriptRoot ".." "analyzers"
   $familyNames = Get-ChildItem $analyzersRoot -Directory | Where-Object { $_.Name -notlike "_*" } | Select-Object -ExpandProperty Name
 
   if ($Family) {
-    $GoldenDir = Join-Path $analyzersRoot "$Family\golden"
+    $GoldenDir = Join-Path $analyzersRoot $Family "golden"
   } else {
     # No -Family/-GoldenDir given: try to infer it from the first analyzerId (e.g. "invoicev3"
     # -> family "invoice") rather than silently falling back to a fixed default family, which
@@ -126,7 +126,7 @@ if (-not $GoldenDir) {
     $inferred = $familyNames | Where-Object { $AnalyzerIds[0] -like "$_*" } | Sort-Object Length -Descending | Select-Object -First 1
     if ($inferred) {
       $Family = $inferred
-      $GoldenDir = Join-Path $analyzersRoot "$Family\golden"
+      $GoldenDir = Join-Path $analyzersRoot $Family "golden"
       Write-Host "No -Family supplied; inferred -Family '$Family' from analyzerId '$($AnalyzerIds[0])'. Pass -Family explicitly to override." -ForegroundColor Yellow
     } else {
       throw "Could not infer a family from analyzerId '$($AnalyzerIds[0])'. Pass -Family <name> or -GoldenDir <path>. Available families: $($familyNames -join ', ')"
@@ -448,7 +448,7 @@ foreach ($analyzerId in $AnalyzerIds) {
 if ($SaveResults) {
   if (-not $ResultsDir) {
     if ($Family) {
-      $ResultsDir = Join-Path $PSScriptRoot "..\analyzers\$Family\results"
+      $ResultsDir = Join-Path $PSScriptRoot ".." "analyzers" $Family "results"
     } else {
       Write-Warning "SaveResults requested but no -Family or -ResultsDir supplied; skipping save."
     }

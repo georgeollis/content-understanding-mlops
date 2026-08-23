@@ -1,0 +1,20 @@
+Make scripts and docs OS-agnostic; run CI on Linux and Windows
+
+Several scripts built paths with literal-backslash strings (e.g.
+Join-Path $analyzersDir "$Family\golden"), which only resolved
+correctly on Windows even though PowerShell 7 itself runs everywhere.
+Switch every affected call to multi-argument Join-Path (e.g.
+Join-Path $analyzersDir $Family "golden"), which builds an
+OS-correct path on any platform.
+
+Also replace '.\' backslash-style example paths in script Write-Host
+next-steps output and in README.md / docs / analyzers/_template/README.md
+with forward-slash './' equivalents, which pwsh accepts as path
+separators on both Windows and Linux/macOS.
+
+Update .github/workflows/ci.yml to run the ci-check job on an
+ubuntu-latest + windows-latest matrix (previously windows-latest only,
+specifically because of the path bug above) and document the change
+in docs/mlops-pipeline.md.
+
+Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>

@@ -68,7 +68,7 @@ param(
 $ErrorActionPreference = "Stop"
 
 $repoRoot = Resolve-Path (Join-Path $PSScriptRoot "..")
-$goldenDir = Join-Path $repoRoot "analyzers\$Family\golden"
+$goldenDir = Join-Path $repoRoot "analyzers" $Family "golden"
 if (-not (Test-Path $goldenDir)) { throw "Golden directory not found: $goldenDir" }
 
 if (-not $Environment -and -not $Endpoint) {
@@ -182,7 +182,7 @@ if ($written -gt 0) {
   Write-Host "Next:" -ForegroundColor Yellow
   Write-Host "  1. Open each new <name>.pdf alongside its expected.json and correct any wrong values."
   Write-Host "  2. Delete the '_bootstrap' key once a document has been reviewed."
-  Write-Host "  3. pwsh -File .\schemas\build-golden-manifest.ps1 -Family $Family"
+  Write-Host "  3. pwsh -File ./schemas/build-golden-manifest.ps1 -Family $Family"
   Write-Host "  4. Mark reviewed documents 'human-verified' in golden/manifest.json's groundTruthSource field."
-  Write-Host "  5. pwsh -File .\scripts\ci-check.ps1"
+  Write-Host "  5. pwsh -File ./scripts/ci-check.ps1"
 }

@@ -81,7 +81,7 @@ function Convert-FieldDefToSchema {
 function Build-SchemaForFamily {
   param([string]$FamilyName)
 
-  $analyzerPath = Join-Path $analyzersDir "$FamilyName\analyzer.json"
+  $analyzerPath = Join-Path $analyzersDir $FamilyName "analyzer.json"
   if (-not (Test-Path $analyzerPath)) {
     throw "No analyzer.json found for family '$FamilyName' at $analyzerPath"
   }
@@ -102,7 +102,7 @@ function Build-SchemaForFamily {
     additionalProperties = $false
   }
 
-  $goldenDir = Join-Path $analyzersDir "$FamilyName\golden"
+  $goldenDir = Join-Path $analyzersDir $FamilyName "golden"
   New-Item -ItemType Directory -Force -Path $goldenDir | Out-Null
   $outPath = Join-Path $goldenDir "expected.schema.json"
   ($schema | ConvertTo-Json -Depth 20) | Set-Content -Path $outPath -Encoding utf8

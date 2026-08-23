@@ -51,7 +51,7 @@ function Get-Sha256 {
 function Build-ManifestForFamily {
   param([string]$FamilyName)
 
-  $goldenDir = Join-Path $analyzersDir "$FamilyName\golden"
+  $goldenDir = Join-Path $analyzersDir $FamilyName "golden"
   if (-not (Test-Path $goldenDir)) {
     throw "No golden/ folder for family '$FamilyName' at $goldenDir"
   }

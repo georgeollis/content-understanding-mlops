@@ -48,7 +48,7 @@ function Get-Rows {
       $envStatus[$envName] = if ($manifest.current) { $manifest.current } else { "_(not deployed)_" }
     }
 
-    $goldenManifestPath = Join-Path $familyDir "golden\manifest.json"
+    $goldenManifestPath = Join-Path $familyDir "golden" "manifest.json"
     $goldenCount = "0"
     if (Test-Path $goldenManifestPath) {
       $goldenManifest = Get-Content $goldenManifestPath -Raw | ConvertFrom-Json

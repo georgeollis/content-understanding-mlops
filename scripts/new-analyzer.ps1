@@ -37,8 +37,8 @@ if ($Family -notmatch "^[a-z0-9-]+$") {
 }
 
 $repoRoot = Resolve-Path (Join-Path $PSScriptRoot "..")
-$templateDir = Join-Path $repoRoot "analyzers\_template"
-$targetDir = Join-Path $repoRoot "analyzers\$Family"
+$templateDir = Join-Path $repoRoot "analyzers" "_template"
+$targetDir = Join-Path $repoRoot "analyzers" $Family
 
 if (Test-Path $targetDir) { throw "analyzers/$Family already exists." }
 
@@ -70,10 +70,10 @@ if (-not $Description) {
   Write-Host "  2. Fill in the remaining '<one-line description...>' placeholders in analyzer.json and manifest.dev.json."
 }
 Write-Host "  3. Add golden/<name>.pdf + golden/<name>.expected.json (at least one pair)."
-Write-Host "  4. pwsh -File .\schemas\build-ground-truth-schema.ps1 -Family $Family"
-Write-Host "  5. pwsh -File .\schemas\build-golden-manifest.ps1 -Family $Family"
-Write-Host "  6. pwsh -File .\scripts\ci-check.ps1"
+Write-Host "  4. pwsh -File ./schemas/build-ground-truth-schema.ps1 -Family $Family"
+Write-Host "  5. pwsh -File ./schemas/build-golden-manifest.ps1 -Family $Family"
+Write-Host "  6. pwsh -File ./scripts/ci-check.ps1"
 Write-Host "  7. git add analyzers/$Family && git commit -m `"Add $Family analyzer`""
-Write-Host "  8. pwsh -File .\scripts\promote-analyzer.ps1 -Environment dev -Family $Family -Notes `"Initial deployment`""
+Write-Host "  8. pwsh -File ./scripts/promote-analyzer.ps1 -Environment dev -Family $Family -Notes `"Initial deployment`""
 Write-Host ""
 Write-Host "Full walkthrough: docs/getting-started.md" -ForegroundColor DarkGray

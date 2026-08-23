@@ -5,7 +5,7 @@ The recommended way to start a new family is to run
 fills in placeholders for you:
 
 ```powershell
-pwsh -File .\scripts\new-analyzer.ps1 -Family <family> -Description "One-line description"
+pwsh -File ./scripts/new-analyzer.ps1 -Family <family> -Description "One-line description"
 ```
 
 Full walkthrough: [`../../docs/getting-started.md`](../../docs/getting-started.md).
@@ -14,7 +14,7 @@ Full walkthrough: [`../../docs/getting-started.md`](../../docs/getting-started.m
 <summary>Manual copy (if you'd rather not use the script)</summary>
 
 ```powershell
-Copy-Item -Recurse analyzers\_template analyzers\<family>
+Copy-Item -Recurse analyzers/_template analyzers/<family>
 ```
 
 Then fill in every placeholder yourself:
@@ -32,12 +32,12 @@ Then fill in every placeholder yourself:
 ## After filling these in
 
 ```powershell
-pwsh -File .\schemas\build-ground-truth-schema.ps1 -Family <family>
-pwsh -File .\schemas\build-golden-manifest.ps1 -Family <family>
-pwsh -File .\scripts\ci-check.ps1
+pwsh -File ./schemas/build-ground-truth-schema.ps1 -Family <family>
+pwsh -File ./schemas/build-golden-manifest.ps1 -Family <family>
+pwsh -File ./scripts/ci-check.ps1
 git add analyzers/<family>
 git commit -m "Add <family> analyzer"
-pwsh -File .\scripts\promote-analyzer.ps1 -Environment dev -Family <family> -Notes "Initial deployment"
+pwsh -File ./scripts/promote-analyzer.ps1 -Environment dev -Family <family> -Notes "Initial deployment"
 ```
 
 </details>
