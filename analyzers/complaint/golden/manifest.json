@@ -5,41 +5,41 @@
   "documents": [
     {
       "name": "COMPLAINT0001",
-      "pdf": "COMPLAINT0001.pdf",
+      "file": "COMPLAINT0001.pdf",
       "expected": "COMPLAINT0001.expected.json",
-      "pdfSha256": "6e6adf589bf4fa6b145848af0af3594214fd7fde446ebca17de9d9eb61c9df15",
+      "fileSha256": "6e6adf589bf4fa6b145848af0af3594214fd7fde446ebca17de9d9eb61c9df15",
       "expectedSha256": "1683b1e20137b696f9dc6d16ad2412c8282bfe7ddd88a1bda1784bf287e3b5cc",
       "groundTruthSource": "generated"
     },
     {
       "name": "COMPLAINT0002",
-      "pdf": "COMPLAINT0002.pdf",
+      "file": "COMPLAINT0002.pdf",
       "expected": "COMPLAINT0002.expected.json",
-      "pdfSha256": "b80f763f1594e15f4930e25581bcf0e9864ac706997f32e7795566eac71084a3",
+      "fileSha256": "b80f763f1594e15f4930e25581bcf0e9864ac706997f32e7795566eac71084a3",
       "expectedSha256": "683383f9445bd576f4b3b99973873ed33ed5c8835475a8ac2a00d459f4ad16a3",
       "groundTruthSource": "generated"
     },
     {
       "name": "COMPLAINT0003",
-      "pdf": "COMPLAINT0003.pdf",
+      "file": "COMPLAINT0003.pdf",
       "expected": "COMPLAINT0003.expected.json",
-      "pdfSha256": "b28f50d678918900ac9d76b2fc05968c2aaae0009e75603850a0736ba45302be",
+      "fileSha256": "b28f50d678918900ac9d76b2fc05968c2aaae0009e75603850a0736ba45302be",
       "expectedSha256": "2eeb1f7246cd104d008f462b134caa2db60ad089d09f32c39f9acc5f05a409cd",
       "groundTruthSource": "generated"
     },
     {
       "name": "COMPLAINT0004",
-      "pdf": "COMPLAINT0004.pdf",
+      "file": "COMPLAINT0004.pdf",
       "expected": "COMPLAINT0004.expected.json",
-      "pdfSha256": "aa590bc1057e18d90889ec705a27eb47cf53be3e80bdae15d20bfa7ce1630c96",
+      "fileSha256": "aa590bc1057e18d90889ec705a27eb47cf53be3e80bdae15d20bfa7ce1630c96",
       "expectedSha256": "1d7323975967070b6c8d4d17685033d864abaa09477d20ae23f3416e45ca06b6",
       "groundTruthSource": "generated"
     },
     {
       "name": "COMPLAINT0005",
-      "pdf": "COMPLAINT0005.pdf",
+      "file": "COMPLAINT0005.pdf",
       "expected": "COMPLAINT0005.expected.json",
-      "pdfSha256": "10209171174bc3bba392766a2fbb6586ce17fc8f58ad44acc7439abd468241d7",
+      "fileSha256": "10209171174bc3bba392766a2fbb6586ce17fc8f58ad44acc7439abd468241d7",
       "expectedSha256": "64b550841f1753ee0995f710e8c31414e3d97d868f5810e7e36f0b169572b5d4",
       "groundTruthSource": "generated"
     }

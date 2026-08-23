@@ -5,7 +5,9 @@
 
 .DESCRIPTION
   Detects silent edits, corruption, or accidental additions/removals in the golden set, and
-  records where each doc came from via a "groundTruthSource" flag.
+  records where each doc came from via a "groundTruthSource" flag. Golden documents are not
+  limited to PDF - any format Content Understanding's document analyzer accepts (DOCX, XLSX,
+  PPTX, images, and more; see scripts/lib/GoldenDocs.ps1) is indexed.
 
 .PARAMETER Family
   Analyzer family folder name, e.g. invoice.
@@ -14,10 +16,10 @@
   Build for every family under analyzers/.
 
 .EXAMPLE
-  .\build-golden-manifest.ps1 -Family invoice
+  ./build-golden-manifest.ps1 -Family invoice
 
 .EXAMPLE
-  .\build-golden-manifest.ps1 -All
+  ./build-golden-manifest.ps1 -All
 
 .NOTES
   Writes: analyzers/<family>/golden/manifest.json
@@ -30,6 +32,8 @@ param(
 $ErrorActionPreference = "Stop"
 $repoRoot = Resolve-Path (Join-Path $PSScriptRoot "..")
 $analyzersDir = Join-Path $repoRoot "analyzers"
+
+. (Join-Path $PSScriptRoot ".." "scripts" "lib" "GoldenDocs.ps1")
 
 if (-not $All -and -not $Family) {
   Write-Error "Provide -Family <name> or -All"
@@ -56,24 +60,24 @@ function Build-ManifestForFamily {
     throw "No golden/ folder for family '$FamilyName' at $goldenDir"
   }
 
-  $pdfs = Get-ChildItem $goldenDir -Filter "*.pdf" | Sort-Object Name
+  $sourceDocs = Get-GoldenDocFiles -GoldenDir $goldenDir
 
   $docs = @()
-  foreach ($pdf in $pdfs) {
-    $base = [System.IO.Path]::GetFileNameWithoutExtension($pdf.Name)
+  foreach ($sourceDoc in $sourceDocs) {
+    $base = [System.IO.Path]::GetFileNameWithoutExtension($sourceDoc.Name)
     $expectedName = "$base.expected.json"
     $expectedPath = Join-Path $goldenDir $expectedName
 
     if (-not (Test-Path $expectedPath)) {
-      Write-Host "  WARNING: $($pdf.Name) has no matching $expectedName - skipping"
+      Write-Host "  WARNING: $($sourceDoc.Name) has no matching $expectedName - skipping"
       continue
     }
 
     $docs += [ordered]@{
       name           = $base
-      pdf            = $pdf.Name
+      file           = $sourceDoc.Name
       expected       = $expectedName
-      pdfSha256      = Get-Sha256 -Path $pdf.FullName
+      fileSha256     = Get-Sha256 -Path $sourceDoc.FullName
       expectedSha256 = Get-Sha256 -Path $expectedPath
       # Manually-verified ground truth (created/checked by a human independent of any
       # generator) is stronger evidence than template-generated ground truth. Defaults to

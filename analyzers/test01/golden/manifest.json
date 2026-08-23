@@ -5,85 +5,83 @@
   "documents": [
     {
       "name": "INV1001",
-      "pdf": "INV1001.pdf",
+      "file": "INV1001.pdf",
       "expected": "INV1001.expected.json",
-      "pdfSha256": "afacf730494ec2f9bd0f3ed3b58176d4ddc62a9a2e0f4199f1705999bc9044dc",
+      "fileSha256": "afacf730494ec2f9bd0f3ed3b58176d4ddc62a9a2e0f4199f1705999bc9044dc",
       "expectedSha256": "a700f0176386c0f760b9af03b799a67e7b0dde8c32a2fb88fefc18d40c18924a",
-      "groundTruthSource": "human-verified"
+      "groundTruthSource": "generated"
     },
     {
       "name": "INV1002",
-      "pdf": "INV1002.pdf",
+      "file": "INV1002.pdf",
       "expected": "INV1002.expected.json",
-      "pdfSha256": "5efbaabd616ddd36c471d7926ee1df57a110d62b844feb946b6f1bc4ceba603f",
+      "fileSha256": "5efbaabd616ddd36c471d7926ee1df57a110d62b844feb946b6f1bc4ceba603f",
       "expectedSha256": "a510ec26e99b1b40f4da849419b20496c1746bc811ed18993c0300413ff78a72",
-      "groundTruthSource": "human-verified"
+      "groundTruthSource": "generated"
     },
     {
       "name": "INV1003",
-      "pdf": "INV1003.pdf",
+      "file": "INV1003.pdf",
       "expected": "INV1003.expected.json",
-      "pdfSha256": "e8b68ad6f2609164154cb870f56771cebd462e9e21fb94aac0b99cc4c3791824",
+      "fileSha256": "e8b68ad6f2609164154cb870f56771cebd462e9e21fb94aac0b99cc4c3791824",
       "expectedSha256": "2b82539dc5c40238448042699489995e929d30e61137d039998b407cfbb79179",
-      "groundTruthSource": "human-verified"
+      "groundTruthSource": "generated"
     },
     {
       "name": "INV1004",
-      "pdf": "INV1004.pdf",
+      "file": "INV1004.pdf",
       "expected": "INV1004.expected.json",
-      "pdfSha256": "8f688e6bc73b2d321e215b3824e74e848c3004612d47dbfb5d28779442590333",
+      "fileSha256": "8f688e6bc73b2d321e215b3824e74e848c3004612d47dbfb5d28779442590333",
       "expectedSha256": "e466ca9084ecad5ed4dde518557e5a4280bea7f0939a6ca3cb64dcb2a0b302db",
-      "groundTruthSource": "human-verified"
+      "groundTruthSource": "generated"
     },
     {
       "name": "INV1005",
-      "pdf": "INV1005.pdf",
+      "file": "INV1005.pdf",
       "expected": "INV1005.expected.json",
-      "pdfSha256": "a368b51d4309b0e764dcb944d3c5253309d845ffbcd3a120c6be32f553f81447",
+      "fileSha256": "a368b51d4309b0e764dcb944d3c5253309d845ffbcd3a120c6be32f553f81447",
       "expectedSha256": "733cde76bb16bfe1c43158ab603c2195bcc38a056d7352e19505927d842fc7d3",
-      "groundTruthSource": "human-verified"
+      "groundTruthSource": "generated"
     },
     {
       "name": "INV1006",
-      "pdf": "INV1006.pdf",
+      "file": "INV1006.pdf",
       "expected": "INV1006.expected.json",
-      "pdfSha256": "85772b887ee1feb2bdad78087cda8143487cf03430f28f5c243aaf6c0d74ae4c",
+      "fileSha256": "85772b887ee1feb2bdad78087cda8143487cf03430f28f5c243aaf6c0d74ae4c",
       "expectedSha256": "f31fd26cea581db7b75f657c2034beab27f4cf4bd36eceecf7c8d5f36bf86d44",
-      "groundTruthSource": "human-verified"
+      "groundTruthSource": "generated"
     },
     {
       "name": "INV1007",
-      "pdf": "INV1007.pdf",
+      "file": "INV1007.pdf",
       "expected": "INV1007.expected.json",
-      "pdfSha256": "91dbe9a007959fbdf4ea3dea6ba2d731a634e537aac9aedf4d7d34f3c6f36240",
+      "fileSha256": "91dbe9a007959fbdf4ea3dea6ba2d731a634e537aac9aedf4d7d34f3c6f36240",
       "expectedSha256": "e678b89db9648c2c4313c77a4146e692ecae4b7c33883adf91809a5dab9a8fc4",
-      "groundTruthSource": "human-verified"
+      "groundTruthSource": "generated"
     },
     {
       "name": "INV1008",
-      "pdf": "INV1008.pdf",
+      "file": "INV1008.pdf",
       "expected": "INV1008.expected.json",
-      "pdfSha256": "66be56ebce92f8d561938870195e40dbb48a9ca423759b566acb6d3d027953ef",
+      "fileSha256": "66be56ebce92f8d561938870195e40dbb48a9ca423759b566acb6d3d027953ef",
       "expectedSha256": "baad2bf64ef691ac6b954c685d6a4c9671c166e6043f01f4ff3044bc41bf533a",
-      "groundTruthSource": "human-verified"
+      "groundTruthSource": "generated"
     },
     {
       "name": "INV1009",
-      "pdf": "INV1009.pdf",
+      "file": "INV1009.pdf",
       "expected": "INV1009.expected.json",
-      "pdfSha256": "09b087e50f7acfd7a61c7144d8270945a0b97ab48b40656acfcb474868e1518b",
+      "fileSha256": "09b087e50f7acfd7a61c7144d8270945a0b97ab48b40656acfcb474868e1518b",
       "expectedSha256": "682c8cbabf272513d5f8345623f84a0d1f52bd0e27c2c7938a05bc1823dc3467",
-      "groundTruthSource": "human-verified"
+      "groundTruthSource": "generated"
     },
     {
       "name": "INV1010",
-      "pdf": "INV1010.pdf",
+      "file": "INV1010.pdf",
       "expected": "INV1010.expected.json",
-      "pdfSha256": "0867097b1ee95b4df644d03d4ac1b5e02c60b6e65338e39a5ae2d8a40cec6e35",
+      "fileSha256": "0867097b1ee95b4df644d03d4ac1b5e02c60b6e65338e39a5ae2d8a40cec6e35",
       "expectedSha256": "7bfaa73c486906ee674dc08d73810cf2fbdc9c1f4af4149f781c25ced472a78e",
-      "groundTruthSource": "human-verified"
+      "groundTruthSource": "generated"
     }
   ]
 }
-
-

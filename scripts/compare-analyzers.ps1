@@ -4,7 +4,7 @@
   and compares extracted fields against ground truth (and against each other).
 
 .DESCRIPTION
-  For every "<name>.pdf" + "<name>.expected.json" pair found in -GoldenDir, this script:
+  For every "<name>.<ext>" + "<name>.expected.json" pair found in -GoldenDir, this script:
     1. Submits every (document, analyzerId) combination to
        POST .../analyzers/{id}:analyzeBinary up front, back-to-back, then polls all the
        resulting operations concurrently until each is done - rather than submitting one
@@ -46,7 +46,9 @@
   also supplied explicitly.
 
 .PARAMETER GoldenDir
-  Folder containing "<name>.pdf" + "<name>.expected.json" pairs. If omitted, resolved from
+  Folder containing "<name>.<ext>" + "<name>.expected.json" pairs (any format Content
+  Understanding's document analyzer accepts - see scripts/lib/GoldenDocs.ps1, not just PDF).
+  If omitted, resolved from
   -Family (analyzers/<Family>/golden); if neither is supplied, the script tries to infer the
   family from the first -AnalyzerIds value (e.g. "invoicev3" -> family "invoice") and errors
   out with the list of available families if it can't.
@@ -96,6 +98,8 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
+
+. (Join-Path $PSScriptRoot "lib" "GoldenDocs.ps1")
 
 # ---------- Resolve endpoint ----------
 if (-not $Environment -and -not $Endpoint) {
@@ -263,7 +267,8 @@ function Start-AnalyzeBinary {
   param([string]$AnalyzerId, [string]$FilePath)
 
   $bytes = [System.IO.File]::ReadAllBytes($FilePath)
-  $headers = @{ Authorization = "Bearer $token"; "Content-Type" = "application/pdf" }
+  $contentType = Get-ContentTypeForExtension -Extension ([System.IO.Path]::GetExtension($FilePath))
+  $headers = @{ Authorization = "******"; "Content-Type" = $contentType }
   $uri = "$endpointTrimmed/contentunderstanding/analyzers/$AnalyzerId`:analyzeBinary?api-version=$ApiVersion"
 
   $response = Invoke-WithRetry { Invoke-WebRequest -Uri $uri -Headers $headers -Method POST -Body $bytes }
@@ -277,21 +282,23 @@ function Get-AnalyzeOperation {
 }
 
 # ---------- Discover golden set (only docs with a matching expected.json are analyzed) ----------
+# Not limited to PDF - any format Content Understanding's document analyzer accepts is picked up
+# (see scripts/lib/GoldenDocs.ps1 and docs/mlops-pipeline.md's "Supported golden document formats").
 if (-not (Test-Path $GoldenDir)) { throw "Golden data folder not found: $GoldenDir" }
-$goldenPdfs = Get-ChildItem $GoldenDir -Filter "*.pdf" | Sort-Object Name
-if ($goldenPdfs.Count -eq 0) { throw "No PDF files found in golden folder: $GoldenDir" }
+$goldenDocs = Get-GoldenDocFiles -GoldenDir $GoldenDir
+if ($goldenDocs.Count -eq 0) { throw "No supported document files found in golden folder: $GoldenDir" }
 
 $documents = [System.Collections.Generic.List[object]]::new()
-foreach ($pdf in $goldenPdfs) {
-  $baseName = [System.IO.Path]::GetFileNameWithoutExtension($pdf.Name)
+foreach ($doc in $goldenDocs) {
+  $baseName = [System.IO.Path]::GetFileNameWithoutExtension($doc.Name)
   $expectedPath = Join-Path $GoldenDir "$baseName.expected.json"
   if (-not (Test-Path $expectedPath)) {
-    Write-Host "Skipping $($pdf.Name) - no matching $baseName.expected.json" -ForegroundColor Yellow
+    Write-Host "Skipping $($doc.Name) - no matching $baseName.expected.json" -ForegroundColor Yellow
     continue
   }
   $documents.Add([pscustomobject]@{
     Name     = $baseName
-    PdfPath  = $pdf.FullName
+    PdfPath  = $doc.FullName
     Expected = (Get-Content $expectedPath -Raw | ConvertFrom-Json)
   })
 }

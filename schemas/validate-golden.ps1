@@ -24,16 +24,16 @@
   Validate every family under analyzers/.
 
 .EXAMPLE
-  .\validate-golden.ps1 -Family invoice
+  ./validate-golden.ps1 -Family invoice
 
 .EXAMPLE
-  .\validate-golden.ps1 -All
+  ./validate-golden.ps1 -All
 
 .NOTES
   Exit code is non-zero if any check fails (usable as a CI gate / pre-commit hook).
   If you've intentionally added/removed/edited golden docs, re-run:
-    .\build-golden-manifest.ps1 -Family <family>
-    .\build-ground-truth-schema.ps1 -Family <family>   (only needed if the analyzer's fields changed)
+    ./build-golden-manifest.ps1 -Family <family>
+    ./build-ground-truth-schema.ps1 -Family <family>   (only needed if the analyzer's fields changed)
 #>
 param(
   [string]$Family,
@@ -43,6 +43,8 @@ param(
 $ErrorActionPreference = "Stop"
 $repoRoot = Resolve-Path (Join-Path $PSScriptRoot "..")
 $analyzersDir = Join-Path $repoRoot "analyzers"
+
+. (Join-Path $PSScriptRoot ".." "scripts" "lib" "GoldenDocs.ps1")
 
 if (-not $All -and -not $Family) {
   Write-Error "Provide -Family <name> or -All"
@@ -135,26 +137,27 @@ function Test-GoldenFamily {
   $gtSchema = Get-Content $schemaPath -Raw | ConvertFrom-Json
 
   $manifestNames = @($manifest.documents | ForEach-Object { $_.name })
-  $diskNames = @(Get-ChildItem $goldenDir -Filter "*.pdf" | ForEach-Object { [System.IO.Path]::GetFileNameWithoutExtension($_.Name) })
+  $diskDocs = Get-GoldenDocFiles -GoldenDir $goldenDir
+  $diskNames = @($diskDocs | ForEach-Object { [System.IO.Path]::GetFileNameWithoutExtension($_.Name) })
 
   foreach ($missing in ($diskNames | Where-Object { $manifestNames -notcontains $_ })) {
     $errors += "${missing}: on disk but not in manifest.json - re-run build-golden-manifest.ps1 -Family $FamilyName"
   }
   foreach ($stale in ($manifestNames | Where-Object { $diskNames -notcontains $_ })) {
-    $errors += "${stale}: in manifest.json but PDF missing on disk"
+    $errors += "${stale}: in manifest.json but source document missing on disk"
   }
 
   foreach ($doc in $manifest.documents) {
     $name = $doc.name
-    $pdfPath = Join-Path $goldenDir $doc.pdf
+    $filePath = Join-Path $goldenDir $doc.file
     $expectedPath = Join-Path $goldenDir $doc.expected
 
-    if (-not (Test-Path $pdfPath)) { $errors += "${name}: $($doc.pdf) not found"; continue }
+    if (-not (Test-Path $filePath)) { $errors += "${name}: $($doc.file) not found"; continue }
     if (-not (Test-Path $expectedPath)) { $errors += "${name}: $($doc.expected) not found"; continue }
 
-    $actualPdfSha = Get-Sha256 -Path $pdfPath
-    if ($actualPdfSha -ne $doc.pdfSha256) {
-      $errors += "${name}: $($doc.pdf) checksum mismatch (file changed since manifest was built)"
+    $actualFileSha = Get-Sha256 -Path $filePath
+    if ($actualFileSha -ne $doc.fileSha256) {
+      $errors += "${name}: $($doc.file) checksum mismatch (file changed since manifest was built)"
     }
 
     $actualExpectedSha = Get-Sha256 -Path $expectedPath
@@ -168,7 +171,7 @@ function Test-GoldenFamily {
     $schemaFieldNames = @($gtSchema.properties.PSObject.Properties.Name)
 
     if ($actualFieldNames -contains "_bootstrap") {
-      $errors += "${name}: $($doc.expected) still has an unreviewed '_bootstrap' marker - review the values against the PDF, then delete that key"
+      $errors += "${name}: $($doc.expected) still has an unreviewed '_bootstrap' marker - review the values against the source document, then delete that key"
     }
 
     foreach ($missingField in ($schemaFieldNames | Where-Object { $actualFieldNames -notcontains $_ })) {

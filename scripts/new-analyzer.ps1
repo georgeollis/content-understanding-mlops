@@ -69,7 +69,7 @@ Write-Host "     (design it in Foundry Studio and export, or hand-write against 
 if (-not $Description) {
   Write-Host "  2. Fill in the remaining '<one-line description...>' placeholders in analyzer.json and manifest.dev.json."
 }
-Write-Host "  3. Add golden/<name>.pdf + golden/<name>.expected.json (at least one pair)."
+Write-Host "  3. Add golden/<name>.<ext> + golden/<name>.expected.json (at least one pair; <ext> can be pdf, docx, xlsx, pptx, png, and more - see scripts/lib/GoldenDocs.ps1)."
 Write-Host "  4. pwsh -File ./schemas/build-ground-truth-schema.ps1 -Family $Family"
 Write-Host "  5. pwsh -File ./schemas/build-golden-manifest.ps1 -Family $Family"
 Write-Host "  6. pwsh -File ./scripts/ci-check.ps1"

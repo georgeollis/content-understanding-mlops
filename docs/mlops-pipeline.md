@@ -58,7 +58,28 @@ Understanding GA REST spec, api-version `2025-11-01`). No deploy occurs at this 
 | Check | Script | Validates |
 |---|---|---|
 | Analyzer schema | `validate-analyzers.ps1` | `analyzer.json` conforms to `analyzer.schema.json` (field types, required properties, `$ref`/`baseAnalyzerId` pattern constraints) |
-| Golden set integrity | `validate-golden.ps1` | Every `<name>.pdf` in `golden/` has a matching `<name>.expected.json`; each `expected.json` conforms to `expected.schema.json` (derived from `analyzer.json`'s `fieldSchema` via `build-ground-truth-schema.ps1`, so every field currently in `fieldSchema` is required and no undefined field is present); blob checksums match `golden/manifest.json` (`build-golden-manifest.ps1`) |
+| Golden set integrity | `validate-golden.ps1` | Every golden document in `golden/` (any [supported format](#supported-golden-document-formats)) has a matching `<name>.expected.json`; each `expected.json` conforms to `expected.schema.json` (derived from `analyzer.json`'s `fieldSchema` via `build-ground-truth-schema.ps1`, so every field currently in `fieldSchema` is required and no undefined field is present); blob checksums match `golden/manifest.json` (`build-golden-manifest.ps1`) |
+
+### Supported golden document formats
+
+Golden documents are not limited to PDF. Any file type Content Understanding's document
+analyzer accepts can be dropped straight into a family's `golden/` folder, and
+`bootstrap-golden.ps1`/`compare-analyzers.ps1`/`build-golden-manifest.ps1` will pick the right
+`Content-Type` automatically (see `scripts/lib/GoldenDocs.ps1` for the canonical extension →
+MIME-type mapping):
+
+| Category | Extensions |
+|---|---|
+| Images | `.pdf`, `.tiff`/`.tif`, `.jpg`/`.jpeg`/`.jpe`, `.png`, `.bmp`, `.heif`, `.heic` |
+| Office (OOXML + legacy) | `.docx`/`.docm`/`.doc`, `.xlsx`/`.xlsm`/`.xls`, `.pptx`/`.pptm`/`.ppt` |
+| OpenDocument | `.odt`, `.ods`, `.odp` |
+| eBook | `.epub` |
+| Text/markup | `.txt`, `.html`, `.md`, `.rtf`, `.xml`, `.json`, `.csv`, `.tsv`, `.kml`, `.eml`, `.msg` |
+
+A single family's golden set can mix formats freely (e.g. a scanned `.pdf` invoice next to a
+native `.docx` one) — nothing in the tooling assumes a single format per family. Audio/video
+formats are also supported by Content Understanding in general, but are out of scope for this
+document-analyzer-focused golden-set tooling.
 
 ### Bootstrapping and maintaining the golden set
 
@@ -68,10 +89,10 @@ silently desynchronizes every existing `expected.json` unless something forces t
 
 **Bootstrapping a new golden set** — `bootstrap-golden.ps1 -Environment <env> -Family
 <family> -AnalyzerId <id>` calls the already-deployed `analyzerId`'s own
-`analyzeBinary` against every `golden/*.pdf` missing an `expected.json`, and writes its
+`analyzeBinary` against every golden document missing an `expected.json`, and writes its
 extraction as the starting file (prefixed with an `"_bootstrap"` marker key). This requires at
 least one prior promotion to exist — the normal order is: author → promote v1 → bootstrap
-against v1 → review/correct each file by hand against the source PDF → delete `"_bootstrap"`.
+against v1 → review/correct each file by hand against the source document → delete `"_bootstrap"`.
 `validate-golden.ps1` fails on any file that still has `"_bootstrap"` present, so an unreviewed
 bootstrap can't silently pass CI. `golden/manifest.json`'s per-document `groundTruthSource`
 field (`build-golden-manifest.ps1`) stays `"generated"` until you change it to
@@ -83,7 +104,7 @@ field (`build-golden-manifest.ps1`) stays `"generated"` until you change it to
 pwsh -File ./schemas/build-ground-truth-schema.ps1 -Family <family>   # regenerate expected.schema.json
 pwsh -File ./schemas/sync-golden-fields.ps1 -Family <family>          # patch every expected.json
 ```
-`sync-golden-fields.ps1` adds a placeholder (`"<<FILL IN FROM PDF>>"`) for any newly required
+`sync-golden-fields.ps1` adds a placeholder (`"<<FILL IN FROM SOURCE DOCUMENT>>"`) for any newly required
 top-level field — deliberately the wrong JSON type for non-string fields, so
 `validate-golden.ps1` keeps failing on that document until a real value replaces it — and warns
 (without deleting) about any top-level field no longer defined in the schema. It only patches
@@ -129,7 +150,7 @@ any other environment's endpoint.
 
 `compare-analyzers.ps1 -Environment <env> -Family <family> -AnalyzerIds <id1>[, <id2>, ...]`
 
-For every `<name>.pdf` + `<name>.expected.json` pair under `analyzers/<family>/golden/`:
+For every golden document + `<name>.expected.json` pair under `analyzers/<family>/golden/`:
 
 1. Submits every `(document, analyzerId)` combination to
    `POST /analyzers/{id}:analyzeBinary?api-version=2025-11-01` up front (capped at
@@ -292,7 +313,7 @@ labeled dataset itself is updated (the `prefix` path is assumed identical across
 |---|---|
 | `analyzers/<family>/analyzer.json` | `PUT /analyzers/{id}` request body — authored by hand or exported from Studio |
 | `analyzers/<family>/manifest.<env>.json` | Per-environment promotion history + `current` analyzerId |
-| `analyzers/<family>/golden/` | `<name>.pdf` + `<name>.expected.json` pairs, `expected.schema.json`, checksummed `manifest.json` |
+| `analyzers/<family>/golden/` | Golden documents (`<name>.<ext>`, any [supported format](#supported-golden-document-formats)) + `<name>.expected.json` pairs, `expected.schema.json`, checksummed `manifest.json` |
 | `analyzers/<family>/results/` | Per-run comparison reports (per environment) |
 | `environments.json` | Environment name → `{ endpoint, labeledDataContainerUrl }` |
 
@@ -372,7 +393,7 @@ Key points:
 - **Failure mode matches local usage** — a failing check (e.g. stale `analyzers/README.md`)
   produces the same console output as running `ci-check.ps1` locally, including the fix
   instructions (e.g. `git diff analyzers/README.md`).
-- **Checks out Git LFS content** (`lfs: true` on the checkout step). Golden-set `*.pdf`
+- **Checks out Git LFS content** (`lfs: true` on the checkout step). Golden-set document
   fixtures are stored via Git LFS (see [`.gitattributes`](../.gitattributes)); without this,
   `actions/checkout@v4` leaves LFS pointer stubs in place of real file bytes, which fails
   `ci-check.ps1`'s golden dataset checksum validation.
@@ -386,7 +407,7 @@ Key points:
   on different machines/runners (depending on each git client's `core.autocrlf` setting), which
   made the "is the family index stale" check produce false positives when the file committed on
   one OS was re-validated on another. This rule is deliberately narrow — a blanket `* text=auto`
-  would also renormalize the golden-set `.pdf`/`.expected.json` fixtures and break their manifest
+  would also renormalize the golden-set document/`.expected.json` fixtures and break their manifest
   checksums.
 
 To require this before merge, enable it as a required status check under the repository's

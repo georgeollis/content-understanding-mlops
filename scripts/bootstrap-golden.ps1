@@ -1,21 +1,22 @@
 <#
 .SYNOPSIS
   Bootstraps starting "<name>.expected.json" ground-truth files for a golden set by running a
-  live analyzerId against each PDF and using its own extraction as a draft.
+  live analyzerId against each source document and using its own extraction as a draft.
 
 .DESCRIPTION
   Hand-writing expected.json from scratch for every golden document doesn't scale, especially
   once a family has more than a handful of fields or documents. This script instead calls
   POST /analyzers/{id}:analyzeBinary against an already-deployed analyzerId (e.g. right after
-  the first promote-analyzer.ps1 run) for every "<name>.pdf" in the golden folder that doesn't
-  already have a "<name>.expected.json", and writes the analyzer's own output as the starting
-  file.
+  the first promote-analyzer.ps1 run) for every source document (any format Content
+  Understanding's document analyzer accepts - PDF, DOCX, XLSX, PPTX, images, and more; see
+  scripts/lib/GoldenDocs.ps1) in the golden folder that doesn't already have a
+  "<name>.expected.json", and writes the analyzer's own output as the starting file.
 
   This is NOT a substitute for review: the analyzer's output can be wrong, and expected.json is
   the ground truth compare-analyzers.ps1 scores against. Every file this script writes has
   "_bootstrap": true injected at the top (removed once you've reviewed it) as a reminder, and
   golden/manifest.json's groundTruthSource stays "generated" (see build-golden-manifest.ps1)
-  until you change it to "human-verified" for a document you've checked against the source PDF.
+  until you change it to "human-verified" for a document you've checked against the source file.
 
   Existing expected.json files are never overwritten unless -Force is passed.
 
@@ -35,18 +36,18 @@
 
 .PARAMETER Force
   Overwrite existing expected.json files too (re-bootstraps everything from the live analyzer's
-  current output). Without this, only PDFs missing an expected.json are processed.
+  current output). Without this, only documents missing an expected.json are processed.
 
 .PARAMETER ApiVersion
   Content Understanding API version. Defaults to the current GA version.
 
 .EXAMPLE
-  # After promoting invoicev1 for the first time, bootstrap ground truth for any golden PDFs
-  # that don't have one yet:
-  .\bootstrap-golden.ps1 -Environment dev -Family invoice -AnalyzerId invoicev1
+  # After promoting invoicev1 for the first time, bootstrap ground truth for any golden
+  # documents that don't have one yet:
+  ./bootstrap-golden.ps1 -Environment dev -Family invoice -AnalyzerId invoicev1
 
 .NOTES
-  Review every generated file against its source PDF before trusting it - see
+  Review every generated file against its source document before trusting it - see
   docs/mlops-pipeline.md#bootstrapping-and-maintaining-the-golden-set.
 #>
 param(
@@ -66,6 +67,8 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
+
+. (Join-Path $PSScriptRoot "lib" "GoldenDocs.ps1")
 
 $repoRoot = Resolve-Path (Join-Path $PSScriptRoot "..")
 $goldenDir = Join-Path $repoRoot "analyzers" $Family "golden"
@@ -128,7 +131,8 @@ function Invoke-AnalyzeBinary {
   param([string]$FilePath)
 
   $bytes = [System.IO.File]::ReadAllBytes($FilePath)
-  $headers = @{ Authorization = "Bearer $token"; "Content-Type" = "application/pdf" }
+  $contentType = Get-ContentTypeForExtension -Extension ([System.IO.Path]::GetExtension($FilePath))
+  $headers = @{ Authorization = "******"; "Content-Type" = $contentType }
   $uri = "$endpointTrimmed/contentunderstanding/analyzers/$AnalyzerId`:analyzeBinary?api-version=$ApiVersion"
 
   $response = Invoke-WebRequest -Uri $uri -Headers $headers -Method POST -Body $bytes
@@ -148,13 +152,13 @@ function Invoke-AnalyzeBinary {
 }
 
 # ---------- Bootstrap ----------
-$pdfs = Get-ChildItem $goldenDir -Filter "*.pdf" | Sort-Object Name
-if ($pdfs.Count -eq 0) { throw "No PDF files found in $goldenDir" }
+$docs = Get-GoldenDocFiles -GoldenDir $goldenDir
+if ($docs.Count -eq 0) { throw "No supported document files found in $goldenDir" }
 
 $written = 0
 $skipped = 0
-foreach ($pdf in $pdfs) {
-  $baseName = [System.IO.Path]::GetFileNameWithoutExtension($pdf.Name)
+foreach ($doc in $docs) {
+  $baseName = [System.IO.Path]::GetFileNameWithoutExtension($doc.Name)
   $expectedPath = Join-Path $goldenDir "$baseName.expected.json"
 
   if ((Test-Path $expectedPath) -and -not $Force) {
@@ -164,11 +168,11 @@ foreach ($pdf in $pdfs) {
   }
 
   Write-Host "Bootstrapping $baseName from '$AnalyzerId'..." -NoNewline
-  $flat = Invoke-AnalyzeBinary -FilePath $pdf.FullName
+  $flat = Invoke-AnalyzeBinary -FilePath $doc.FullName
 
   # Ordered so "_bootstrap" is impossible to miss at the top of the file, and is the first
   # thing a reviewer should delete once they've verified this document's values.
-  $draft = [ordered]@{ _bootstrap = "GENERATED from analyzerId '$AnalyzerId' on $(Get-Date -AsUTC -Format 'o') - review every value against the source PDF, then delete this key." }
+  $draft = [ordered]@{ _bootstrap = "GENERATED from analyzerId '$AnalyzerId' on $(Get-Date -AsUTC -Format 'o') - review every value against the source document, then delete this key." }
   foreach ($k in $flat.Keys) { $draft[$k] = $flat[$k] }
 
   $draft | ConvertTo-Json -Depth 20 | Set-Content -Path $expectedPath -Encoding utf8
@@ -180,7 +184,7 @@ Write-Host ""
 Write-Host "Bootstrapped $written file(s), skipped $skipped existing file(s)." -ForegroundColor Cyan
 if ($written -gt 0) {
   Write-Host "Next:" -ForegroundColor Yellow
-  Write-Host "  1. Open each new <name>.pdf alongside its expected.json and correct any wrong values."
+  Write-Host "  1. Open each new <name>.<ext> alongside its expected.json and correct any wrong values."
   Write-Host "  2. Delete the '_bootstrap' key once a document has been reviewed."
   Write-Host "  3. pwsh -File ./schemas/build-golden-manifest.ps1 -Family $Family"
   Write-Host "  4. Mark reviewed documents 'human-verified' in golden/manifest.json's groundTruthSource field."

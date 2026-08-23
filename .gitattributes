@@ -1,4 +1,11 @@
 *.pdf filter=lfs diff=lfs merge=lfs -text
+*.docx filter=lfs diff=lfs merge=lfs -text
+*.xlsx filter=lfs diff=lfs merge=lfs -text
+*.pptx filter=lfs diff=lfs merge=lfs -text
+*.png filter=lfs diff=lfs merge=lfs -text
+*.jpg filter=lfs diff=lfs merge=lfs -text
+*.jpeg filter=lfs diff=lfs merge=lfs -text
+*.tiff filter=lfs diff=lfs merge=lfs -text
 
 # Golden-set fixtures (analyzers/*/golden/*) are byte-checksummed against the manifest recorded
 # by schemas/bootstrap-golden.ps1. Mark them binary/no-conversion so git never rewrites their

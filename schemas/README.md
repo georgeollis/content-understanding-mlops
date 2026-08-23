@@ -57,8 +57,10 @@ All PowerShell scripts, runnable per-family or with `-All`:
   wrong-typed for non-string fields, so `validate-golden.ps1` keeps failing until a human fills
   them in) and warns about fields no longer in the schema. Top-level fields only.
 - **`build-golden-manifest.ps1`** — writes `analyzers/<family>/golden/manifest.json`: a sha256
-  checksum of every `*.pdf`/`*.expected.json` pair in the golden set, plus a `groundTruthSource`
-  flag (`generated` vs. `human-verified`). Re-run it after adding/removing/editing golden docs.
+  checksum of every source document (any supported format - PDF, DOCX, XLSX, PPTX, images, and
+  more; see `scripts/lib/GoldenDocs.ps1`) / `*.expected.json` pair in the golden set, plus a
+  `groundTruthSource` flag (`generated` vs. `human-verified`). Re-run it after adding/removing/
+  editing golden docs.
 - **`validate-golden.ps1`** — the CI-facing check: confirms every golden doc matches its checksum
   in `manifest.json` (catches silent edits/corruption/stale manifests), every `expected.json`
   conforms to `expected.schema.json` (catches typo'd/renamed fields that would otherwise silently
