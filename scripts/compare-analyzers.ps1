@@ -5,13 +5,18 @@
 
 .DESCRIPTION
   For every "<name>.pdf" + "<name>.expected.json" pair found in -GoldenDir, this script:
-    1. Submits the PDF to each analyzer in -AnalyzerIds via POST .../analyzers/{id}:analyzeBinary
-    2. Polls the operation until the result is ready
-    3. Flattens the extracted ContentField result into plain values (and, if the analyzer's
+    1. Submits every (document, analyzerId) combination to
+       POST .../analyzers/{id}:analyzeBinary up front, back-to-back, then polls all the
+       resulting operations concurrently until each is done - rather than submitting one
+       document/analyzer pair and waiting for it to finish before starting the next. Azure
+       processes each analyzeBinary call independently server-side, so this turns total wall
+       time into roughly "slowest single document" instead of "sum of every document x every
+       analyzer".
+    2. Flattens the extracted ContentField result into plain values (and, if the analyzer's
        config has "estimateFieldSourceAndConfidence": true, per-field confidence scores 0-1)
-    4. Compares each field against the expected.json ground truth (numeric tolerance, case/whitespace
+    3. Compares each field against the expected.json ground truth (numeric tolerance, case/whitespace
        insensitive string matching, and item-by-item comparison for array fields like LineItems)
-    5. Prints a per-document, per-analyzer match report (including confidence, when available)
+    4. Prints a per-document, per-analyzer match report (including confidence, when available)
        plus an overall accuracy summary with average confidence, so you can see
        regressions/improvements when comparing two versions of the same analyzer (e.g.
        invoicev1 vs invoicev2).
@@ -209,7 +214,7 @@ function Test-ValueMatch {
   return (Normalize-StringValue $expected) -eq (Normalize-StringValue $actual)
 }
 
-function Invoke-AnalyzeBinary {
+function Start-AnalyzeBinary {
   param([string]$AnalyzerId, [string]$FilePath)
 
   $bytes = [System.IO.File]::ReadAllBytes($FilePath)
@@ -217,32 +222,81 @@ function Invoke-AnalyzeBinary {
   $uri = "$endpointTrimmed/contentunderstanding/analyzers/$AnalyzerId`:analyzeBinary?api-version=$ApiVersion"
 
   $response = Invoke-WebRequest -Uri $uri -Headers $headers -Method POST -Body $bytes
-  $opLocation = $response.Headers['Operation-Location'][0]
-
-  $getHeaders = @{ Authorization = "Bearer $token" }
-  do {
-    Start-Sleep -Seconds 2
-    $op = Invoke-RestMethod -Uri $opLocation -Headers $getHeaders -Method GET
-  } while ($op.status -eq "NotStarted" -or $op.status -eq "Running")
-
-  if ($op.status -ne "Succeeded") {
-    throw "Analyze failed for '$AnalyzerId' on '$FilePath': $($op.error | ConvertTo-Json -Depth 5)"
-  }
-
-  $fieldsRaw = $op.result.contents[0].fields
-  return [ordered]@{
-    values      = Get-FlatFields $fieldsRaw
-    confidences = Get-FlatConfidences $fieldsRaw
-  }
+  return $response.Headers['Operation-Location'][0]
 }
 
-# ---------- Discover golden set ----------
+function Get-AnalyzeOperation {
+  param([string]$OperationLocation)
+  $headers = @{ Authorization = "Bearer $token" }
+  return Invoke-RestMethod -Uri $OperationLocation -Headers $headers -Method GET
+}
+
+# ---------- Discover golden set (only docs with a matching expected.json are analyzed) ----------
 if (-not (Test-Path $GoldenDir)) { throw "Golden data folder not found: $GoldenDir" }
 $goldenPdfs = Get-ChildItem $GoldenDir -Filter "*.pdf" | Sort-Object Name
 if ($goldenPdfs.Count -eq 0) { throw "No PDF files found in golden folder: $GoldenDir" }
 
-Write-Host "Golden set: $($goldenPdfs.Count) document(s) in $GoldenDir" -ForegroundColor Cyan
+$documents = [System.Collections.Generic.List[object]]::new()
+foreach ($pdf in $goldenPdfs) {
+  $baseName = [System.IO.Path]::GetFileNameWithoutExtension($pdf.Name)
+  $expectedPath = Join-Path $GoldenDir "$baseName.expected.json"
+  if (-not (Test-Path $expectedPath)) {
+    Write-Host "Skipping $($pdf.Name) - no matching $baseName.expected.json" -ForegroundColor Yellow
+    continue
+  }
+  $documents.Add([pscustomobject]@{
+    Name     = $baseName
+    PdfPath  = $pdf.FullName
+    Expected = (Get-Content $expectedPath -Raw | ConvertFrom-Json)
+  })
+}
+if ($documents.Count -eq 0) { throw "No documents with a matching expected.json found in $GoldenDir" }
+
+Write-Host "Golden set: $($documents.Count) document(s) in $GoldenDir" -ForegroundColor Cyan
 Write-Host "Analyzers under test: $($AnalyzerIds -join ', ')" -ForegroundColor Cyan
+Write-Host ""
+
+# ---------- Phase 1: submit every (document, analyzerId) analysis up front ----------
+# Submitting everything before waiting on any of it lets Azure process all these analyses
+# concurrently server-side, instead of paying each operation's full wall-clock time one at a
+# time. $jobs.Result is filled in during phase 2 below.
+$jobs = [System.Collections.Generic.List[object]]::new()
+$totalJobs = $documents.Count * $AnalyzerIds.Count
+Write-Host "Submitting $totalJobs analyze request(s)..." -ForegroundColor Cyan
+foreach ($doc in $documents) {
+  foreach ($analyzerId in $AnalyzerIds) {
+    $opLocation = Start-AnalyzeBinary -AnalyzerId $analyzerId -FilePath $doc.PdfPath
+    $jobs.Add([pscustomobject]@{
+      Document          = $doc.Name
+      AnalyzerId        = $analyzerId
+      OperationLocation = $opLocation
+      Status            = "Running"
+      Result            = $null
+    })
+  }
+}
+Write-Host "Submitted. Polling $totalJobs operation(s) until all are done..." -ForegroundColor Cyan
+
+# ---------- Phase 2: poll every outstanding operation until all are done ----------
+while (@($jobs | Where-Object { $_.Status -in @("NotStarted", "Running") }).Count -gt 0) {
+  Start-Sleep -Seconds 2
+  foreach ($job in @($jobs | Where-Object { $_.Status -in @("NotStarted", "Running") })) {
+    $op = Get-AnalyzeOperation -OperationLocation $job.OperationLocation
+    $job.Status = $op.status
+    if ($op.status -eq "Succeeded") {
+      $fieldsRaw = $op.result.contents[0].fields
+      $job.Result = [ordered]@{
+        values      = Get-FlatFields $fieldsRaw
+        confidences = Get-FlatConfidences $fieldsRaw
+      }
+    } elseif ($op.status -eq "Failed") {
+      throw "Analyze failed for '$($job.AnalyzerId)' on '$($job.Document)': $($op.error | ConvertTo-Json -Depth 5)"
+    }
+  }
+  $doneCount = @($jobs | Where-Object { $_.Status -eq "Succeeded" }).Count
+  Write-Host "  $doneCount/$totalJobs complete" -ForegroundColor DarkGray
+}
+Write-Host "All analyses complete." -ForegroundColor Green
 Write-Host ""
 
 # accuracy[analyzerId] = @{ matched = n; total = n; confSum = n; confCount = n }
@@ -252,23 +306,17 @@ foreach ($id in $AnalyzerIds) { $accuracy[$id] = @{ matched = 0; total = 0; conf
 # Structured record of every document/field/analyzer comparison, for the saved JSON report.
 $documentReports = [System.Collections.Generic.List[object]]::new()
 
-foreach ($pdf in $goldenPdfs) {
-  $baseName = [System.IO.Path]::GetFileNameWithoutExtension($pdf.Name)
-  $expectedPath = Join-Path $GoldenDir "$baseName.expected.json"
-  if (-not (Test-Path $expectedPath)) {
-    Write-Host "Skipping $($pdf.Name) - no matching $baseName.expected.json" -ForegroundColor Yellow
-    continue
-  }
-  $expected = Get-Content $expectedPath -Raw | ConvertFrom-Json
+# ---------- Phase 3: compare each document's results against its ground truth ----------
+foreach ($doc in $documents) {
+  $baseName = $doc.Name
+  $expected = $doc.Expected
 
   Write-Host "=== $baseName ===" -ForegroundColor White
 
   $resultsByAnalyzer = @{}
   foreach ($analyzerId in $AnalyzerIds) {
-    Write-Host "  Analyzing with '$analyzerId'..." -NoNewline
-    $result = Invoke-AnalyzeBinary -AnalyzerId $analyzerId -FilePath $pdf.FullName
-    $resultsByAnalyzer[$analyzerId] = $result
-    Write-Host " done"
+    $job = $jobs | Where-Object { $_.Document -eq $baseName -and $_.AnalyzerId -eq $analyzerId }
+    $resultsByAnalyzer[$analyzerId] = $job.Result
   }
 
   # Only compare fields present in the expected ground truth (schemas may only cover a subset).
