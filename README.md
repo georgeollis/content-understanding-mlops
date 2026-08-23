@@ -151,7 +151,7 @@ equivalent for `test`/`prod`/etc.
 |---|---|
 | `analyzers/<family>/` | `analyzer.json`, per-environment `manifest.<env>.json`, `golden/` test set, `results/` |
 | `schemas/` | JSON Schemas + validation/generation scripts |
-| `scripts/` | `promote-analyzer.ps1`, `compare-analyzers.ps1`, `upload-analyzers.ps1`, `copy-labeled-data.ps1`, `ci-check.ps1` |
+| `scripts/` | `new-analyzer.ps1`, `promote-analyzer.ps1`, `compare-analyzers.ps1`, `upload-analyzers.ps1`, `list-analyzers.ps1`, `copy-labeled-data.ps1`, `ci-check.ps1` |
 | `docs/` | Reference documentation |
 | `environments.json` | Environment name → `{ endpoint, labeledDataContainerUrl }` |
 
@@ -162,6 +162,9 @@ equivalent for `test`/`prod`/etc.
 ```powershell
 # Run all validation checks (schema, golden-set integrity, family index freshness)
 pwsh -File .\scripts\ci-check.ps1
+
+# Scaffold a new analyzer family from analyzers/_template, placeholders pre-filled
+pwsh -File .\scripts\new-analyzer.ps1 -Family <family> -Description "..."
 
 # Pull a live analyzer's current definition from Studio (dev only) into analyzer.json
 pwsh -File .\scripts\sync-analyzer-from-studio.ps1 -Environment dev -Family <family> -AnalyzerId <id>
@@ -174,6 +177,9 @@ pwsh -File .\scripts\compare-analyzers.ps1 -Environment dev -Family <family> -An
 
 # Draft expected.json files from a deployed analyzerId's own output, for review
 pwsh -File .\scripts\bootstrap-golden.ps1 -Environment dev -Family <family> -AnalyzerId <id>
+
+# List analyzers deployed in an environment (useful to check what's live, or find a forgotten analyzerId)
+pwsh -File .\scripts\list-analyzers.ps1 -Environment dev
 
 # Copy labeled-data blobs from one environment's storage container to another's (same prefix)
 pwsh -File .\scripts\copy-labeled-data.ps1 -SourceEnvironment dev -DestinationEnvironment test -Prefix "labelingProjects/<id>/train"

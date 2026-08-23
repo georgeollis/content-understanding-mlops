@@ -199,4 +199,4 @@ $manifest | ConvertTo-Json -Depth 10 | Set-Content $manifestFile -Encoding utf8
 Write-Host "Updated $manifestFile - current ($Environment) = $analyzerId" -ForegroundColor Green
 Write-Host ""
 Write-Host "Next: compare against the previous version with:" -ForegroundColor Cyan
-Write-Host "  .\compare-analyzers.ps1 -Endpoint $Endpoint -AnalyzerIds <previousId>, $analyzerId"
+Write-Host "  .\compare-analyzers.ps1 -Endpoint $Endpoint -Family $Family -AnalyzerIds <previousId>, $analyzerId"

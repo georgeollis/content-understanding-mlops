@@ -10,18 +10,20 @@ The pipeline exclusively targets the Content Understanding data-plane API on a M
 Foundry account (Cognitive Services kind `AIServices`/Foundry). No other Azure resource type
 is called by any script in this repo.
 
-Three REST operations are used, all under `{endpoint}/contentunderstanding`, api-version
+Four REST operations are used, all under `{endpoint}/contentunderstanding`, api-version
 `2025-11-01` (GA):
 
 | Operation | Method + path | Used by | Purpose |
 |---|---|---|---|
 | Create analyzer | `PUT /analyzers/{analyzerId}?api-version=2025-11-01&allowReplace=true` | `upload-analyzers.ps1` (via `promote-analyzer.ps1`) | Creates a new analyzer from an `analyzer.json` body; returns `Operation-Location` for polling |
 | Get analyzer | `GET /analyzers/{analyzerId}?api-version=2025-11-01` | `sync-analyzer-from-studio.ps1` | Read-only fetch of a live (Studio-edited) analyzer's current definition, for pulling into `analyzer.json` |
+| List analyzers | `GET /analyzers?api-version=2025-11-01` | `list-analyzers.ps1` | Read-only, paginated listing of every analyzer deployed in an environment (custom and/or prebuilt) |
 | Analyze document | `POST /analyzers/{analyzerId}:analyzeBinary?api-version=2025-11-01` | `compare-analyzers.ps1`, `bootstrap-golden.ps1` | Submits document bytes for extraction; returns `Operation-Location` for polling |
 
 Create and Analyze are asynchronous: the initial response returns `202 Accepted` with an
 `Operation-Location` header; the caller polls `GET {Operation-Location}` until
-`status ∈ {"Succeeded", "Failed"}`. Get analyzer is a synchronous, single-request read.
+`status ∈ {"Succeeded", "Failed"}`. Get analyzer and List analyzers are synchronous,
+single-request reads (List follows `nextLink` for pagination).
 
 ```mermaid
 graph LR

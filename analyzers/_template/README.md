@@ -1,11 +1,23 @@
 # Analyzer family template
 
-Copy this folder to `analyzers/<family>/` to start a new family, then fill in the placeholders.
+The recommended way to start a new family is to run
+[`scripts/new-analyzer.ps1`](../../scripts/new-analyzer.ps1), which copies this folder and
+fills in placeholders for you:
+
+```powershell
+pwsh -File .\scripts\new-analyzer.ps1 -Family <family> -Description "One-line description"
+```
+
 Full walkthrough: [`../../docs/getting-started.md`](../../docs/getting-started.md).
+
+<details>
+<summary>Manual copy (if you'd rather not use the script)</summary>
 
 ```powershell
 Copy-Item -Recurse analyzers\_template analyzers\<family>
 ```
+
+Then fill in every placeholder yourself:
 
 ## What to fill in
 
@@ -27,3 +39,5 @@ git add analyzers/<family>
 git commit -m "Add <family> analyzer"
 pwsh -File .\scripts\promote-analyzer.ps1 -Environment dev -Family <family> -Notes "Initial deployment"
 ```
+
+</details>

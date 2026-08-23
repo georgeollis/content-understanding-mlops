@@ -46,30 +46,25 @@ contain secrets (no keys are stored here; auth is token-based — see
 
 ## 3. Author a new analyzer family
 
-Two ways to produce `analyzers/<family>/analyzer.json`:
+Scaffold the folder (copies `analyzers/_template`, fills in placeholders):
+
+```powershell
+pwsh -File .\scripts\new-analyzer.ps1 -Family <family> -Description "One-line description of what this analyzer extracts"
+```
+
+This creates `analyzers/<family>/` with `analyzer.json`, `manifest.dev.json`, and empty
+`golden/`/`sample-documents/`/`results/` folders, and prints the exact next-step commands. Two
+ways to produce the real `fieldSchema` inside `analyzer.json`:
 
 - **Build it in Foundry Studio** (recommended for `dev`): design `fieldSchema` interactively,
-  optionally attach labeled training data, then export the JSON. For a brand-new family, use
-  Studio's **Download** action once to get the initial file. For an existing family, you can
-  keep iterating live in Studio indefinitely and pull the current state down anytime with
+  optionally attach labeled training data, then export the JSON over the placeholder
+  `fieldSchema` `new-analyzer.ps1` left in place. For an existing family, you can keep
+  iterating live in Studio indefinitely and pull the current state down anytime with
   `sync-analyzer-from-studio.ps1` (dev only — see step 8 below and
   [`mlops-pipeline.md`](mlops-pipeline.md#authoring-studio-dev-vs-this-repo-dev)).
 - **Write it by hand**, matching [`schemas/analyzer.schema.json`](../schemas/analyzer.schema.json).
-
-Create the family folder and required files:
-
-```
-analyzers/<family>/
-  analyzer.json              # the PUT /analyzers/{id} request body
-  manifest.dev.json          # copy an existing manifest.dev.json as a template, then clear "promotions" to []
-  golden/                    # at least one <name>.pdf + <name>.expected.json pair
-  sample-documents/          # optional broader pool of test documents
-```
-
-A minimal starting `manifest.dev.json`:
-```json
-{ "current": null, "promotions": [] }
-```
+  VS Code shows inline validation/autocomplete for this automatically (see
+  [`schemas/README.md`](../schemas/README.md#editor-validation-vs-code)).
 
 For the golden set, add PDFs plus hand-written `<name>.expected.json` files (matching your
 `fieldSchema`), then generate the derived schema/checksums:

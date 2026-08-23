@@ -275,10 +275,12 @@ labeled dataset itself is updated (the `prefix` path is assumed identical across
 
 | Script | Function |
 |---|---|
+| `new-analyzer.ps1` | Scaffolds a new family from `analyzers/_template` with placeholders pre-filled |
 | `promote-analyzer.ps1` | Deploys `analyzer.json` as a new `analyzerId` in one environment; tags + records the promotion |
 | `sync-analyzer-from-studio.ps1` | Pulls a live analyzer's current definition from Studio (dev only) into `analyzer.json` |
 | `compare-analyzers.ps1` | Scores one or more `analyzerId`s against the golden set in one environment |
 | `bootstrap-golden.ps1` | Drafts `expected.json` files from a deployed analyzerId's own output, for review |
+| `list-analyzers.ps1` | Lists analyzers currently deployed in an environment (id, status, base analyzer, created date) |
 | `copy-labeled-data.ps1` | Replicates labeled-data blobs between environments' storage containers |
 | `upload-analyzers.ps1` | Low-level `PUT /analyzers/{id}` + poll (invoked by `promote-analyzer.ps1`) |
 | `ci-check.ps1` | Runs schema validation, golden-set validation, and family-index freshness check |

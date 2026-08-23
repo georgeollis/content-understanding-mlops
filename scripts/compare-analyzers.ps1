@@ -47,8 +47,9 @@
 
 .PARAMETER GoldenDir
   Folder containing "<name>.pdf" + "<name>.expected.json" pairs. If omitted, resolved from
-  -Family (analyzers/<Family>/golden); if neither is supplied, defaults to
-  "..\analyzers\invoice\golden" relative to this script for backward compatibility.
+  -Family (analyzers/<Family>/golden); if neither is supplied, the script tries to infer the
+  family from the first -AnalyzerIds value (e.g. "invoicev3" -> family "invoice") and errors
+  out with the list of available families if it can't.
 
 .PARAMETER ApiVersion
   Content Understanding API version. Defaults to the current GA version.
@@ -113,11 +114,23 @@ if (-not $Environment) { $Environment = "default" }
 
 # ---------- Resolve golden directory ----------
 if (-not $GoldenDir) {
+  $analyzersRoot = Join-Path $PSScriptRoot "..\analyzers"
+  $familyNames = Get-ChildItem $analyzersRoot -Directory | Where-Object { $_.Name -notlike "_*" } | Select-Object -ExpandProperty Name
+
   if ($Family) {
-    $GoldenDir = Join-Path $PSScriptRoot "..\analyzers\$Family\golden"
+    $GoldenDir = Join-Path $analyzersRoot "$Family\golden"
   } else {
-    $GoldenDir = Join-Path $PSScriptRoot "..\analyzers\invoice\golden"
-    Write-Warning "No -Family or -GoldenDir supplied; defaulting to '$GoldenDir'. Pass -Family <name> to target a different analyzer family."
+    # No -Family/-GoldenDir given: try to infer it from the first analyzerId (e.g. "invoicev3"
+    # -> family "invoice") rather than silently falling back to a fixed default family, which
+    # previously caused confusing MISMATCH output when comparing a different family's analyzers.
+    $inferred = $familyNames | Where-Object { $AnalyzerIds[0] -like "$_*" } | Sort-Object Length -Descending | Select-Object -First 1
+    if ($inferred) {
+      $Family = $inferred
+      $GoldenDir = Join-Path $analyzersRoot "$Family\golden"
+      Write-Host "No -Family supplied; inferred -Family '$Family' from analyzerId '$($AnalyzerIds[0])'. Pass -Family explicitly to override." -ForegroundColor Yellow
+    } else {
+      throw "Could not infer a family from analyzerId '$($AnalyzerIds[0])'. Pass -Family <name> or -GoldenDir <path>. Available families: $($familyNames -join ', ')"
+    }
   }
 }
 if (-not (Test-Path $GoldenDir)) { throw "Golden directory not found: $GoldenDir" }
