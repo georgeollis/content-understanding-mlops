@@ -24,6 +24,11 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
+        with:
+          # Golden-set *.pdf fixtures are stored via Git LFS (see .gitattributes). checkout@v4
+          # does not fetch LFS content by default, which left CI with tiny LFS pointer stubs
+          # instead of real PDF bytes and made ci-check.ps1's checksum validation fail.
+          lfs: true
 
       - name: Run ci-check.ps1
         shell: pwsh

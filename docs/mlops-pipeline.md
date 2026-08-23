@@ -340,6 +340,8 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          lfs: true
       - shell: pwsh
         run: ./scripts/ci-check.ps1
 ```
@@ -362,11 +364,14 @@ Key points:
 - **Failure mode matches local usage** — a failing check (e.g. stale `analyzers/README.md`)
   produces the same console output as running `ci-check.ps1` locally, including the fix
   instructions (e.g. `git diff analyzers/README.md`).
+- **Checks out Git LFS content** (`lfs: true` on the checkout step). Golden-set `*.pdf`
+  fixtures are stored via Git LFS (see [`.gitattributes`](../.gitattributes)); without this,
+  `actions/checkout@v4` leaves LFS pointer stubs in place of real file bytes, which fails
+  `ci-check.ps1`'s golden dataset checksum validation.
 - **Golden-set fixtures are marked binary via [`.gitattributes`](../.gitattributes)**
-  (`analyzers/*/golden/** -text`). Without this, the CI runner's default line-ending conversion
-  for text-like files (e.g. `.expected.json`) silently rewrote LF to CRLF on checkout, changing
-  the file's bytes and causing `ci-check.ps1`'s golden dataset validation to fail with
-  false-positive checksum mismatches against the manifest recorded by `bootstrap-golden.ps1`.
+  (`analyzers/*/golden/** -text`). This prevents git from ever rewriting their line endings on
+  checkout regardless of a runner's `core.autocrlf` setting, which is good defensive practice
+  even though the LFS-fetch fix above was the actual cause of the checksum failures seen in CI.
 - **`analyzers/README.md` is forced to LF via [`.gitattributes`](../.gitattributes)**
   (`analyzers/README.md text eol=lf`), scoped to just that one generated file. Without this, the
   table written by `schemas/list-families.ps1` could be checked out with different line endings
