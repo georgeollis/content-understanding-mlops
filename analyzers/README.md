@@ -7,6 +7,13 @@ schema validation, [`../scripts/`](../scripts/) for the tooling operating on the
 [`../docs/azure-foundry-architecture.md`](../docs/azure-foundry-architecture.md) for the Azure
 REST surface used.
 
+> **Why "family"?** Each folder is one document type (e.g. `invoice`), but it's not a single
+> analyzer — it's the whole versioned lineage of `analyzerId`s deployed for that document type
+> over time (`invoicev1`, `invoicev2`, `invoicev3`, ...), tracked independently per environment
+> via `manifest.<env>.json`. "Family" names that one-document-type-to-many-versions
+> relationship, the same way it's used for VM families or model families — not a group of
+> unrelated analyzers.
+
 Starting a new family? Copy [`_template/`](_template/) — see its README for what to fill in.
 `_template` (and any folder prefixed `_`) is excluded from validation and the index below.
 
