@@ -14,7 +14,9 @@
 
 .PARAMETER Family
   New family name (folder under analyzers/, e.g. "invoice"). Must not already exist. Use
-  lowercase, no spaces - it becomes part of every deployed analyzerId (e.g. "<family>v1").
+  lowercase letters/digits only, no hyphens or spaces - it becomes part of every deployed
+  analyzerId (e.g. "<family>v1"), and Content Understanding rejects analyzerIds containing "-"
+  even though its own API docs list hyphens as an allowed character.
 
 .PARAMETER Description
   One-line description of what this analyzer extracts (shown in analyzers/README.md's family
@@ -32,8 +34,8 @@ param(
 
 $ErrorActionPreference = "Stop"
 
-if ($Family -notmatch "^[a-z0-9-]+$") {
-  throw "Family '$Family' should be lowercase letters/digits/hyphens only (it becomes part of every deployed analyzerId)."
+if ($Family -notmatch "^[a-z0-9]+$") {
+  throw "Family '$Family' should be lowercase letters/digits only, no hyphens (it becomes part of every deployed analyzerId, e.g. '${Family}v1', and Content Understanding rejects analyzerIds containing '-')."
 }
 
 $repoRoot = Resolve-Path (Join-Path $PSScriptRoot "..")

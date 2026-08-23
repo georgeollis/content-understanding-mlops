@@ -105,6 +105,13 @@ $manifestFile = Join-Path $familyDir "manifest.$Environment.json"
 if (-not (Test-Path $analyzerFile)) { throw "Not found: $analyzerFile" }
 if (-not (Test-Path $manifestFile)) { throw "Not found: $manifestFile (expected one manifest file per environment - copy manifest.dev.json as a starting template if this is a new environment)" }
 
+# Content Understanding rejects analyzerIds containing "-" (even though its own API docs list
+# hyphens as allowed), and the family name becomes part of every deployed analyzerId
+# ("<family>v<N>") - fail fast with a clear message instead of letting Azure reject the PUT.
+if ($Family -match "-") {
+  throw "Family '$Family' contains a hyphen, which Content Understanding does not allow in analyzerIds. Rename the analyzers/$Family folder to a hyphen-free name (e.g. '$($Family -replace '-', '')') and try again."
+}
+
 # ---------- Git safety check ----------
 Push-Location $repoRoot
 try {
