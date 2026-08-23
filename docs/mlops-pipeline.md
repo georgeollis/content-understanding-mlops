@@ -131,9 +131,15 @@ any other environment's endpoint.
 
 For every `<name>.pdf` + `<name>.expected.json` pair under `analyzers/<family>/golden/`:
 
-1. Submits the PDF to each listed `analyzerId` via
-   `POST /analyzers/{id}:analyzeBinary?api-version=2025-11-01`, then polls
-   `Operation-Location` until `status == "Succeeded"`.
+1. Submits every `(document, analyzerId)` combination to
+   `POST /analyzers/{id}:analyzeBinary?api-version=2025-11-01` up front (capped at
+   `-MaxConcurrent`, default 4, in flight at once), then polls all outstanding
+   `Operation-Location`s in a shared sweep until each reaches `status == "Succeeded"`. This
+   runs the whole golden set concurrently rather than one document/analyzer pair at a time -
+   wall time approaches the slowest single operation instead of the sum of every combination.
+   If the Content Understanding resource's own request-rate quota rejects a submission (HTTP
+   429) or fails an in-flight operation with a rate-limit error, the script retries/resubmits
+   with backoff automatically; lower `-MaxConcurrent` if this happens often.
 2. Flattens the response's `result.contents[0].fields` (raw `ContentField` objects, each with a
    `type` and a `value<Type>` property, plus a `confidence` (0-1) property when the analyzer's
    `config.estimateFieldSourceAndConfidence` is `true`) into plain scalar/array/object values and

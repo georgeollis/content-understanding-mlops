@@ -62,6 +62,13 @@
 .PARAMETER ResultsDir
   Override the folder results are saved to. Defaults to "analyzers/<Family>/results".
 
+.PARAMETER MaxConcurrent
+  Maximum number of analyze operations submitted and left outstanding at once. All
+  (document, analyzerId) combinations are still processed in parallel rather than one at a
+  time, but capped at this many in flight simultaneously to stay under the Content
+  Understanding resource's request-rate quota. Defaults to 4; lower it if you see 429
+  (rate limit) retries, raise it on a higher-quota resource for more speedup.
+
 .EXAMPLE
   # Compare two versions of the invoice analyzer against the golden invoice set
   .\compare-analyzers.ps1 -Environment dev -Family invoice -AnalyzerIds "invoicev1", "invoicev2"
@@ -82,7 +89,9 @@ param(
 
   [bool]$SaveResults = $true,
 
-  [string]$ResultsDir
+  [string]$ResultsDir,
+
+  [int]$MaxConcurrent = 4
 )
 
 $ErrorActionPreference = "Stop"
@@ -214,6 +223,29 @@ function Test-ValueMatch {
   return (Normalize-StringValue $expected) -eq (Normalize-StringValue $actual)
 }
 
+# Retries an HTTP call a few times, with growing back-off, if the service returns 429 (rate
+# limit) or a 5xx. The Content Understanding endpoint enforces a per-resource request-rate
+# quota, so submitting many analyses at once (see the throttled submit loop below) can still
+# occasionally hit it even when staying under -MaxConcurrent.
+function Invoke-WithRetry {
+  param([scriptblock]$Action, [int]$MaxAttempts = 5)
+  $attempt = 0
+  while ($true) {
+    $attempt++
+    try {
+      return & $Action
+    } catch {
+      $statusCode = $null
+      if ($_.Exception.Response) { $statusCode = [int]$_.Exception.Response.StatusCode }
+      $isRetryable = $statusCode -eq 429 -or ($statusCode -ge 500 -and $statusCode -lt 600)
+      if (-not $isRetryable -or $attempt -ge $MaxAttempts) { throw }
+      $delaySeconds = [Math]::Min(30, [Math]::Pow(2, $attempt))
+      Write-Host "  (HTTP $statusCode, retrying in ${delaySeconds}s, attempt $attempt/$MaxAttempts)" -ForegroundColor DarkYellow
+      Start-Sleep -Seconds $delaySeconds
+    }
+  }
+}
+
 function Start-AnalyzeBinary {
   param([string]$AnalyzerId, [string]$FilePath)
 
@@ -221,14 +253,14 @@ function Start-AnalyzeBinary {
   $headers = @{ Authorization = "Bearer $token"; "Content-Type" = "application/pdf" }
   $uri = "$endpointTrimmed/contentunderstanding/analyzers/$AnalyzerId`:analyzeBinary?api-version=$ApiVersion"
 
-  $response = Invoke-WebRequest -Uri $uri -Headers $headers -Method POST -Body $bytes
+  $response = Invoke-WithRetry { Invoke-WebRequest -Uri $uri -Headers $headers -Method POST -Body $bytes }
   return $response.Headers['Operation-Location'][0]
 }
 
 function Get-AnalyzeOperation {
   param([string]$OperationLocation)
   $headers = @{ Authorization = "Bearer $token" }
-  return Invoke-RestMethod -Uri $OperationLocation -Headers $headers -Method GET
+  return Invoke-WithRetry { Invoke-RestMethod -Uri $OperationLocation -Headers $headers -Method GET }
 }
 
 # ---------- Discover golden set (only docs with a matching expected.json are analyzed) ----------
@@ -256,31 +288,44 @@ Write-Host "Golden set: $($documents.Count) document(s) in $GoldenDir" -Foregrou
 Write-Host "Analyzers under test: $($AnalyzerIds -join ', ')" -ForegroundColor Cyan
 Write-Host ""
 
-# ---------- Phase 1: submit every (document, analyzerId) analysis up front ----------
-# Submitting everything before waiting on any of it lets Azure process all these analyses
-# concurrently server-side, instead of paying each operation's full wall-clock time one at a
-# time. $jobs.Result is filled in during phase 2 below.
+# ---------- Phase 1+2: submit up to -MaxConcurrent at a time, polling until all are done ----------
+# Everything still runs concurrently rather than one full analysis at a time, but capped at
+# -MaxConcurrent in flight simultaneously - submitting every combination at once (no cap) can
+# trip the Content Understanding resource's request-rate quota (HTTP 429).
 $jobs = [System.Collections.Generic.List[object]]::new()
-$totalJobs = $documents.Count * $AnalyzerIds.Count
-Write-Host "Submitting $totalJobs analyze request(s)..." -ForegroundColor Cyan
+$pendingToSubmit = [System.Collections.Generic.Queue[object]]::new()
 foreach ($doc in $documents) {
   foreach ($analyzerId in $AnalyzerIds) {
-    $opLocation = Start-AnalyzeBinary -AnalyzerId $analyzerId -FilePath $doc.PdfPath
+    $pendingToSubmit.Enqueue([pscustomobject]@{ Document = $doc.Name; AnalyzerId = $analyzerId; PdfPath = $doc.PdfPath })
+  }
+}
+$totalJobs = $pendingToSubmit.Count
+$maxOperationRetries = 5
+Write-Host "Running $totalJobs analysis(es), up to $MaxConcurrent at a time..." -ForegroundColor Cyan
+
+while ($jobs.Count -lt $totalJobs -or @($jobs | Where-Object { $_.Status -in @("NotStarted", "Running") }).Count -gt 0) {
+  # Top up in-flight work up to -MaxConcurrent before polling.
+  $inFlight = @($jobs | Where-Object { $_.Status -in @("NotStarted", "Running") }).Count
+  while ($inFlight -lt $MaxConcurrent -and $pendingToSubmit.Count -gt 0) {
+    $next = $pendingToSubmit.Dequeue()
+    $opLocation = Start-AnalyzeBinary -AnalyzerId $next.AnalyzerId -FilePath $next.PdfPath
     $jobs.Add([pscustomobject]@{
-      Document          = $doc.Name
-      AnalyzerId        = $analyzerId
+      Document          = $next.Document
+      AnalyzerId        = $next.AnalyzerId
+      PdfPath           = $next.PdfPath
       OperationLocation = $opLocation
       Status            = "Running"
       Result            = $null
+      RetryCount        = 0
     })
+    $inFlight++
   }
-}
-Write-Host "Submitted. Polling $totalJobs operation(s) until all are done..." -ForegroundColor Cyan
 
-# ---------- Phase 2: poll every outstanding operation until all are done ----------
-while (@($jobs | Where-Object { $_.Status -in @("NotStarted", "Running") }).Count -gt 0) {
+  $stillPending = @($jobs | Where-Object { $_.Status -in @("NotStarted", "Running") })
+  if ($stillPending.Count -eq 0 -and $pendingToSubmit.Count -eq 0) { break }
+
   Start-Sleep -Seconds 2
-  foreach ($job in @($jobs | Where-Object { $_.Status -in @("NotStarted", "Running") })) {
+  foreach ($job in $stillPending) {
     $op = Get-AnalyzeOperation -OperationLocation $job.OperationLocation
     $job.Status = $op.status
     if ($op.status -eq "Succeeded") {
@@ -290,7 +335,21 @@ while (@($jobs | Where-Object { $_.Status -in @("NotStarted", "Running") }).Coun
         confidences = Get-FlatConfidences $fieldsRaw
       }
     } elseif ($op.status -eq "Failed") {
-      throw "Analyze failed for '$($job.AnalyzerId)' on '$($job.Document)': $($op.error | ConvertTo-Json -Depth 5)"
+      # The service can fail an in-flight operation with its own rate-limit error (distinct
+      # from an HTTP 429 on our submit/poll calls, which Invoke-WithRetry already handles) -
+      # in that case, resubmit the same (document, analyzerId) instead of hard-failing the run.
+      $errorText = ($op.error | ConvertTo-Json -Depth 5)
+      $isRateLimited = $errorText -match "RateLimit|429"
+      if ($isRateLimited -and $job.RetryCount -lt $maxOperationRetries) {
+        $job.RetryCount++
+        $delaySeconds = [Math]::Min(30, 5 * $job.RetryCount)
+        Write-Host "  Rate-limited server-side for '$($job.AnalyzerId)' on '$($job.Document)'; retrying in ${delaySeconds}s (attempt $($job.RetryCount)/$maxOperationRetries)" -ForegroundColor DarkYellow
+        Start-Sleep -Seconds $delaySeconds
+        $job.OperationLocation = Start-AnalyzeBinary -AnalyzerId $job.AnalyzerId -FilePath $job.PdfPath
+        $job.Status = "Running"
+      } else {
+        throw "Analyze failed for '$($job.AnalyzerId)' on '$($job.Document)': $errorText"
+      }
     }
   }
   $doneCount = @($jobs | Where-Object { $_.Status -eq "Succeeded" }).Count
