@@ -362,11 +362,14 @@ Key points:
 - **Failure mode matches local usage** — a failing check (e.g. stale `analyzers/README.md`)
   produces the same console output as running `ci-check.ps1` locally, including the fix
   instructions (e.g. `git diff analyzers/README.md`).
-- **Line endings are normalized to LF via [`.gitattributes`](../.gitattributes)** (`* text=auto
-  eol=lf`). Without this, the generated table inside `analyzers/README.md` could be checked out
-  with different line endings on different machines/runners (depending on each git client's
-  `core.autocrlf` setting), which made the "is the family index stale" check produce false
-  positives when the file committed on one OS was re-validated on another.
+- **`analyzers/README.md` is forced to LF via [`.gitattributes`](../.gitattributes)**
+  (`analyzers/README.md text eol=lf`), scoped to just that one generated file. Without this, the
+  table written by `schemas/list-families.ps1` could be checked out with different line endings
+  on different machines/runners (depending on each git client's `core.autocrlf` setting), which
+  made the "is the family index stale" check produce false positives when the file committed on
+  one OS was re-validated on another. This rule is deliberately narrow — a blanket `* text=auto`
+  would also renormalize the golden-set `.pdf`/`.expected.json` fixtures and break their manifest
+  checksums.
 
 To require this before merge, enable it as a required status check under the repository's
 branch protection rules for `main` (Settings → Branches → Branch protection rules).
