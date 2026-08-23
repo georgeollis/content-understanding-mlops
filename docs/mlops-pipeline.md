@@ -135,16 +135,27 @@ For every `<name>.pdf` + `<name>.expected.json` pair under `analyzers/<family>/g
    `POST /analyzers/{id}:analyzeBinary?api-version=2025-11-01`, then polls
    `Operation-Location` until `status == "Succeeded"`.
 2. Flattens the response's `result.contents[0].fields` (raw `ContentField` objects, each with a
-   `type` and a `value<Type>` property) into plain scalar/array/object values.
+   `type` and a `value<Type>` property, plus a `confidence` (0-1) property when the analyzer's
+   `config.estimateFieldSourceAndConfidence` is `true`) into plain scalar/array/object values and
+   a parallel top-level field -> confidence map.
 3. Compares each flattened field against the corresponding key in `expected.json`:
    - Numeric types: `Math.Abs(expected - actual) < 0.01`.
    - Strings: case-insensitive, trimmed equality.
    - Arrays/objects (e.g. `LineItems`): recursive per-element/per-property comparison using the
      same rules.
-4. Prints a per-document table (`OK` / `MISMATCH (<value>)` per field per analyzer) and an
-   aggregate `matched/total (pct%)` summary per `analyzerId`.
+4. Prints a per-document table (`OK [conf: 0.94]` / `MISMATCH [conf: 0.61] (<value>)` per field
+   per analyzer, or plain `OK`/`MISMATCH` when confidence isn't returned) and an aggregate
+   `matched/total (pct%), avg confidence: 0.xx` summary per `analyzerId`.
 
 This calls the live `analyzeBinary` endpoint — there is no local/simulated scoring path.
+
+Confidence is only returned when `estimateFieldSourceAndConfidence: true` is set in
+`analyzer.json`'s `config` (all current families and `_template` have this enabled). It's a
+model-reported certainty score, not a correctness guarantee — treat it as a signal for
+prioritizing human review (e.g. flag anything below a threshold for a labeled-data reviewer),
+not as a substitute for the golden-set accuracy comparison above. Confidence is top-level fields
+only; nested confidence inside array/object field items (e.g. per-line-item on `LineItems`) is
+not currently extracted.
 
 ---
 
@@ -153,10 +164,10 @@ This calls the live `analyzeBinary` endpoint — there is no local/simulated sco
 Unless `-SaveResults:$false` is passed, stage 3 writes a JSON report to
 `analyzers/<family>/results/<timestampUTC>_<environment>_<analyzerIds>.json`, containing:
 `timestamp`, `environment`, `endpoint`, `family`, `analyzerIds`, `apiVersion`, `goldenDir`,
-`gitCommit` (of this repo at run time), the per-analyzer `summary` (matched/total/accuracyPct),
-and per-document/per-field `results` (actual value + matched boolean). Intended to be committed
-alongside the promotion it evaluates, giving an audit trail queryable via
-`git log analyzers/<family>/results/`.
+`gitCommit` (of this repo at run time), the per-analyzer `summary`
+(matched/total/accuracyPct/avgConfidence), and per-document/per-field `results` (actual value,
+confidence, and matched boolean). Intended to be committed alongside the promotion it evaluates,
+giving an audit trail queryable via `git log analyzers/<family>/results/`.
 
 ---
 

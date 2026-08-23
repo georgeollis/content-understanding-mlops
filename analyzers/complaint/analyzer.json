@@ -5,7 +5,8 @@
   },
   "baseAnalyzerId": "prebuilt-document",
   "config": {
-    "returnDetails": true
+    "returnDetails": true,
+    "estimateFieldSourceAndConfidence": true
   },
   "models": {
     "completion": "gpt-5"

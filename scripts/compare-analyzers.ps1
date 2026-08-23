@@ -7,12 +7,20 @@
   For every "<name>.pdf" + "<name>.expected.json" pair found in -GoldenDir, this script:
     1. Submits the PDF to each analyzer in -AnalyzerIds via POST .../analyzers/{id}:analyzeBinary
     2. Polls the operation until the result is ready
-    3. Flattens the extracted ContentField result into plain values
+    3. Flattens the extracted ContentField result into plain values (and, if the analyzer's
+       config has "estimateFieldSourceAndConfidence": true, per-field confidence scores 0-1)
     4. Compares each field against the expected.json ground truth (numeric tolerance, case/whitespace
        insensitive string matching, and item-by-item comparison for array fields like LineItems)
-    5. Prints a per-document, per-analyzer match report plus an overall accuracy summary, so you can
-       see regressions/improvements when comparing two versions of the same analyzer (e.g.
+    5. Prints a per-document, per-analyzer match report (including confidence, when available)
+       plus an overall accuracy summary with average confidence, so you can see
+       regressions/improvements when comparing two versions of the same analyzer (e.g.
        invoicev1 vs invoicev2).
+
+  Confidence scores are only returned by the API when the analyzer definition
+  (analyzers/<family>/analyzer.json) has "config": { "estimateFieldSourceAndConfidence": true }.
+  If that's not set, confidence is reported as "n/a" and excluded from the average. This is
+  top-level fields only - nested confidence inside array/object field items (e.g. per-line-item
+  confidence on a LineItems array) is not currently extracted.
 
   Authentication uses a Microsoft Entra ID access token (az account get-access-token).
 
@@ -144,6 +152,23 @@ function Get-FlatFields {
   return $flat
 }
 
+# Flattens the analyzer's raw "fields" object into a name -> confidence (0-1, or $null) map.
+# Only present when the analyzer's config has "estimateFieldSourceAndConfidence": true (or the
+# field itself has "estimateSourceAndConfidence": true in fieldSchema) - otherwise every field's
+# "confidence" property is absent and this returns $null for all of them.
+# NOTE: top-level only, same limitation as Get-FlatFields - nested confidence inside array/object
+# field items (e.g. per-line-item confidence on LineItems) is not extracted here.
+function Get-FlatConfidences {
+  param($fieldsObject)
+  $flat = [ordered]@{}
+  if ($fieldsObject) {
+    foreach ($p in $fieldsObject.PSObject.Properties) {
+      $flat[$p.Name] = if ($null -ne $p.Value.confidence) { [double]$p.Value.confidence } else { $null }
+    }
+  }
+  return $flat
+}
+
 function Normalize-StringValue {
   param($v)
   if ($null -eq $v) { return "" }
@@ -204,7 +229,11 @@ function Invoke-AnalyzeBinary {
     throw "Analyze failed for '$AnalyzerId' on '$FilePath': $($op.error | ConvertTo-Json -Depth 5)"
   }
 
-  return Get-FlatFields $op.result.contents[0].fields
+  $fieldsRaw = $op.result.contents[0].fields
+  return [ordered]@{
+    values      = Get-FlatFields $fieldsRaw
+    confidences = Get-FlatConfidences $fieldsRaw
+  }
 }
 
 # ---------- Discover golden set ----------
@@ -216,9 +245,9 @@ Write-Host "Golden set: $($goldenPdfs.Count) document(s) in $GoldenDir" -Foregro
 Write-Host "Analyzers under test: $($AnalyzerIds -join ', ')" -ForegroundColor Cyan
 Write-Host ""
 
-# accuracy[analyzerId] = @{ matched = n; total = n }
+# accuracy[analyzerId] = @{ matched = n; total = n; confSum = n; confCount = n }
 $accuracy = @{}
-foreach ($id in $AnalyzerIds) { $accuracy[$id] = @{ matched = 0; total = 0 } }
+foreach ($id in $AnalyzerIds) { $accuracy[$id] = @{ matched = 0; total = 0; confSum = 0.0; confCount = 0 } }
 
 # Structured record of every document/field/analyzer comparison, for the saved JSON report.
 $documentReports = [System.Collections.Generic.List[object]]::new()
@@ -237,8 +266,8 @@ foreach ($pdf in $goldenPdfs) {
   $resultsByAnalyzer = @{}
   foreach ($analyzerId in $AnalyzerIds) {
     Write-Host "  Analyzing with '$analyzerId'..." -NoNewline
-    $flat = Invoke-AnalyzeBinary -AnalyzerId $analyzerId -FilePath $pdf.FullName
-    $resultsByAnalyzer[$analyzerId] = $flat
+    $result = Invoke-AnalyzeBinary -AnalyzerId $analyzerId -FilePath $pdf.FullName
+    $resultsByAnalyzer[$analyzerId] = $result
     Write-Host " done"
   }
 
@@ -249,14 +278,18 @@ foreach ($pdf in $goldenPdfs) {
     $row = [ordered]@{ Field = $fieldName; Expected = ($expected.$fieldName | ConvertTo-Json -Compress -Depth 5) }
     $analyzerResults = [ordered]@{}
     foreach ($analyzerId in $AnalyzerIds) {
-      $actualValue = $resultsByAnalyzer[$analyzerId][$fieldName]
+      $actualValue = $resultsByAnalyzer[$analyzerId].values[$fieldName]
+      $confidence = $resultsByAnalyzer[$analyzerId].confidences[$fieldName]
       $isMatch = Test-ValueMatch $expected.$fieldName $actualValue
       $accuracy[$analyzerId].total++
       if ($isMatch) { $accuracy[$analyzerId].matched++ }
-      $row["$analyzerId"] = if ($isMatch) { "OK" } else { "MISMATCH ($([string]($actualValue | ConvertTo-Json -Compress -Depth 5)))" }
+      if ($null -ne $confidence) { $accuracy[$analyzerId].confSum += $confidence; $accuracy[$analyzerId].confCount++ }
+      $confSuffix = if ($null -ne $confidence) { " [conf: $([Math]::Round($confidence, 2))]" } else { "" }
+      $row["$analyzerId"] = if ($isMatch) { "OK$confSuffix" } else { "MISMATCH$confSuffix ($([string]($actualValue | ConvertTo-Json -Compress -Depth 5)))" }
       $analyzerResults[$analyzerId] = [ordered]@{
-        actual  = $actualValue
-        matched = $isMatch
+        actual     = $actualValue
+        confidence = $confidence
+        matched    = $isMatch
       }
     }
     $fieldReports.Add([ordered]@{
@@ -280,11 +313,14 @@ $analyzerSummaries = [ordered]@{}
 foreach ($analyzerId in $AnalyzerIds) {
   $a = $accuracy[$analyzerId]
   $pct = if ($a.total -gt 0) { [Math]::Round(100 * $a.matched / $a.total, 1) } else { 0 }
-  Write-Host ("  {0,-25} {1}/{2} fields matched ({3}%)" -f $analyzerId, $a.matched, $a.total, $pct)
+  $avgConf = if ($a.confCount -gt 0) { [Math]::Round($a.confSum / $a.confCount, 3) } else { $null }
+  $confDisplay = if ($null -ne $avgConf) { "avg confidence: $avgConf" } else { "avg confidence: n/a (estimateFieldSourceAndConfidence not enabled/returned)" }
+  Write-Host ("  {0,-25} {1}/{2} fields matched ({3}%), {4}" -f $analyzerId, $a.matched, $a.total, $pct, $confDisplay)
   $analyzerSummaries[$analyzerId] = [ordered]@{
-    matched      = $a.matched
-    total        = $a.total
-    accuracyPct  = $pct
+    matched        = $a.matched
+    total          = $a.total
+    accuracyPct    = $pct
+    avgConfidence  = $avgConf
   }
 }
 
