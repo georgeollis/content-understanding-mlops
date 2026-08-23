@@ -115,7 +115,7 @@ Resolves `<env>` against `environments.json` to an `endpoint` (and, if present,
    polls the returned `Operation-Location` until `status == "Succeeded"`. This always creates a
    new analyzer object — it never mutates or replaces an existing `analyzerId`.
 5. **Git tag**: `git tag -a <family>-<env>-v<nextVersion>` at the current commit
-   (e.g. `invoice-dev-v3`).
+   (e.g. `<family>-dev-v3`).
 6. **Manifest update**: marks any prior `active` entry in `manifest.<env>.json` as
    `superseded`, appends the new promotion record (`version`, `analyzerId`, `gitTag`, `commit`,
    `createdAt`, `notes`), and sets `current = analyzerId`.
@@ -188,7 +188,7 @@ Each entry in [`environments.json`](../environments.json) is:
 
 Each named environment is backed by a distinct Foundry account. There is no shared state
 between environments at any layer:
-- **Deployed analyzers**: `dev`'s `invoicev2` and `test`'s `invoicev2` (if it exists) are
+- **Deployed analyzers**: `dev`'s `<family>v2` and `test`'s `<family>v2` (if it exists) are
   independent deployments in separate accounts that happen to share an ID string.
 - **Manifests**: `manifest.<env>.json` tracks promotion history and version numbering
   per-environment; there is no cross-environment manifest.

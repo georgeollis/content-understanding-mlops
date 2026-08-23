@@ -136,8 +136,8 @@ A git branch merge changes tracked files only; it never invokes the Azure API. P
 environment is always an explicit, separate step:
 
 ```powershell
-pwsh -File .\scripts\promote-analyzer.ps1 -Environment dev  -Family invoice -Notes "..."
-pwsh -File .\scripts\promote-analyzer.ps1 -Environment test -Family invoice -Notes "..."
+pwsh -File .\scripts\promote-analyzer.ps1 -Environment dev  -Family <family> -Notes "..."
+pwsh -File .\scripts\promote-analyzer.ps1 -Environment test -Family <family> -Notes "..."
 ```
 
 Beyond `dev`, promotion is the only supported path to any environment — there is no Studio
