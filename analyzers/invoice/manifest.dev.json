@@ -9,7 +9,6 @@
     {
       "version": 1,
       "analyzerId": "invoicev1",
-      "commit": "5a9d902",
       "createdAt": "2026-08-21",
       "status": "superseded",
       "notes": "Initial field set: InvoiceNumber, dates, Terms, Business/Client contact incl. phone numbers."
@@ -17,7 +16,6 @@
     {
       "version": 2.0,
       "analyzerId": "invoicev2",
-      "commit": "42a258f",
       "createdAt": "2026-08-21",
       "status": "superseded",
       "notes": "Added TotalAmount field extraction."
@@ -25,7 +23,6 @@
     {
       "version": 3.0,
       "analyzerId": "invoicev3",
-      "commit": "6b4e9d2",
       "createdAt": "2026-08-22",
       "status": "active",
       "notes": "test: verify labeled-data rewrite logic doesn't break normal promotion"

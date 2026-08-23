@@ -171,7 +171,7 @@ pwsh -File ./scripts/new-analyzer.ps1 -Family <family> -Description "..."
 # Pull a live analyzer's current definition from Studio (dev only) into analyzer.json
 pwsh -File ./scripts/sync-analyzer-from-studio.ps1 -Environment dev -Family <family> -AnalyzerId <id>
 
-# Deploy analyzer.json as a new analyzerId in one environment; tags the commit; updates manifest.<env>.json
+# Deploy analyzer.json as a new analyzerId in one environment; updates manifest.<env>.json
 pwsh -File ./scripts/promote-analyzer.ps1 -Environment dev -Family <family> -Notes "..."
 
 # Run the golden PDF set through one or more analyzerIds; prints + saves per-field accuracy

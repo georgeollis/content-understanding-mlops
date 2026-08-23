@@ -8,7 +8,6 @@
     {
       "version": 1,
       "analyzerId": "test01v1",
-      "commit": "8b4c738",
       "createdAt": "2026-08-23",
       "status": "active",
       "notes": "Test"

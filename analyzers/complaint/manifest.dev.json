@@ -9,7 +9,6 @@
     {
       "version": 1,
       "analyzerId": "complaintv1",
-      "commit": "7bf2ce0",
       "createdAt": "2026-08-22",
       "status": "active",
       "notes": "Initial promotion - end-to-end pipeline test"

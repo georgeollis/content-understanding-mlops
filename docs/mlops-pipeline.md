@@ -12,7 +12,7 @@ Foundry analyzer, per environment.
 | Scope | `dev` environment only | All environments |
 | State tracking | None (Azure-side only) | git commit history |
 | Repeatable evaluation | None | Fixed golden set, scored per `analyzerId` |
-| Deployment mechanism | UI-driven, direct | `promote-analyzer.ps1`, tagged per commit |
+| Deployment mechanism | UI-driven, direct | `promote-analyzer.ps1` |
 
 Studio is used to interactively construct `fieldSchema` and, where applicable, build a labeled
 training set (`knowledgeSources[].kind == "labeledData"`) against the `dev` Foundry account.
@@ -121,7 +121,7 @@ Resolves `<env>` against `environments.json` to an `endpoint` (and, if present,
 `labeledDataContainerUrl`). Execution:
 
 1. **Git precondition**: `git status --porcelain -- analyzers/<family>/analyzer.json` must be
-   empty (fails unless `-AllowDirty`), so every deployed `analyzerId` maps to an exact commit.
+   empty (fails unless `-AllowDirty`), so what's deployed always matches what's committed.
 2. **Version resolution**: reads `manifest.<env>.json`, computes
    `nextVersion = max(existing promotions[].version) + 1` for that environment specifically —
    version numbering is per-environment, not global.
@@ -136,9 +136,8 @@ Resolves `<env>` against `environments.json` to an `endpoint` (and, if present,
    polls the returned `Operation-Location` until `status == "Succeeded"`. This always creates a
    new analyzer object — it never mutates or replaces an existing `analyzerId`.
 5. **Manifest update**: marks any prior `active` entry in `manifest.<env>.json` as
-   `superseded`, appends the new promotion record (`version`, `analyzerId`, `commit`,
-   `createdAt`, `notes`), and sets `current = analyzerId`. The recorded `commit` SHA is what
-   ties a deployed `analyzerId` back to an exact, reviewable point in git history.
+   `superseded`, appends the new promotion record (`version`, `analyzerId`, `createdAt`,
+   `notes`), and sets `current = analyzerId`.
 
 Each environment is deployed to independently — promoting to `dev` issues no request against
 any other environment's endpoint.
@@ -325,9 +324,9 @@ labeled dataset itself is updated (the `prefix` path is assumed identical across
 - Azure has no update-in-place semantics for analyzers in this workflow — every promotion
   creates a new, permanent `analyzerId`. Prior IDs are never deleted, enabling rollback (point
   traffic at an older ID) or direct side-by-side comparison.
-- `manifest.<env>.json` is the join between the two: `analyzerId` ↔ git `commit`, scoped per
-  environment. It is generated exclusively by `promote-analyzer.ps1`; manual edits will
-  desynchronize the record from actual deployed state.
+- `manifest.<env>.json` records which `analyzerId` is currently deployed in each environment,
+  scoped per environment. It is generated exclusively by `promote-analyzer.ps1`; manual edits
+  will desynchronize the record from actual deployed state.
 
 ## Evaluation model
 
