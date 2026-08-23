@@ -268,7 +268,7 @@ function Start-AnalyzeBinary {
 
   $bytes = [System.IO.File]::ReadAllBytes($FilePath)
   $contentType = Get-ContentTypeForExtension -Extension ([System.IO.Path]::GetExtension($FilePath))
-  $headers = @{ Authorization = "******"; "Content-Type" = $contentType }
+  $headers = @{ Authorization = "Bearer $token"; "Content-Type" = $contentType }
   $uri = "$endpointTrimmed/contentunderstanding/analyzers/$AnalyzerId`:analyzeBinary?api-version=$ApiVersion"
 
   $response = Invoke-WithRetry { Invoke-WebRequest -Uri $uri -Headers $headers -Method POST -Body $bytes }
