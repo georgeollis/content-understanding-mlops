@@ -196,7 +196,7 @@ the promotion it evaluates, giving an audit trail queryable via
 
 ## Environments
 
-Each entry in [`environments.json`](../environments.json) is:
+Repo-root [`environments.json`](../environments.json) provides default environment entries:
 
 ```json
 {
@@ -208,6 +208,10 @@ Each entry in [`environments.json`](../environments.json) is:
   }
 }
 ```
+
+For analyzer-specific overrides, add `analyzers/<family>/environments.json`; matching fields
+there override root values for that family only (for example, a different
+`labeledDataContainerUrl` per family).
 
 Each named environment is backed by a distinct Foundry account. There is no shared state
 between environments at any layer:
@@ -271,17 +275,19 @@ Two mechanisms handle this:
 
 1. **`copy-labeled-data.ps1`** — copies blobs under `-Prefix` from the source environment's
    `labeledDataContainerUrl` to the destination environment's, via `azcopy copy --recursive`.
+   Pass `-Family <family>` to use analyzer-specific environment overrides.
    Requires `azcopy` on `PATH` and an authenticated `azcopy login` session (or equivalent
    RBAC — `Storage Blob Data Reader` on source, `Storage Blob Data Contributor` on
    destination).
    ```powershell
-   pwsh -File ./scripts/copy-labeled-data.ps1 -SourceEnvironment dev -DestinationEnvironment test `
+   pwsh -File ./scripts/copy-labeled-data.ps1 -Family <family> -SourceEnvironment dev -DestinationEnvironment test `
      -Prefix "labelingProjects/<project-id>/train"
    ```
 2. **`promote-analyzer.ps1`'s automatic rewrite** (Stage 2, step 3 above) — replaces
-   `containerUrl` with the target environment's `labeledDataContainerUrl` at deploy time, so
-   the same, unmodified `analyzer.json` is valid across every environment once the blob copy
-   has been performed.
+   `containerUrl` with the target environment's `labeledDataContainerUrl` at deploy time,
+   resolving from analyzer-specific `environments.json` first and then repo-root config, so the
+   same, unmodified `analyzer.json` is valid across every environment once the blob copy has been
+   performed.
 
 Run the copy step before the first promotion to a new environment; re-run only when the
 labeled dataset itself is updated (the `prefix` path is assumed identical across environments).
@@ -311,7 +317,7 @@ labeled dataset itself is updated (the `prefix` path is assumed identical across
 | `analyzers/<family>/manifest.<env>.json` | Per-environment promotion history + `current` analyzerId |
 | `analyzers/<family>/golden/` | Golden documents (`<name>.<ext>`, any [supported format](#supported-golden-document-formats)) + `<name>.expected.json` pairs, `expected.schema.json`, checksummed `manifest.json` |
 | `analyzers/<family>/results/` | Per-run comparison reports (per environment) |
-| `environments.json` | Environment name → `{ endpoint, labeledDataContainerUrl }` |
+| `environments.json` | Default environment name → `{ endpoint, labeledDataContainerUrl }` |
 
 ---
 
@@ -487,4 +493,3 @@ graph TB
   manual run.
 - **Drift detection** — detecting out-of-band changes to a live analyzer (e.g. a Studio edit
   post-authoring) that are not reflected in the git-tracked `analyzer.json`/manifest.
-

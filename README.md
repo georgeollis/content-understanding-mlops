@@ -128,10 +128,11 @@ graph LR
 
 ## Environments
 
-Each named environment in [`environments.json`](environments.json) maps to a distinct Foundry
-account (`endpoint`) and, optionally, a distinct labeled-data blob container
-(`labeledDataContainerUrl`). Environments do not share deployed `analyzerId`s, manifests, or
-labeled data — each is independently promoted to.
+Each named environment in repo-root [`environments.json`](environments.json) maps to a distinct
+Foundry account (`endpoint`) and can include a default labeled-data blob container
+(`labeledDataContainerUrl`). For family-specific labeled-data containers, add
+`analyzers/<family>/environments.json` and override only the fields that differ. Environments do
+not share deployed `analyzerId`s, manifests, or labeled data — each is independently promoted to.
 
 A git branch merge changes tracked files only; it never invokes the Azure API. Promoting to an
 environment is always an explicit, separate step:
@@ -155,7 +156,7 @@ equivalent for `test`/`prod`/etc.
 | `scripts/` | `onboard-analyzer.ps1`, `new-analyzer.ps1`, `promote-analyzer.ps1`, `compare-analyzers.ps1`, `upload-analyzers.ps1`, `list-analyzers.ps1`, `copy-labeled-data.ps1`, `ci-check.ps1` |
 | `docs/` | Reference documentation |
 | `.github/workflows/ci.yml` | Runs `ci-check.ps1` on every push/PR to `main` (see [Continuous integration](docs/mlops-pipeline.md#continuous-integration)) |
-| `environments.json` | Environment name → `{ endpoint, labeledDataContainerUrl }` |
+| `environments.json` | Default environment config (typically endpoint + optional labeledDataContainerUrl) |
 
 ---
 
