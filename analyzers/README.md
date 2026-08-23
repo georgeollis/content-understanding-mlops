@@ -15,6 +15,8 @@ Starting a new family? Copy [`_template/`](_template/) — see its README for wh
 ```
 analyzers/<family>/
   analyzer.json         # single mutable source of truth (git-tracked; history via commits)
+  environments.json     # optional per-family environment overrides (e.g. family-specific
+                        # labeledDataContainerUrl); values override repo-root environments.json
   manifest.<env>.json    # one per environment (dev/test/prod, ...) - which analyzerId is
                            # currently live IN THAT ENVIRONMENT'S Foundry account. Promoting to
                            # one environment never affects another's manifest or deployment.
@@ -27,8 +29,9 @@ analyzers/<family>/
     <timestamp>_<environment>_<analyzerIds>.json   # git-tracked accuracy reports, per environment
 ```
 
-See the repo root [`environments.json`](../environments.json) for the environment -> endpoint
-mapping used by `-Environment` on the scripts below.
+`-Environment` resolution uses repo-root [`environments.json`](../environments.json) by default.
+If `analyzers/<family>/environments.json` exists, matching fields there override root values for
+that family (useful for family-specific labeled-data containers).
 
 ## Common commands
 

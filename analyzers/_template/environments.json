@@ -1,0 +1,4 @@
+{
+  "note": "Optional analyzer-specific overrides for environments used by scripts/promote-analyzer.ps1 and scripts/copy-labeled-data.ps1. Values here override same-named fields from repo-root environments.json for this family only. Common pattern: keep endpoint in repo-root environments.json and set only labeledDataContainerUrl here when this family uses a different container.",
+  "environments": {}
+}

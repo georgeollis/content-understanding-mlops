@@ -60,7 +60,7 @@ RBAC requirement: the calling principal needs a role granting
 
 ## Environments
 
-`environments.json` maps environment names to Foundry accounts:
+Repo-root `environments.json` maps environment names to Foundry accounts:
 
 ```json
 {
@@ -79,6 +79,10 @@ not shared across entries. See
 [`mlops-pipeline.md`](./mlops-pipeline.md#environments) for the promotion model across
 environments and [`mlops-pipeline.md`](./mlops-pipeline.md#labeled-data-across-environments)
 for how labeled training data is replicated between them.
+
+If one analyzer family needs different settings (for example a different
+`labeledDataContainerUrl`), add `analyzers/<family>/environments.json`; scripts that operate on a
+family merge those values over the repo-root defaults for that family only.
 
 ---
 

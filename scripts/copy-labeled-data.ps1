@@ -15,19 +15,27 @@
   fail to train/build correctly there.
 
   This script uses "azcopy" to copy every blob under -Prefix from the source environment's
-  labeledDataContainerUrl to the destination environment's labeledDataContainerUrl (both read
-  from environments.json), preserving the folder structure so the same -Prefix path works
-  in both places.
+  labeledDataContainerUrl to the destination environment's labeledDataContainerUrl (resolved
+  from analyzers/<family>/environments.json when -Family is set and that file exists,
+  otherwise from repo-root environments.json), preserving the folder structure so the same
+  -Prefix path works in both places.
 
   Requires: azcopy (https://aka.ms/azcopy) authenticated via 'azcopy login', or has access to
   both storage accounts via Entra ID (the identity running this script needs Storage Blob Data
   Reader on the source and Storage Blob Data Contributor on the destination).
 
 .PARAMETER SourceEnvironment
-  Environment name to copy labeled data FROM (e.g. "dev"), as defined in environments.json.
+  Environment name to copy labeled data FROM (e.g. "dev"), as defined in the resolved
+  environment config file.
 
 .PARAMETER DestinationEnvironment
-  Environment name to copy labeled data TO (e.g. "test"), as defined in environments.json.
+  Environment name to copy labeled data TO (e.g. "test"), as defined in the resolved
+  environment config file.
+
+.PARAMETER Family
+  Optional analyzer family. If supplied and analyzers/<family>/environments.json exists,
+  environment entries are read from that file first (falling back to repo-root
+  environments.json when an entry is missing).
 
 .PARAMETER Prefix
   The blob path prefix under each container holding this family's labeled data, e.g.
@@ -38,11 +46,17 @@
   .\copy-labeled-data.ps1 -SourceEnvironment dev -DestinationEnvironment test `
     -Prefix "labelingProjects/599a5656-8624-47e1-8b94-0d1bec0a40b8/train"
 
+.EXAMPLE
+  .\copy-labeled-data.ps1 -Family invoice -SourceEnvironment dev -DestinationEnvironment test `
+    -Prefix "labelingProjects/599a5656-8624-47e1-8b94-0d1bec0a40b8/train"
+
 .NOTES
   Run this BEFORE promote-analyzer.ps1 for the destination environment, so the labeled data is
   already in place by the time the analyzer is deployed there.
 #>
 param(
+  [string]$Family,
+
   [Parameter(Mandatory = $true)]
   [string]$SourceEnvironment,
 
@@ -56,17 +70,17 @@ param(
 $ErrorActionPreference = "Stop"
 
 $repoRoot = Resolve-Path (Join-Path $PSScriptRoot "..")
-$envConfigPath = Join-Path $repoRoot "environments.json"
-if (-not (Test-Path $envConfigPath)) { throw "Not found: $envConfigPath" }
 
-$envConfig = Get-Content $envConfigPath -Raw | ConvertFrom-Json
+. (Join-Path $PSScriptRoot "lib" "EnvironmentConfig.ps1")
 
-$srcEntry = $envConfig.environments.$SourceEnvironment
-$dstEntry = $envConfig.environments.$DestinationEnvironment
-if (-not $srcEntry) { throw "Environment '$SourceEnvironment' not found in $envConfigPath." }
-if (-not $dstEntry) { throw "Environment '$DestinationEnvironment' not found in $envConfigPath." }
-if (-not $srcEntry.labeledDataContainerUrl) { throw "Environment '$SourceEnvironment' has no 'labeledDataContainerUrl' set in $envConfigPath." }
-if (-not $dstEntry.labeledDataContainerUrl) { throw "Environment '$DestinationEnvironment' has no 'labeledDataContainerUrl' set in $envConfigPath." }
+$resolvedSource = Resolve-EnvironmentConfigEntry -RepoRoot $repoRoot -Environment $SourceEnvironment -Family $Family
+$resolvedDestination = Resolve-EnvironmentConfigEntry -RepoRoot $repoRoot -Environment $DestinationEnvironment -Family $Family
+
+$srcEntry = $resolvedSource.Entry
+$dstEntry = $resolvedDestination.Entry
+
+if (-not $srcEntry.labeledDataContainerUrl) { throw "Environment '$SourceEnvironment' has no 'labeledDataContainerUrl' set in $($resolvedSource.Path)." }
+if (-not $dstEntry.labeledDataContainerUrl) { throw "Environment '$DestinationEnvironment' has no 'labeledDataContainerUrl' set in $($resolvedDestination.Path)." }
 
 if (-not (Get-Command azcopy -ErrorAction SilentlyContinue)) {
   throw "azcopy not found on PATH. Install it from https://aka.ms/azcopy and run 'azcopy login' first."

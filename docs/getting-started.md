@@ -42,6 +42,10 @@ Clone the repo, then point at least one environment at a real Foundry account:
 contain secrets (no keys are stored here; auth is token-based — see
 [`azure-foundry-architecture.md`](azure-foundry-architecture.md#authentication)).
 
+If one analyzer family needs a different labeled-data container than others, add
+`analyzers/<family>/environments.json` and override only the fields that differ (typically
+`labeledDataContainerUrl`).
+
 ---
 
 ## 3. Author a new analyzer family
@@ -144,7 +148,7 @@ have the training blobs, copy them first (see
 [`mlops-pipeline.md`](mlops-pipeline.md#labeled-data-across-environments)):
 
 ```powershell
-pwsh -File ./scripts/copy-labeled-data.ps1 -SourceEnvironment <studio-source> -DestinationEnvironment dev -Prefix "labelingProjects/<id>/train"
+pwsh -File ./scripts/copy-labeled-data.ps1 -Family <family> -SourceEnvironment <studio-source> -DestinationEnvironment dev -Prefix "labelingProjects/<id>/train"
 ```
 
 ---
@@ -202,7 +206,8 @@ pwsh -File ./schemas/build-golden-manifest.ps1 -Family <family>
 
 ## 8. Promoting to another environment (`test`, `prod`, ...)
 
-Add the new environment to `environments.json`, copy `manifest.dev.json` to
+Add the new environment to repo-root `environments.json` (and, if needed, family-specific
+overrides to `analyzers/<family>/environments.json`), copy `manifest.dev.json` to
 `manifest.<env>.json` (reset `current`/`promotions`), copy labeled data if applicable, then:
 
 ```powershell

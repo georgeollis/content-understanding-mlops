@@ -27,8 +27,9 @@
        "current".
 
 .PARAMETER Environment
-  Environment name (e.g. "dev", "test", "prod") as defined in environments.json at the repo
-  root. Resolves -Endpoint automatically. Either -Environment or -Endpoint is required.
+  Environment name (e.g. "dev", "test", "prod"). Resolves -Endpoint automatically from
+  analyzers/<family>/environments.json when present, otherwise from repo-root
+  environments.json. Either -Environment or -Endpoint is required.
 
 .PARAMETER Endpoint
   The Content Understanding resource endpoint, e.g. https://myresource.cognitiveservices.azure.com
@@ -76,17 +77,17 @@ $familyDir = Join-Path $repoRoot "analyzers" $Family
 $analyzerFile = Join-Path $familyDir "analyzer.json"
 
 if (-not $Environment -and -not $Endpoint) {
-  throw "Provide -Environment <name> (see environments.json) or -Endpoint <url>."
+  throw "Provide -Environment <name> (see analyzer or repo environments.json) or -Endpoint <url>."
 }
+
+. (Join-Path $PSScriptRoot "lib" "EnvironmentConfig.ps1")
 
 $labeledDataContainerUrl = $null
 if (-not $Endpoint) {
-  $envConfigPath = Join-Path $repoRoot "environments.json"
-  if (-not (Test-Path $envConfigPath)) { throw "Not found: $envConfigPath. Create it or pass -Endpoint directly." }
-  $envConfig = Get-Content $envConfigPath -Raw | ConvertFrom-Json
-  $envEntry = $envConfig.environments.$Environment
-  if (-not $envEntry) { throw "Environment '$Environment' not found in $envConfigPath. Add it, or pass -Endpoint directly." }
+  $resolvedEnv = Resolve-EnvironmentConfigEntry -RepoRoot $repoRoot -Environment $Environment -Family $Family
+  $envEntry = $resolvedEnv.Entry
   $Endpoint = $envEntry.endpoint
+  if (-not $Endpoint) { throw "Environment '$Environment' in $($resolvedEnv.Path) is missing 'endpoint'. Add it, or pass -Endpoint directly." }
   $labeledDataContainerUrl = $envEntry.labeledDataContainerUrl
 }
 
@@ -125,7 +126,7 @@ $deployFile = $analyzerFile
 $hasLabeledData = $analyzerDef.knowledgeSources | Where-Object { $_.kind -eq "labeledData" }
 if ($hasLabeledData) {
   if (-not $labeledDataContainerUrl) {
-    Write-Host "  WARNING: analyzer.json references labeled data, but environment '$Environment' has no 'labeledDataContainerUrl' set in environments.json. Deploying with the containerUrl already in analyzer.json (may point at the wrong environment's storage)." -ForegroundColor Yellow
+    Write-Host "  WARNING: analyzer.json references labeled data, but environment '$Environment' has no 'labeledDataContainerUrl' set in analyzer/root environments.json. Deploying with the containerUrl already in analyzer.json (may point at the wrong environment's storage)." -ForegroundColor Yellow
   } else {
     foreach ($src in $analyzerDef.knowledgeSources) {
       if ($src.kind -eq "labeledData") {
