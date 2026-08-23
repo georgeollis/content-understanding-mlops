@@ -19,8 +19,8 @@
   even though its own API docs list hyphens as an allowed character.
 
 .PARAMETER Description
-  One-line description of what this analyzer extracts (shown in analyzers/README.md's family
-  index). Optional - if omitted, the placeholder is left in place for you to fill in by hand.
+  One-line description of what this analyzer extracts. Optional - if omitted, the placeholder
+  is left in place for you to fill in by hand.
 
 .EXAMPLE
   .\new-analyzer.ps1 -Family receipt -Description "Extracts merchant, line items, and totals from retail receipts"
@@ -55,7 +55,6 @@ function Update-PlaceholderFile {
   $content = Get-Content $Path -Raw
   $content = $content.Replace("<family>", $Family)
   if ($Description) {
-    $content = $content.Replace("<one-line description of what this analyzer extracts - shown in analyzers/README.md's family index>", $Description)
     $content = $content.Replace("<one-line description of what this analyzer extracts>", $Description)
   }
   Set-Content -Path $Path -Value $content -NoNewline

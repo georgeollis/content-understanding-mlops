@@ -70,9 +70,6 @@ All PowerShell scripts, runnable per-family or with `-All`:
   score as "missing" in `compare-analyzers.ps1`), that every top-level `fieldSchema` field is
   present (no missing/extra fields), and that no unreviewed `"_bootstrap"` draft marker remains
   (see `scripts/bootstrap-golden.ps1`).
-- **`list-families.ps1`** — scans `analyzers/*` (excluding any `_`-prefixed folder, e.g.
-  `_template`) and prints the family index table; pass `-WriteReadme` to write it into
-  `analyzers/README.md`. Run manually after adding/removing a family - not part of `ci-check.ps1`.
 
 All scripts require PowerShell 7+ (`pwsh`) and exit non-zero on failure, so they're usable as a
 pre-commit hook or CI gate before `promote-analyzer.ps1` runs. No Python or external packages

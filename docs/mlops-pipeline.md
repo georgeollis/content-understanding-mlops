@@ -396,12 +396,6 @@ Key points:
   (`analyzers/*/golden/** -text`). This prevents git from ever rewriting their line endings on
   checkout regardless of a runner's `core.autocrlf` setting, which is good defensive practice
   even though the LFS-fetch fix above was the actual cause of the checksum failures seen in CI.
-- **`analyzers/README.md` is forced to LF via [`.gitattributes`](../.gitattributes)**
-  (`analyzers/README.md text eol=lf`), scoped to just that one generated file, so
-  `schemas/list-families.ps1 -WriteReadme` produces the same line endings regardless of which
-  OS it's run on. This rule is deliberately narrow — a blanket `* text=auto` would also
-  renormalize the golden-set document/`.expected.json` fixtures and break their manifest
-  checksums.
 
 To require this before merge, enable it as a required status check under the repository's
 branch protection rules for `main` (Settings → Branches → Branch protection rules).

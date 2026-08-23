@@ -8,7 +8,7 @@ schema validation, [`../scripts/`](../scripts/) for the tooling operating on the
 REST surface used.
 
 Starting a new family? Copy [`_template/`](_template/) — see its README for what to fill in.
-`_template` (and any folder prefixed `_`) is excluded from validation and the index below.
+`_template` (and any folder prefixed `_`) is excluded from validation.
 
 ## Layout convention (per family)
 
@@ -29,15 +29,6 @@ analyzers/<family>/
 
 See the repo root [`environments.json`](../environments.json) for the environment -> endpoint
 mapping used by `-Environment` on the scripts below.
-
-## Index
-
-<!-- Regenerate this table with: pwsh -File schemas/list-families.ps1 -WriteReadme -->
-
-| Family | Description | Current (by environment) | Golden docs |
-|---|---|---|---|
-| `businessinvoice` | Business invoice | dev: `_(not deployed)_` | 1 |
-| `invoice` | Extracts invoice header, business (from) and client (for) contact details. | dev: `invoicev3` | 5 |
 
 ## Common commands
 

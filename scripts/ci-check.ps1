@@ -12,10 +12,6 @@
   This does NOT call Azure (no live comparison) - it's meant to be fast and run on every
   commit/PR. Use compare-analyzers.ps1 separately for live accuracy comparisons before promoting.
 
-  To refresh analyzers/README.md's family index table, run
-  schemas/list-families.ps1 -WriteReadme manually - it is not part of this check and never
-  fails CI.
-
 .PARAMETER Fix
   Before validating, regenerate every family's derived golden-set artifacts
   (expected.schema.json + manifest.json via schemas/update-golden.ps1 -All), so a stale
