@@ -61,6 +61,9 @@ All PowerShell scripts, runnable per-family or with `-All`:
   more; see `scripts/lib/GoldenDocs.ps1`) / `*.expected.json` pair in the golden set, plus a
   `groundTruthSource` flag (`generated` vs. `human-verified`). Re-run it after adding/removing/
   editing golden docs.
+- **`update-golden.ps1`** — convenience wrapper that just runs `build-ground-truth-schema.ps1`
+  then `build-golden-manifest.ps1` for a family (the two are almost always run together).
+  `scripts/ci-check.ps1 -Fix` calls this for every family automatically before validating.
 - **`validate-golden.ps1`** — the CI-facing check: confirms every golden doc matches its checksum
   in `manifest.json` (catches silent edits/corruption/stale manifests), every `expected.json`
   conforms to `expected.schema.json` (catches typo'd/renamed fields that would otherwise silently

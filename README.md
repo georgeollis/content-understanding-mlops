@@ -152,7 +152,7 @@ equivalent for `test`/`prod`/etc.
 |---|---|
 | `analyzers/<family>/` | `analyzer.json`, per-environment `manifest.<env>.json`, `golden/` test set, `results/` |
 | `schemas/` | JSON Schemas + validation/generation scripts |
-| `scripts/` | `new-analyzer.ps1`, `promote-analyzer.ps1`, `compare-analyzers.ps1`, `upload-analyzers.ps1`, `list-analyzers.ps1`, `copy-labeled-data.ps1`, `ci-check.ps1` |
+| `scripts/` | `onboard-analyzer.ps1`, `new-analyzer.ps1`, `promote-analyzer.ps1`, `compare-analyzers.ps1`, `upload-analyzers.ps1`, `list-analyzers.ps1`, `copy-labeled-data.ps1`, `ci-check.ps1` |
 | `docs/` | Reference documentation |
 | `.github/workflows/ci.yml` | Runs `ci-check.ps1` on every push/PR to `main` (see [Continuous integration](docs/mlops-pipeline.md#continuous-integration)) |
 | `environments.json` | Environment name → `{ endpoint, labeledDataContainerUrl }` |
@@ -165,11 +165,20 @@ equivalent for `test`/`prod`/etc.
 # Run all validation checks (schema, golden-set integrity)
 pwsh -File ./scripts/ci-check.ps1
 
+# Same, but auto-regenerate stale golden-set artifacts (schema/manifest) instead of just failing
+pwsh -File ./scripts/ci-check.ps1 -Fix
+
+# One-shot onboarding: scaffold (if new) + optional Studio pull + golden-set refresh + validate
+pwsh -File ./scripts/onboard-analyzer.ps1 -Family <family> -Description "..." [-AnalyzerId <id>]
+
 # Scaffold a new analyzer family from analyzers/_template, placeholders pre-filled
 pwsh -File ./scripts/new-analyzer.ps1 -Family <family> -Description "..."
 
 # Pull a live analyzer's current definition from Studio (dev only) into analyzer.json
 pwsh -File ./scripts/sync-analyzer-from-studio.ps1 -Environment dev -Family <family> -AnalyzerId <id>
+
+# Refresh a family's derived golden-set artifacts (expected.schema.json + manifest.json) in one step
+pwsh -File ./schemas/update-golden.ps1 -Family <family>
 
 # Deploy analyzer.json as a new analyzerId in one environment; updates manifest.<env>.json
 pwsh -File ./scripts/promote-analyzer.ps1 -Environment dev -Family <family> -Notes "..."

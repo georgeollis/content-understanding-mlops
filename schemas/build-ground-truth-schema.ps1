@@ -113,6 +113,7 @@ function Build-SchemaForFamily {
 
 function Get-AllFamilies {
   Get-ChildItem $analyzersDir -Directory |
+    Where-Object { $_.Name -notlike "_*" } |
     Where-Object { Test-Path (Join-Path $_.FullName "analyzer.json") } |
     ForEach-Object { $_.Name } |
     Sort-Object

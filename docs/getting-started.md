@@ -46,6 +46,18 @@ contain secrets (no keys are stored here; auth is token-based — see
 
 ## 3. Author a new analyzer family
 
+**Fast path** — one command scaffolds, optionally pulls from Studio, refreshes golden-set
+artifacts, and validates:
+
+```powershell
+pwsh -File ./scripts/onboard-analyzer.ps1 -Family <family> -Description "One-line description" [-AnalyzerId <studio-analyzer-id>]
+```
+
+Omit `-AnalyzerId` if you're authoring `analyzer.json` by hand instead of pulling from Studio.
+Safe to re-run as you iterate. See the printed "Next steps" for what's left (adding golden
+docs, committing, promoting). The rest of this section explains what that wrapper does, if you
+want to run the steps individually instead.
+
 Scaffold the folder (copies `analyzers/_template`, fills in placeholders):
 
 ```powershell
@@ -57,22 +69,26 @@ This creates `analyzers/<family>/` with `analyzer.json`, `manifest.dev.json`, an
 ways to produce the real `fieldSchema` inside `analyzer.json`:
 
 - **Build it in Foundry Studio** (recommended for `dev`): design `fieldSchema` interactively,
-  optionally attach labeled training data, then export the JSON over the placeholder
-  `fieldSchema` `new-analyzer.ps1` left in place. For an existing family, you can keep
-  iterating live in Studio indefinitely and pull the current state down anytime with
-  `sync-analyzer-from-studio.ps1` (dev only — see step 8 below and
-  [`mlops-pipeline.md`](mlops-pipeline.md#authoring-studio-dev-vs-this-repo-dev)).
+  optionally attach labeled training data, then pull it down with
+  `sync-analyzer-from-studio.ps1 -Environment dev -Family <family> -AnalyzerId <id>` (dev
+  only — see step 7 below and
+  [`mlops-pipeline.md`](mlops-pipeline.md#authoring-studio-dev-vs-this-repo-dev)). You can keep
+  iterating live in Studio indefinitely and pull the current state down anytime.
 - **Write it by hand**, matching [`schemas/analyzer.schema.json`](../schemas/analyzer.schema.json).
   VS Code shows inline validation/autocomplete for this automatically (see
   [`schemas/README.md`](../schemas/README.md#editor-validation-vs-code)).
 
-For the golden set, add PDFs plus hand-written `<name>.expected.json` files (matching your
-`fieldSchema`), then generate the derived schema/checksums:
+For the golden set, add source documents (PDF, DOCX, XLSX, PPTX, images, and more — see
+[`schemas/README.md`](../schemas/README.md) for the full supported list) plus hand-written
+`<name>.expected.json` files (matching your `fieldSchema`), then generate the derived
+schema/checksums in one step:
 
 ```powershell
-pwsh -File ./schemas/build-ground-truth-schema.ps1 -Family <family>
-pwsh -File ./schemas/build-golden-manifest.ps1 -Family <family>
+pwsh -File ./schemas/update-golden.ps1 -Family <family>
 ```
+
+(equivalent to running `build-ground-truth-schema.ps1` then `build-golden-manifest.ps1`
+separately, if you want more granular control).
 
 Hand-writing every `expected.json` field-by-field doesn't scale well. An alternative once
 you've promoted a first version (step 5 below): use
@@ -88,8 +104,16 @@ the deployed analyzer's own output, then correct them — see
 pwsh -File ./scripts/ci-check.ps1
 ```
 
-Runs analyzer-schema validation and golden-set integrity checks. Fix any reported errors, then
-commit:
+Runs analyzer-schema validation and golden-set integrity checks. If it reports a stale
+checksum/schema (e.g. after editing a golden doc), auto-fix it and re-validate in one go:
+
+```powershell
+pwsh -File ./scripts/ci-check.ps1 -Fix
+```
+
+`-Fix` only regenerates derived artifacts (`expected.schema.json`, `manifest.json`) — anything
+needing human judgment (an unreviewed `_bootstrap` marker, a genuinely missing field) still
+fails and must be fixed by hand. Once it passes, commit:
 
 ```powershell
 git add analyzers/<family>
@@ -155,7 +179,9 @@ Two ways to iterate on an existing family, either can be committed and promoted 
 `-AnalyzerIds <family>v1, <family>v2`) → commit results.
 
 **Edit live in Studio (dev only)**: keep iterating in Studio against `dev` for as long as you
-want, then pull the current state down when ready:
+want, then pull the current state down when ready (or just re-run
+`onboard-analyzer.ps1 -Family <family> -AnalyzerId <id>`, which does this plus the golden-set
+refresh in one step):
 ```powershell
 pwsh -File ./scripts/sync-analyzer-from-studio.ps1 -Environment dev -Family <family> -AnalyzerId <id>
 ```
