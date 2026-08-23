@@ -1,0 +1,183 @@
+{
+	"analyzerId": "test01",
+	"description": "test01",
+	"createdAt": "2026-08-22T14:53:29Z",
+	"lastModifiedAt": "2026-08-22T14:53:29Z",
+	"baseAnalyzerId": "prebuilt-document",
+	"config": {
+		"returnDetails": false,
+		"enableOcr": true,
+		"enableLayout": true,
+		"enableFormula": true,
+		"enableFigureDescription": false,
+		"enableFigureAnalysis": false,
+		"chartFormat": "chartjs",
+		"tableFormat": "html",
+		"enableSegment": false,
+		"omitContent": false,
+		"segmentPerPage": false,
+		"annotationFormat": "markdown"
+	},
+	"warnings": [],
+	"status": "ready",
+	"processingLocation": "geography",
+	"knowledgeSources": [
+		{
+			"kind": "labeledData",
+			"containerUrl": "https://byofoundrylfgymnr5ast.blob.core.windows.net/invoices",
+			"prefix": "labelingProjects/599a5656-8624-47e1-8b94-0d1bec0a40b8/train",
+			"fileListPath": ""
+		}
+	],
+	"supportedModels": {
+		"completion": [
+			"gpt-4o",
+			"gpt-4o-mini",
+			"gpt-4.1",
+			"gpt-4.1-mini",
+			"gpt-4.1-nano",
+			"gpt-5",
+			"gpt-5-mini",
+			"gpt-5-nano",
+			"gpt-5.1",
+			"gpt-5.2",
+			"gpt-5.4",
+			"gpt-5.4-mini",
+			"gpt-5.5"
+		],
+		"embedding": [
+			"text-embedding-3-small",
+			"text-embedding-3-large",
+			"text-embedding-ada-002"
+		]
+	},
+	"models": {
+		"completion": "gpt-5",
+		"embedding": "text-embedding-3-large"
+	},
+	"fieldSchema": {
+		"fields": {
+			"SellerName": {
+				"type": "string",
+				"method": "extract",
+				"description": "Legal or trade name of the issuing business shown in the From section"
+			},
+			"SellerEmail": {
+				"type": "string",
+				"method": "extract",
+				"description": "Email address of the issuing business as printed in the From section"
+			},
+			"SellerAddress": {
+				"type": "string",
+				"method": "extract",
+				"description": "Mailing or street address of the issuing business as shown in the From section"
+			},
+			"SellerPhone": {
+				"type": "string",
+				"method": "extract",
+				"description": "Telephone number for the issuing business as printed in the From section"
+			},
+			"BuyerName": {
+				"type": "string",
+				"method": "extract",
+				"description": "Customer or recipient name shown in the For section"
+			},
+			"BuyerEmail": {
+				"type": "string",
+				"method": "extract",
+				"description": "Email address of the customer shown in the For section"
+			},
+			"BuyerAddress": {
+				"type": "string",
+				"method": "extract",
+				"description": "Mailing or street address of the customer as printed in the For section"
+			},
+			"BuyerPhone": {
+				"type": "string",
+				"method": "extract",
+				"description": "Telephone number for the customer as shown in the For section"
+			},
+			"InvoiceNumber": {
+				"type": "string",
+				"method": "extract",
+				"description": "Unique invoice identifier labeled Number used to reference this billing document"
+			},
+			"InvoiceDate": {
+				"type": "date",
+				"method": "extract",
+				"description": "Calendar date the invoice was issued as labeled Date"
+			},
+			"PaymentTerms": {
+				"type": "string",
+				"method": "extract",
+				"description": "Payment terms indicating due time frame or conditions as labeled Terms"
+			},
+			"DueDate": {
+				"type": "date",
+				"method": "extract",
+				"description": "Calendar date by which payment is due as labeled Due"
+			},
+			"LineItems": {
+				"type": "array",
+				"method": "generate",
+				"description": "Itemized list of goods or services billed including description, unit price, quantity, and line amount",
+				"items": {
+					"type": "object",
+					"method": "generate",
+					"properties": {
+						"Description": {
+							"type": "string",
+							"method": "extract",
+							"description": "Narrative description of the product or service for the line"
+						},
+						"UnitPriceAmount": {
+							"type": "number",
+							"method": "extract",
+							"description": "Unit price for the line item excluding currency symbols"
+						},
+						"Quantity": {
+							"type": "number",
+							"method": "extract",
+							"description": "Number of units billed for this line"
+						},
+						"LineAmount": {
+							"type": "number",
+							"method": "extract",
+							"description": "Extended amount for the line, typically unit price multiplied by quantity"
+						}
+					}
+				}
+			},
+			"SubtotalAmount": {
+				"type": "number",
+				"method": "extract",
+				"description": "Sum of line item amounts before taxes, discounts, or additional charges"
+			},
+			"TaxDescription": {
+				"type": "string",
+				"method": "extract",
+				"description": "Printed tax label or rate description accompanying the tax total"
+			},
+			"TaxAmount": {
+				"type": "number",
+				"method": "extract",
+				"description": "Total tax amount applied to the subtotal"
+			},
+			"TotalAmount": {
+				"type": "number",
+				"method": "extract",
+				"description": "Grand total due including taxes and adjustments"
+			},
+			"BalanceDueAmount": {
+				"type": "number",
+				"method": "extract",
+				"description": "Outstanding balance still payable at the time of invoice issuance"
+			},
+			"Notes": {
+				"type": "string",
+				"method": "extract",
+				"description": "Free-text notes or footer messages printed on the invoice"
+			}
+		}
+	}
+}

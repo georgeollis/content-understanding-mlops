@@ -1,0 +1,28 @@
+{
+  "SellerName": "Crimson Forge",
+  "SellerEmail": "hello@crimsonforge.com",
+  "SellerAddress": "154 Oak Street, Franklin",
+  "SellerPhone": "(319) 691 8779",
+  "BuyerName": "Reese Thomas",
+  "BuyerEmail": "reese@harrismail.com",
+  "BuyerAddress": "924 Chestnut Blvd, Madison",
+  "BuyerPhone": "099 642 69556",
+  "InvoiceNumber": "INV1004",
+  "InvoiceDate": "2024-05-27",
+  "PaymentTerms": "Next Day",
+  "DueDate": "2024-05-28",
+  "LineItems": [
+    {
+      "Description": "Website design",
+      "UnitPriceAmount": 362,
+      "Quantity": 2,
+      "LineAmount": 724
+    }
+  ],
+  "SubtotalAmount": 724,
+  "TaxDescription": "Tax (7%)",
+  "TaxAmount": 50.68,
+  "TotalAmount": 774.68,
+  "BalanceDueAmount": 774.68,
+  "Notes": "Please make checks payable to the business name above."
+}

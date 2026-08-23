@@ -1,0 +1,133 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "test01 ground-truth (expected.json) schema",
+  "description": "Auto-generated from analyzers/test01/analyzer.json. Do not hand-edit; re-run build-ground-truth-schema.ps1 after changing the analyzer's fieldSchema.",
+  "type": "object",
+  "properties": {
+    "SellerName": {
+      "type": "string",
+      "description": "Legal or trade name of the issuing business shown in the From section"
+    },
+    "SellerEmail": {
+      "type": "string",
+      "description": "Email address of the issuing business as printed in the From section"
+    },
+    "SellerAddress": {
+      "type": "string",
+      "description": "Mailing or street address of the issuing business as shown in the From section"
+    },
+    "SellerPhone": {
+      "type": "string",
+      "description": "Telephone number for the issuing business as printed in the From section"
+    },
+    "BuyerName": {
+      "type": "string",
+      "description": "Customer or recipient name shown in the For section"
+    },
+    "BuyerEmail": {
+      "type": "string",
+      "description": "Email address of the customer shown in the For section"
+    },
+    "BuyerAddress": {
+      "type": "string",
+      "description": "Mailing or street address of the customer as printed in the For section"
+    },
+    "BuyerPhone": {
+      "type": "string",
+      "description": "Telephone number for the customer as shown in the For section"
+    },
+    "InvoiceNumber": {
+      "type": "string",
+      "description": "Unique invoice identifier labeled Number used to reference this billing document"
+    },
+    "InvoiceDate": {
+      "type": "string",
+      "description": "Calendar date the invoice was issued as labeled Date"
+    },
+    "PaymentTerms": {
+      "type": "string",
+      "description": "Payment terms indicating due time frame or conditions as labeled Terms"
+    },
+    "DueDate": {
+      "type": "string",
+      "description": "Calendar date by which payment is due as labeled Due"
+    },
+    "LineItems": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "Description": {
+            "type": "string",
+            "description": "Narrative description of the product or service for the line"
+          },
+          "UnitPriceAmount": {
+            "type": "number",
+            "description": "Unit price for the line item excluding currency symbols"
+          },
+          "Quantity": {
+            "type": "number",
+            "description": "Number of units billed for this line"
+          },
+          "LineAmount": {
+            "type": "number",
+            "description": "Extended amount for the line, typically unit price multiplied by quantity"
+          }
+        },
+        "required": [
+          "Description",
+          "UnitPriceAmount",
+          "Quantity",
+          "LineAmount"
+        ]
+      },
+      "description": "Itemized list of goods or services billed including description, unit price, quantity, and line amount"
+    },
+    "SubtotalAmount": {
+      "type": "number",
+      "description": "Sum of line item amounts before taxes, discounts, or additional charges"
+    },
+    "TaxDescription": {
+      "type": "string",
+      "description": "Printed tax label or rate description accompanying the tax total"
+    },
+    "TaxAmount": {
+      "type": "number",
+      "description": "Total tax amount applied to the subtotal"
+    },
+    "TotalAmount": {
+      "type": "number",
+      "description": "Grand total due including taxes and adjustments"
+    },
+    "BalanceDueAmount": {
+      "type": "number",
+      "description": "Outstanding balance still payable at the time of invoice issuance"
+    },
+    "Notes": {
+      "type": "string",
+      "description": "Free-text notes or footer messages printed on the invoice"
+    }
+  },
+  "required": [
+    "SellerName",
+    "SellerEmail",
+    "SellerAddress",
+    "SellerPhone",
+    "BuyerName",
+    "BuyerEmail",
+    "BuyerAddress",
+    "BuyerPhone",
+    "InvoiceNumber",
+    "InvoiceDate",
+    "PaymentTerms",
+    "DueDate",
+    "LineItems",
+    "SubtotalAmount",
+    "TaxDescription",
+    "TaxAmount",
+    "TotalAmount",
+    "BalanceDueAmount",
+    "Notes"
+  ],
+  "additionalProperties": false
+}
