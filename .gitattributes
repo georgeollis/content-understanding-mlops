@@ -1,5 +1,12 @@
 *.pdf filter=lfs diff=lfs merge=lfs -text
 
+# Golden-set fixtures (analyzers/*/golden/*) are byte-checksummed against the manifest recorded
+# by schemas/bootstrap-golden.ps1. Mark them binary/no-conversion so git never rewrites their
+# line endings on checkout - without this, the CI (windows-latest) runner's default
+# core.autocrlf handling of *.expected.json converted LF to CRLF, changing the file's bytes and
+# making ci-check.ps1's golden dataset validation fail with false-positive checksum mismatches.
+analyzers/*/golden/** -text
+
 # analyzers/README.md is generated with LF-only line breaks by schemas/list-families.ps1.
 # Force it to always check out as LF so ci-check.ps1's "is the index stale" regeneration
 # check produces identical bytes regardless of the checking-out machine/runner's

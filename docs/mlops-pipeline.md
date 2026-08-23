@@ -362,6 +362,11 @@ Key points:
 - **Failure mode matches local usage** — a failing check (e.g. stale `analyzers/README.md`)
   produces the same console output as running `ci-check.ps1` locally, including the fix
   instructions (e.g. `git diff analyzers/README.md`).
+- **Golden-set fixtures are marked binary via [`.gitattributes`](../.gitattributes)**
+  (`analyzers/*/golden/** -text`). Without this, the CI runner's default line-ending conversion
+  for text-like files (e.g. `.expected.json`) silently rewrote LF to CRLF on checkout, changing
+  the file's bytes and causing `ci-check.ps1`'s golden dataset validation to fail with
+  false-positive checksum mismatches against the manifest recorded by `bootstrap-golden.ps1`.
 - **`analyzers/README.md` is forced to LF via [`.gitattributes`](../.gitattributes)**
   (`analyzers/README.md text eol=lf`), scoped to just that one generated file. Without this, the
   table written by `schemas/list-families.ps1` could be checked out with different line endings
