@@ -378,17 +378,16 @@ Key points:
   matrix on every push/PR guards against a future change accidentally reintroducing an
   OS-specific path.
 - **No Azure access required or used.** `ci-check.ps1` only validates files already in the
-  checkout (schema conformance, golden-set checksums, family-index freshness) — it never calls
+  checkout (schema conformance, golden-set checksums) — it never calls
   `analyzeBinary` or any live endpoint, so it needs no secrets/credentials and runs identically
   for any contributor's fork or PR.
 - **This is the PR gate, not the promotion gate.** It catches authoring-stage mistakes (bad
-  `analyzer.json`, drifted golden set, stale `analyzers/README.md`) before merge. It does not
+  `analyzer.json`, drifted golden set) before merge. It does not
   run `compare-analyzers.ps1` (that requires a live Foundry endpoint and credentials) and it
   does not run `promote-analyzer.ps1` — both remain manual, intentional steps per
   [Stage 2 — Promote](#stage-2--promote) and [Stage 3 — Evaluate](#stage-3--evaluate).
-- **Failure mode matches local usage** — a failing check (e.g. stale `analyzers/README.md`)
-  produces the same console output as running `ci-check.ps1` locally, including the fix
-  instructions (e.g. `git diff analyzers/README.md`).
+- **Failure mode matches local usage** — a failing check produces the same console output as
+  running `ci-check.ps1` locally, including the fix instructions.
 - **Checks out Git LFS content** (`lfs: true` on the checkout step). Golden-set document
   fixtures are stored via Git LFS (see [`.gitattributes`](../.gitattributes)); without this,
   `actions/checkout@v4` leaves LFS pointer stubs in place of real file bytes, which fails
@@ -398,12 +397,10 @@ Key points:
   checkout regardless of a runner's `core.autocrlf` setting, which is good defensive practice
   even though the LFS-fetch fix above was the actual cause of the checksum failures seen in CI.
 - **`analyzers/README.md` is forced to LF via [`.gitattributes`](../.gitattributes)**
-  (`analyzers/README.md text eol=lf`), scoped to just that one generated file. Without this, the
-  table written by `schemas/list-families.ps1` could be checked out with different line endings
-  on different machines/runners (depending on each git client's `core.autocrlf` setting), which
-  made the "is the family index stale" check produce false positives when the file committed on
-  one OS was re-validated on another. This rule is deliberately narrow — a blanket `* text=auto`
-  would also renormalize the golden-set document/`.expected.json` fixtures and break their manifest
+  (`analyzers/README.md text eol=lf`), scoped to just that one generated file, so
+  `schemas/list-families.ps1 -WriteReadme` produces the same line endings regardless of which
+  OS it's run on. This rule is deliberately narrow — a blanket `* text=auto` would also
+  renormalize the golden-set document/`.expected.json` fixtures and break their manifest
   checksums.
 
 To require this before merge, enable it as a required status check under the repository's

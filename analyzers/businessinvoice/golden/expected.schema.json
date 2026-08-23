@@ -1,0 +1,16 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "businessinvoice ground-truth (expected.json) schema",
+  "description": "Auto-generated from analyzers/businessinvoice/analyzer.json. Do not hand-edit; re-run build-ground-truth-schema.ps1 after changing the analyzer's fieldSchema.",
+  "type": "object",
+  "properties": {
+    "SellerName": {
+      "type": "string",
+      "description": "The name of the seller"
+    }
+  },
+  "required": [
+    "SellerName"
+  ],
+  "additionalProperties": false
+}

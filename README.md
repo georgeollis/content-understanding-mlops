@@ -67,7 +67,7 @@ graph LR
 | Stage | Operation | Script |
 |---|---|---|
 | 1. Author | Edit `analyzer.json`; validated against `schemas/analyzer.schema.json` | *(edit + `ci-check.ps1` + commit)* |
-| 2. Promote | Deploys as a new immutable `analyzerId` in one target environment; records the commit | `promote-analyzer.ps1` |
+| 2. Promote | Deploys as a new immutable `analyzerId` in one target environment | `promote-analyzer.ps1` |
 | 3. Evaluate | Runs the golden PDF set through one or more live `analyzerId`s via `analyzeBinary`; scores field-level accuracy | `compare-analyzers.ps1` |
 | 4. Record | Persists the scored comparison as JSON under `analyzers/<family>/results/` | *(automatic, part of stage 3)* |
 
@@ -162,7 +162,7 @@ equivalent for `test`/`prod`/etc.
 ## Command reference
 
 ```powershell
-# Run all validation checks (schema, golden-set integrity, family index freshness)
+# Run all validation checks (schema, golden-set integrity)
 pwsh -File ./scripts/ci-check.ps1
 
 # Scaffold a new analyzer family from analyzers/_template, placeholders pre-filled

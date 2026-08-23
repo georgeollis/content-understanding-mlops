@@ -1,6 +1,6 @@
 name: CI
 
-# Runs scripts/ci-check.ps1 (schema validation, golden-set integrity, family-index freshness)
+# Runs scripts/ci-check.ps1 (schema validation, golden-set integrity)
 # on every push and pull request. This is the same command documented in README.md and
 # docs/getting-started.md for local pre-commit use - CI just guarantees it actually ran.
 #

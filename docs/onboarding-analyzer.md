@@ -73,15 +73,14 @@ set `"groundTruthSource": "human-verified"` per document in that file.
 pwsh -File ./scripts/ci-check.ps1
 ```
 
-Checks analyzer-schema validity, golden-set integrity (checksums + no leftover `_bootstrap`
-markers... actually `_bootstrap` isn't blocked by ci-check, review manually), and regenerates
-`analyzers/README.md`'s index table if stale. Fix anything reported, re-run until it passes.
+Checks analyzer-schema validity and golden-set integrity (checksums + no leftover `_bootstrap`
+markers... actually `_bootstrap` isn't blocked by ci-check, review manually). Fix anything
+reported, re-run until it passes.
 
 ## 5. Commit
 
 ```powershell
 git add analyzers/<family>
-git add analyzers/README.md   # if ci-check regenerated it
 git commit -m "Add <family> analyzer"
 ```
 

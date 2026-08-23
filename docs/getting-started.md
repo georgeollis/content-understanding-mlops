@@ -88,8 +88,8 @@ the deployed analyzer's own output, then correct them — see
 pwsh -File ./scripts/ci-check.ps1
 ```
 
-Runs analyzer-schema validation, golden-set integrity checks, and regenerates
-`analyzers/README.md`'s family index if stale. Fix any reported errors, then commit:
+Runs analyzer-schema validation and golden-set integrity checks. Fix any reported errors, then
+commit:
 
 ```powershell
 git add analyzers/<family>
