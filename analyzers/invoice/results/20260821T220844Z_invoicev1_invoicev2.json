@@ -8,7 +8,6 @@
   ],
   "apiVersion": "2025-11-01",
   "goldenDir": "C:\\GitHub\\content-understand\\scripts\\..\\analyzers\\invoice\\golden",
-  "gitCommit": "e0bf0c8b227185f46c6abef68f6c0a9482886bb5",
   "summary": {
     "invoicev1": {
       "matched": 60,

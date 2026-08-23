@@ -467,8 +467,6 @@ if ($SaveResults) {
     $safeIds = ($AnalyzerIds -join "_")
     $reportPath = Join-Path $ResultsDir "$timestamp`_$Environment`_$safeIds.json"
 
-    $gitCommit = (git -C $PSScriptRoot rev-parse HEAD 2>$null)
-
     $report = [ordered]@{
       timestamp    = (Get-Date -AsUTC -Format "o")
       environment  = $Environment
@@ -477,7 +475,6 @@ if ($SaveResults) {
       analyzerIds  = $AnalyzerIds
       apiVersion   = $ApiVersion
       goldenDir    = $GoldenDir
-      gitCommit    = $gitCommit
       summary      = $analyzerSummaries
       documents    = $documentReports
     }

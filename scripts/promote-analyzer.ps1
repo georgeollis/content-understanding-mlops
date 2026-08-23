@@ -18,14 +18,12 @@
   This script:
     1. Reads analyzers/<family>/analyzer.json and analyzers/<family>/manifest.<Environment>.json.
     2. Determines the next version number for THIS environment (max existing promotion + 1).
-    3. Requires a clean git working tree for this file (so what's deployed always matches what's
-       committed) unless -AllowDirty is passed.
-    4. If analyzer.json references labeled training data (knowledgeSources[].kind ==
+    3. If analyzer.json references labeled training data (knowledgeSources[].kind ==
        "labeledData"), rewrites containerUrl to this environment's labeledDataContainerUrl
        (from environments.json) before deploying - see copy-labeled-data.ps1 for how the
        actual blob data gets copied to each environment's storage account.
-    5. Uploads analyzer.json to Azure as "<family>V<N>" via upload-analyzers.ps1.
-    6. Appends a new entry to manifest.<Environment>.json's "promotions" array and updates
+    4. Uploads analyzer.json to Azure as "<family>V<N>" via upload-analyzers.ps1.
+    5. Appends a new entry to manifest.<Environment>.json's "promotions" array and updates
        "current".
 
 .PARAMETER Environment
@@ -41,10 +39,6 @@
 
 .PARAMETER Notes
   Free-text note describing what changed in this promotion (stored in the manifest).
-
-.PARAMETER AllowDirty
-  Skip the clean-working-tree check (not recommended - the whole point is that what's deployed
-  always matches what's committed to analyzer.json).
 
 .PARAMETER ApiVersion
   Content Understanding API version. Defaults to the current GA version.
@@ -71,8 +65,6 @@ param(
 
   [Parameter(Mandatory = $true)]
   [string]$Notes,
-
-  [switch]$AllowDirty,
 
   [string]$ApiVersion = "2025-11-01"
 )
@@ -110,19 +102,6 @@ if (-not (Test-Path $manifestFile)) { throw "Not found: $manifestFile (expected 
 # ("<family>v<N>") - fail fast with a clear message instead of letting Azure reject the PUT.
 if ($Family -match "-") {
   throw "Family '$Family' contains a hyphen, which Content Understanding does not allow in analyzerIds. Rename the analyzers/$Family folder to a hyphen-free name (e.g. '$($Family -replace '-', '')') and try again."
-}
-
-# ---------- Git safety check ----------
-Push-Location $repoRoot
-try {
-  $relPath = "analyzers/$Family/analyzer.json"
-  $dirty = git status --porcelain -- $relPath
-  if ($dirty -and -not $AllowDirty) {
-    throw "Uncommitted changes in $relPath. Commit them first (so what's deployed always matches what's committed), or pass -AllowDirty to override."
-  }
-}
-finally {
-  Pop-Location
 }
 
 # ---------- Determine next version (per environment) ----------

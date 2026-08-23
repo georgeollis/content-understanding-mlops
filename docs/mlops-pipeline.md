@@ -120,22 +120,20 @@ needs a manual edit. Re-run `build-golden-manifest.ps1` afterwards (checksums ch
 Resolves `<env>` against `environments.json` to an `endpoint` (and, if present,
 `labeledDataContainerUrl`). Execution:
 
-1. **Git precondition**: `git status --porcelain -- analyzers/<family>/analyzer.json` must be
-   empty (fails unless `-AllowDirty`), so what's deployed always matches what's committed.
-2. **Version resolution**: reads `manifest.<env>.json`, computes
+1. **Version resolution**: reads `manifest.<env>.json`, computes
    `nextVersion = max(existing promotions[].version) + 1` for that environment specifically —
    version numbering is per-environment, not global.
-3. **Labeled-data containerUrl rewrite** (conditional): if
+2. **Labeled-data containerUrl rewrite** (conditional): if
    `analyzer.json.knowledgeSources[].kind == "labeledData"`, the script writes a temporary copy
    of `analyzer.json` with `containerUrl` replaced by the target environment's
    `labeledDataContainerUrl`, and deploys that copy instead of the source file. If no
    `labeledDataContainerUrl` is configured for the environment, it deploys the file as-is and
    emits a warning. The source `analyzer.json` on disk is never modified.
-4. **Deploy**: `analyzerId = "<family>v<nextVersion>"` (lowercase); calls
+3. **Deploy**: `analyzerId = "<family>v<nextVersion>"` (lowercase); calls
    `upload-analyzers.ps1`, which issues `PUT /analyzers/{analyzerId}?allowReplace=true` and
    polls the returned `Operation-Location` until `status == "Succeeded"`. This always creates a
    new analyzer object — it never mutates or replaces an existing `analyzerId`.
-5. **Manifest update**: marks any prior `active` entry in `manifest.<env>.json` as
+4. **Manifest update**: marks any prior `active` entry in `manifest.<env>.json` as
    `superseded`, appends the new promotion record (`version`, `analyzerId`, `createdAt`,
    `notes`), and sets `current = analyzerId`.
 
@@ -189,10 +187,10 @@ not currently extracted.
 Unless `-SaveResults:$false` is passed, stage 3 writes a JSON report to
 `analyzers/<family>/results/<timestampUTC>_<environment>_<analyzerIds>.json`, containing:
 `timestamp`, `environment`, `endpoint`, `family`, `analyzerIds`, `apiVersion`, `goldenDir`,
-`gitCommit` (of this repo at run time), the per-analyzer `summary`
-(matched/total/accuracyPct/avgConfidence), and per-document/per-field `results` (actual value,
-confidence, and matched boolean). Intended to be committed alongside the promotion it evaluates,
-giving an audit trail queryable via `git log analyzers/<family>/results/`.
+the per-analyzer `summary` (matched/total/accuracyPct/avgConfidence), and per-document/per-field
+`results` (actual value, confidence, and matched boolean). Intended to be committed alongside
+the promotion it evaluates, giving an audit trail queryable via
+`git log analyzers/<family>/results/`.
 
 ---
 

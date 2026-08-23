@@ -109,9 +109,7 @@ integration](mlops-pipeline.md#continuous-integration) for details.
 pwsh -File ./scripts/promote-analyzer.ps1 -Environment dev -Family <family> -Notes "Initial deployment"
 ```
 
-This requires a clean git working tree for `analyzer.json` (commit first, so what's deployed
-always matches what's committed). It deploys `analyzerId = "<family>v1"` and updates
-`manifest.dev.json`. Push your commit:
+This deploys `analyzerId = "<family>v1"` and updates `manifest.dev.json`. Push your commit:
 
 ```powershell
 git push origin main

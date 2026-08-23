@@ -7,7 +7,6 @@
   ],
   "apiVersion": "2025-11-01",
   "goldenDir": "C:\\GitHub\\content-understand\\scripts\\..\\analyzers\\complaint\\golden",
-  "gitCommit": "7bf2ce09619cd3c75984055fcd3deedc732371c9",
   "summary": {
     "complaintv1": {
       "matched": 35,
