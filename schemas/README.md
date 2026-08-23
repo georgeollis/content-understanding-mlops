@@ -52,13 +52,22 @@ All PowerShell scripts, runnable per-family or with `-All`:
 - **`build-ground-truth-schema.ps1`** — derives `analyzers/<family>/golden/expected.schema.json`
   directly from that family's `analyzer.json` `fieldSchema`. Re-run it whenever you add/rename/
   remove a field so ground-truth files stay in lockstep with the analyzer.
+- **`sync-golden-fields.ps1`** — when `fieldSchema` changes, patches every `expected.json` in a
+  family's `golden/` with placeholder values for newly-required top-level fields (deliberately
+  wrong-typed for non-string fields, so `validate-golden.ps1` keeps failing until a human fills
+  them in) and warns about fields no longer in the schema. Top-level fields only.
 - **`build-golden-manifest.ps1`** — writes `analyzers/<family>/golden/manifest.json`: a sha256
   checksum of every `*.pdf`/`*.expected.json` pair in the golden set, plus a `groundTruthSource`
   flag (`generated` vs. `human-verified`). Re-run it after adding/removing/editing golden docs.
 - **`validate-golden.ps1`** — the CI-facing check: confirms every golden doc matches its checksum
-  in `manifest.json` (catches silent edits/corruption/stale manifests) and every `expected.json`
+  in `manifest.json` (catches silent edits/corruption/stale manifests), every `expected.json`
   conforms to `expected.schema.json` (catches typo'd/renamed fields that would otherwise silently
-  score as "missing" in `compare-analyzers.ps1`).
+  score as "missing" in `compare-analyzers.ps1`), that every top-level `fieldSchema` field is
+  present (no missing/extra fields), and that no unreviewed `"_bootstrap"` draft marker remains
+  (see `scripts/bootstrap-golden.ps1`).
+- **`list-families.ps1`** — scans `analyzers/*` (excluding any `_`-prefixed folder, e.g.
+  `_template`) and regenerates the family index table in `analyzers/README.md` with
+  `-WriteReadme`; `ci-check.ps1` fails if the committed table is stale.
 
 All scripts require PowerShell 7+ (`pwsh`) and exit non-zero on failure, so they're usable as a
 pre-commit hook or CI gate before `promote-analyzer.ps1` runs. No Python or external packages

@@ -10,26 +10,27 @@ The pipeline exclusively targets the Content Understanding data-plane API on a M
 Foundry account (Cognitive Services kind `AIServices`/Foundry). No other Azure resource type
 is called by any script in this repo.
 
-Two REST operations are used, both under `{endpoint}/contentunderstanding`, api-version
+Three REST operations are used, all under `{endpoint}/contentunderstanding`, api-version
 `2025-11-01` (GA):
 
 | Operation | Method + path | Used by | Purpose |
 |---|---|---|---|
 | Create analyzer | `PUT /analyzers/{analyzerId}?api-version=2025-11-01&allowReplace=true` | `upload-analyzers.ps1` (via `promote-analyzer.ps1`) | Creates a new analyzer from an `analyzer.json` body; returns `Operation-Location` for polling |
-| Analyze document | `POST /analyzers/{analyzerId}:analyzeBinary?api-version=2025-11-01` | `compare-analyzers.ps1` | Submits document bytes for extraction; returns `Operation-Location` for polling |
+| Get analyzer | `GET /analyzers/{analyzerId}?api-version=2025-11-01` | `sync-analyzer-from-studio.ps1` | Read-only fetch of a live (Studio-edited) analyzer's current definition, for pulling into `analyzer.json` |
+| Analyze document | `POST /analyzers/{analyzerId}:analyzeBinary?api-version=2025-11-01` | `compare-analyzers.ps1`, `bootstrap-golden.ps1` | Submits document bytes for extraction; returns `Operation-Location` for polling |
 
-Both operations are asynchronous: the initial response returns `202 Accepted` with an
+Create and Analyze are asynchronous: the initial response returns `202 Accepted` with an
 `Operation-Location` header; the caller polls `GET {Operation-Location}` until
-`status ∈ {"Succeeded", "Failed"}`.
+`status ∈ {"Succeeded", "Failed"}`. Get analyzer is a synchronous, single-request read.
 
 ```mermaid
 graph LR
     REPO["scripts/*.ps1"] -->|"HTTPS, Bearer token"| FOUNDRY["Foundry account<br/>Content Understanding API"]
 ```
 
-> Foundry Studio (the web UI) is used only for `dev`-scoped authoring — see
+> Foundry Studio (the web UI) is used for ongoing `dev`-scoped authoring — see
 > [`mlops-pipeline.md`](./mlops-pipeline.md#authoring-studio-dev-vs-this-repo-dev) for the
-> workflow boundary.
+> workflow boundary and how Studio edits get pulled back into git.
 
 ---
 

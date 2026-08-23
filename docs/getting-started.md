@@ -55,7 +55,6 @@ Two ways to produce `analyzers/<family>/analyzer.json`:
   `sync-analyzer-from-studio.ps1` (dev only — see step 8 below and
   [`mlops-pipeline.md`](mlops-pipeline.md#authoring-studio-dev-vs-this-repo-dev)).
 - **Write it by hand**, matching [`schemas/analyzer.schema.json`](../schemas/analyzer.schema.json).
-- **Write it by hand**, matching [`schemas/analyzer.schema.json`](../schemas/analyzer.schema.json).
 
 Create the family folder and required files:
 
@@ -137,8 +136,10 @@ Score the newly deployed analyzer against its own golden set:
 pwsh -File .\scripts\compare-analyzers.ps1 -Environment dev -Family <family> -AnalyzerIds <family>v1
 ```
 
-Prints a per-document, per-field match table plus an aggregate accuracy percentage, and writes
-a report to `analyzers/<family>/results/`. Commit the report:
+Prints a per-document, per-field match table plus an aggregate accuracy percentage (and, since
+`_template/analyzer.json` has `config.estimateFieldSourceAndConfidence: true` by default, an
+average per-field confidence score too), and writes a report to `analyzers/<family>/results/`.
+Commit the report:
 
 ```powershell
 git add analyzers/<family>/results

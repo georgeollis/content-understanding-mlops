@@ -11,7 +11,7 @@ Copy-Item -Recurse analyzers\_template analyzers\<family>
 
 | File | Do this |
 |---|---|
-| `analyzer.json` | Replace with the JSON exported from Foundry Studio's **Download** action (or hand-write it against [`schemas/analyzer.schema.json`](../../schemas/analyzer.schema.json)) |
+| `analyzer.json` | Already has `config.estimateFieldSourceAndConfidence: true` set (so `compare-analyzers.ps1` reports per-field confidence once promoted). Replace the rest with the JSON exported from Foundry Studio's **Download** action (or hand-write it against [`schemas/analyzer.schema.json`](../../schemas/analyzer.schema.json)). For an existing family, you can also keep iterating live in Studio (dev only) and pull updates with [`sync-analyzer-from-studio.ps1`](../../scripts/sync-analyzer-from-studio.ps1) instead of re-copying by hand. |
 | `manifest.dev.json` | Leave as-is (`{ "current": null, "promotions": [] }`) — `promote-analyzer.ps1` fills this in on first promotion. Copy it again as `manifest.<env>.json` for each additional environment. |
 | `golden/` | Add at least one `<name>.pdf`. For `<name>.expected.json`: either hand-write it (fields matching `analyzer.json`'s `fieldSchema`), or promote first and use [`bootstrap-golden.ps1`](../../scripts/bootstrap-golden.ps1) to draft it from the deployed analyzer's own output, then review/correct it. Delete this folder's `.gitkeep`. |
 | `sample-documents/` | Optional: broader pool of sample/synthetic documents for this family, delete `.gitkeep` if unused |
