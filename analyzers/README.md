@@ -38,6 +38,7 @@ mapping used by `-Environment` on the scripts below.
 |---|---|---|---|
 | `complaint` | Extracts structured fields from customer complaint forms (customer contact details, complaint nature, incident details, desired resolution). | dev: `complaintv1` | 5 |
 | `invoice` | Extracts invoice header, business (from) and client (for) contact details. | dev: `invoicev3` | 5 |
+| `sampleinvoice` | Extracts seller name and invoice number from sample invoice documents. | dev: `sampleinvoicev1` | 5 |
 | `test01` | Extracts seller/buyer invoice fields (contact details, line items, tax, totals) using a labeled training dataset. | dev: `test01v1` | 10 |
 
 ## Common commands
