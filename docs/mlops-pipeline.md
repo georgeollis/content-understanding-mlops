@@ -415,21 +415,38 @@ Foundry account) and gating/triggering `promote-analyzer.ps1` from CI.
 
 ```mermaid
 graph TB
+    subgraph ONBOARD["0. Onboard a new family (once)"]
+        NEWANALYZER["new-analyzer.ps1"]
+        TEMPLATE["analyzers/_template"]
+        SCAFFOLD["analyzers/&lt;family&gt;/<br/>(analyzer.json, golden/, environments.json)"]
+
+        TEMPLATE --> NEWANALYZER --> SCAFFOLD
+    end
+
     subgraph AUTHOR["1. Author (local, git-tracked)"]
-        EDIT["Edit analyzers/&lt;family&gt;/analyzer.json"]
+        STUDIO["Foundry Studio (dev only)<br/>interactive fieldSchema / labeling"]
+        SYNCSTUDIO["sync-analyzer-from-studio.ps1<br/>GET /analyzers/{id}"]
+        EDIT["analyzers/&lt;family&gt;/analyzer.json"]
         VALA["validate-analyzers.ps1"]
         GTSCHEMA["build-ground-truth-schema.ps1"]
+        SYNCFIELDS["sync-golden-fields.ps1<br/>(patch expected.json on fieldSchema drift)"]
         GOLDMAN["build-golden-manifest.ps1"]
         VALG["validate-golden.ps1"]
         CI["ci-check.ps1"]
         COMMIT["git commit"]
 
+        SCAFFOLD --> EDIT
+        STUDIO --> SYNCSTUDIO --> EDIT
         EDIT --> VALA
-        EDIT --> GTSCHEMA --> VALG
+        EDIT --> GTSCHEMA --> SYNCFIELDS --> VALG
         GTSCHEMA --> GOLDMAN --> VALG
         VALA --> CI
         VALG --> CI
         CI --> COMMIT
+    end
+
+    subgraph LABELDATA["Labeled data replication (per new environment, as needed)"]
+        COPYLABEL["copy-labeled-data.ps1<br/>azcopy source env -> dest env"]
     end
 
     subgraph PROMOTE["2. Promote (per environment)"]
@@ -439,6 +456,7 @@ graph TB
         MANIFEST["update manifest.&lt;env&gt;.json"]
 
         COMMIT --> PROMOTESCRIPT
+        COPYLABEL -.->|"blobs must exist before first promotion"| REWRITE
         PROMOTESCRIPT --> REWRITE --> UPLOAD --> MANIFEST
     end
 
@@ -446,11 +464,25 @@ graph TB
         ANALYZERV1["analyzerId: v1"]
         ANALYZERV2["analyzerId: v2"]
         ANALYZERVN["analyzerId: vN"]
+        LISTANALYZERS["list-analyzers.ps1<br/>(read-only inventory)"]
     end
 
     UPLOAD ==> ANALYZERV1
     UPLOAD ==> ANALYZERV2
     UPLOAD ==> ANALYZERVN
+    LISTANALYZERS -.-> ANALYZERV1
+    LISTANALYZERS -.-> ANALYZERV2
+    LISTANALYZERS -.-> ANALYZERVN
+
+    subgraph BOOTSTRAP["Golden-set bootstrap (first promotion only)"]
+        BOOTSCRIPT["bootstrap-golden.ps1<br/>analyzeBinary against deployed analyzerId"]
+        REVIEW["human review<br/>(remove &quot;_bootstrap&quot; marker)"]
+
+        BOOTSCRIPT --> REVIEW
+    end
+
+    ANALYZERV1 -.->|"drafts missing expected.json"| BOOTSCRIPT
+    REVIEW -.->|"reviewed expected.json"| VALG
 
     subgraph EVALUATE["3. Evaluate"]
         COMPARESCRIPT["compare-analyzers.ps1<br/>POST /analyzers/{id}:analyzeBinary"]
@@ -459,8 +491,10 @@ graph TB
         MANIFEST -.-> COMPARESCRIPT
         COMPARESCRIPT --> ANALYZERV1
         COMPARESCRIPT --> ANALYZERV2
+        COMPARESCRIPT --> ANALYZERVN
         ANALYZERV1 --> SCORE
         ANALYZERV2 --> SCORE
+        ANALYZERVN --> SCORE
     end
 
     subgraph RECORD["4. Record"]
